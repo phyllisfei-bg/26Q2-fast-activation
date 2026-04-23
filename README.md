@@ -1,73 +1,44 @@
-# React + TypeScript + Vite
+# BitGo Fast Activation — 26Q2 Prototype
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A design prototype exploring a streamlined onboarding and activation experience for new BitGo customers. Built as self-contained HTML files — no build step, no dependencies.
 
-Currently, two official plugins are available:
+**Live prototype:** https://phyllisfei-bg.github.io/26Q2-fast-activation/flow.html
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Project Goal
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new BitGo customers. The goal is to get businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible — reducing drop-off, shortening onboarding time, and delivering a role-appropriate experience from day one.
 
-## Expanding the ESLint configuration
+The prototype covers three sequential stages: entity-level compliance (KYB), individual user verification (KYC), and a role-based getting-started dashboard that surfaces the right priorities for each user type immediately after first login.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Flows
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 1. KYB — Business Verification (`bitgo-KYB.html`)
+Targets the legal person or entity initiating the BitGo account. Covers entity identity collection, ownership structure disclosure, and compliance checks. This is typically completed by a company representative before any individual users are invited.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 2. KYC — User Verification (`bitgo-kyc.html`)
+Targets invited platform admins and users assigned default roles. Covers individual identity verification and initial goal-setting to personalize the experience downstream.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 3. Getting Started Dashboard (`bitgo-dashboard.html`)
+The post-verification landing experience. Surfaces role-based priority actions, business product recommendations, and a personalized "For You" section based on the user's stated goals from KYC.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## File Map
+
+| File | Description |
+|---|---|
+| `flow.html` | Entry point — visual map linking all three flows |
+| `bitgo-KYB.html` | KYB flow (business / entity verification) |
+| `bitgo-kyc.html` | KYC flow (platform admins and default-role users) |
+| `bitgo-dashboard.html` | Getting Started dashboard (role-based + For You) |
+| `card-hover-exploration.html` | Card hover interaction sandbox |
+
+---
+
+## Design
+
+Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the top-right corner of each flow screen.
