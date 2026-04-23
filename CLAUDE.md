@@ -1,42 +1,59 @@
 # 26Q2-fast-activation
 
-BitGo fast-activation prototype — self-contained HTML/CSS/JS files, no build step.
+BitGo fast-activation prototype — React + Vite app.
+
+## Stack
+
+- React 19, TypeScript, Vite
+- Plain CSS with design tokens (`src/styles/tokens.css`)
+- No Tailwind yet (to be added)
 
 ## File map
 
-| File | What it is |
+| Path | What it is |
 |---|---|
-| `flow.html` | Entry point — user flow diagram linking all three experiences |
-| `bitgo-KYB.html` | KYB flow (legal person / business verification) |
-| `bitgo-kyc.html` | KYC flow (invited platform admins & default-role users) |
-| `bitgo-dashboard.html` | Getting Started dashboard (role-based + For You section) |
-| `card-hover-exploration.html` | Card hover interaction sandbox |
-| `index.html` | Misc / landing |
+| `src/pages/Dashboard.tsx` | Main dashboard page |
+| `src/pages/WalletDetailPage.tsx` | Wallet detail view |
+| `src/flows/WalletCreationFlow.tsx` | Create wallet modal flow |
+| `src/flows/WalkthroughStepper.tsx` | In-context walkthrough stepper |
+| `src/components/` | Shared UI: Sidebar, Topbar, GetStarted, ForYou, Balances, Portfolio, TradeCard, Snackbar |
+| `src/hooks/useGetStarted.ts` | Get Started task state |
+| `src/hooks/useTheme.ts` | Light/dark theme toggle |
+| `src/types/index.ts` | Shared types, constants, trade pairs, walkthrough definitions |
+| `src/styles/globals.css` | Global styles |
+| `src/styles/tokens.css` | CSS custom properties (design tokens) |
+| `archive/` | Original HTML prototypes — reference only, do not edit |
+
+## How to run
+
+```bash
+npm install
+npm run dev
+```
 
 ## How to work on this with Claude Code
 
-Open this folder in Claude Code (`claude` in your terminal from this directory).
-All files are single-file HTML — edit in place, preview in browser.
+- **Change a component**: tell Claude which file + which screen/state
+- **Add a new flow**: add a new file under `src/flows/` and wire it up in `App.tsx`
+- **Add a new page**: add under `src/pages/` and add routing in `App.tsx`
 
-### Common tasks
+## Flows still to migrate (KYB + KYC)
 
-- **Change a component**: tell Claude which file + which screen/step
-- **Add a new screen**: Claude will add a new `<section id="pageN">` and wire up navigation
-- **Push updates**: after Claude edits files, run `git add -A && git commit -m "..." && git push`
+The `archive/` folder has the original HTML prototypes for reference:
+- `archive/bitgo-KYB.html` — business/entity verification flow
+- `archive/bitgo-kyc.html` — individual user verification flow
+- `archive/bitgo-dashboard.html` — earlier HTML version of the dashboard (already migrated)
 
-### GitHub repo
+KYB and KYC need to be built as React components under `src/flows/`.
+
+## GitHub repo
 
 Private repo at: `https://github.com/phyllisfei-bg/26Q2-fast-activation`
 
-After making changes, push with: `git add -A && git commit -m "..." && git push`
+After making changes: `git add -A && git commit -m "..." && git push`
 
 ## Design tokens (dark-mode aware)
 
-All three flows share CSS custom properties:
+CSS custom properties in `src/styles/tokens.css`:
 - `--color-primary` `--color-level1/2` `--color-text` `--color-border`
-- Theme toggle is in the top-right corner of each flow screen
-
-## Do not
-
-- Add a bundler or build tool — keep files self-contained
-- Rename the HTML files (links between pages depend on exact filenames)
+- Theme toggle wired via `useTheme` hook, toggled from `Topbar`
