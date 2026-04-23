@@ -1,18 +1,35 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Sidebar }            from './components/Sidebar';
 import { Snackbar } from './components/Snackbar';
 import type { SnackbarHandle } from './components/Snackbar';
 import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { WalletCreationFlow } from './flows/WalletCreationFlow';
+import { KYBFlow }            from './flows/KYBFlow';
+import { KYCFlow }            from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
 import type { GsTask, WalletInfo } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation' | 'go-account';
+type TopPage = 'dashboard' | 'kyb' | 'kyc';
+
+function getTopPage(): TopPage {
+  const h = window.location.hash;
+  if (h === '#kyb') return 'kyb';
+  if (h === '#kyc') return 'kyc';
+  return 'dashboard';
+}
 
 export default function App() {
   const { isLight, toggle } = useTheme();
+  const [topPage, setTopPage] = useState<TopPage>(getTopPage);
+
+  useEffect(() => {
+    function onHash() { setTopPage(getTopPage()); }
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   const { done, markDone, allDone } = useGetStarted();
 
   const [flow, setFlow]             = React.useState<ActiveFlow>('none');
@@ -53,6 +70,9 @@ export default function App() {
     setWalletOpen(false);
     snackRef.current?.dismiss();
   };
+
+  if (topPage === 'kyb') return <KYBFlow />;
+  if (topPage === 'kyc') return <KYCFlow />;
 
   return (
     <>

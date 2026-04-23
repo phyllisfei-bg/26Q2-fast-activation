@@ -1,8 +1,13 @@
 /* ─── Kintsugi Design System Tokens ─────────────────────────────── */
 :root {
+  /* ── Common / Black ── */
   --black: #0B0B10;
   --black-a800: rgba(11,11,16,.80);
   --black-a600: rgba(11,11,16,.60);
+  --black-a400: rgba(11,11,16,.40);
+  --black-a300: rgba(11,11,16,.30);
+
+  /* ── Common / White ── */
   --white: #FFFFFF;
   --white-a800: rgba(255,255,255,.80);
   --white-a700: rgba(255,255,255,.70);
@@ -12,16 +17,26 @@
   --white-a200: rgba(255,255,255,.20);
   --white-a100: rgba(255,255,255,.10);
   --white-a50:  rgba(255,255,255,.05);
+
+  /* ── Dark grey scale ── */
   --dg-800: #17182A;
   --dg-700: #1D1F33;
   --dg-600: #24263C;
   --dg-500: #2D2F48;
   --dg-400: #383A54;
+  --dg-200: rgba(255,255,255,.12);
+
+  /* ── Brand / Primary scale ── */
   --brand-500: #3D65F0;
   --brand-400: #6080F7;
   --brand-700: #2B4FD4;
+  --brand-800: #1E3BA8;
+  --brand-a400: rgba(61,101,240,.40);
+  --brand-a300: rgba(61,101,240,.30);
   --brand-a200: rgba(61,101,240,.20);
   --brand-a100: rgba(61,101,240,.10);
+
+  /* ── Semantic aliases ── */
   --color-bg:               var(--black);
   --color-level1:           var(--dg-800);
   --color-level2:           var(--dg-700);
@@ -29,17 +44,36 @@
   --color-level4:           var(--dg-500);
   --color-border:           var(--dg-600);
   --color-border-strong:    var(--dg-500);
+  --color-border-selected:  var(--brand-500);
+  --color-backdrop:         var(--black-a600);
+  --color-overlay:          var(--black-a400);
+
+  /* ── Primary colours ── */
   --color-primary:          var(--brand-500);
   --color-primary-hover:    var(--brand-700);
+  --color-primary-light:    var(--brand-a200);
+  --color-primary-tonal:    var(--brand-a400);
+
+  /* ── Text ── */
   --color-text:             var(--white);
   --color-text-secondary:   var(--white-a700);
   --color-text-muted:       var(--white-a400);
   --color-text-placeholder: var(--white-a300);
+
+  /* ── Semantic ── */
   --color-success:          #4ADE80;
+  --color-danger:           #F87171;
   --color-gold:             #F59E0B;
   --color-error:            #E53E3E;
+
+  /* ── Surface shortcuts ── */
+  --color-surface:          var(--color-level1);
+  --color-surface-raised:   var(--color-level2);
+  --color-surface-overlay:  var(--color-level1);
+
+  /* ── Button ghost ── */
   --btn-ghost:              var(--white-a50);
-  --btn-ghost-hover:        var(--white-a100);
+  --btn-ghost-hover:        var(--dg-700);
 }
 
 /* ─── Light mode overrides ───────────────────────────────────────── */
@@ -57,18 +91,26 @@ body.light-mode {
   --white-a500: rgba(13,14,28,.32);
   --white-a700: rgba(13,14,28,.55);
   --white-a800: rgba(13,14,28,.65);
-  --color-bg:               #FFFFFF;
+  --color-bg:               #F5F6FC;
   --color-level1:           #FFFFFF;
   --color-level2:           #EEF0FA;
   --color-level3:           #E4E7F5;
   --color-level4:           #D6DAF0;
   --color-border:           #DFE2F2;
   --color-border-strong:    #CDD1E8;
+  --color-border-selected:  var(--brand-500);
+  --color-backdrop:         rgba(13,14,28,.45);
+  --color-overlay:          rgba(13,14,28,.25);
+  --color-primary-light:    rgba(61,101,240,.12);
+  --color-surface:          #FFFFFF;
+  --color-surface-raised:   #EEF0FA;
+  --color-surface-overlay:  #FFFFFF;
   --color-text:             #0D0E1C;
   --color-text-secondary:   rgba(13,14,28,.65);
   --color-text-muted:       rgba(13,14,28,.42);
   --color-text-placeholder: rgba(13,14,28,.28);
   --color-success:          #16A34A;
+  --color-danger:           #DC2626;
   --color-gold:             #D97706;
   --btn-ghost:              rgba(13,14,28,.05);
   --btn-ghost-hover:        rgba(13,14,28,.09);
