@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Cards — Hover Exploration</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f1f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 24px 72px;
+      gap: 36px;
+    }
+
+    /* ── Page header ── */
+    .page-header { text-align: center; }
+    .page-header h1 {
+      font-size: 13px; font-weight: 600;
+      letter-spacing: .09em; text-transform: uppercase;
+      color: #8b8fa8; margin-bottom: 5px;
+    }
+    .page-header p { font-size: 13px; color: #b0b3c4; }
+
+    /* ── Toggle ── */
+    .toggle-bar {
+      display: flex;
+      background: #e4e5ee;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+    .toggle-btn {
+      padding: 7px 20px;
+      border-radius: 9px; border: none;
+      background: transparent;
+      font-size: 13px; font-weight: 500; color: #8b8fa8;
+      cursor: pointer;
+      transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+      white-space: nowrap;
+    }
+    .toggle-btn.active {
+      background: #fff; color: #111827;
+      box-shadow: 0 1px 4px rgba(0,0,0,.1);
+    }
+
+    /* ── Variant panels ── */
+    .variant { width: 814px; display: none; }
+    .variant.visible { display: block; }
+
+    /* ══════════════════════════════════════
+       VARIANT A — Expand in place
+    ══════════════════════════════════════ */
+    .grid-a {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    /* ══════════════════════════════════════
+       VARIANT B — 2/3 row takeover
+    ══════════════════════════════════════ */
+    .grid-b { display: flex; flex-direction: column; gap: 12px; }
+    .card-row {
+      display: flex; gap: 12px;
+      align-items: flex-start;
+    }
+    .grid-b .card {
+      transition:
+        flex         420ms cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 240ms ease,
+        box-shadow   240ms ease,
+        transform    200ms ease;
+    }
+    .card-row:has(.card:hover) .card:hover { flex: 2; }
+    .card-row:has(.card:hover) .card:not(:hover) .card-title {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ══════════════════════════════════════
+       SHARED card styles
+    ══════════════════════════════════════ */
+    .card {
+      background: #fff;
+      border: 1.5px solid #e8e9f0;
+      border-radius: 16px;
+      padding: 22px 20px 20px;
+      cursor: pointer;
+      overflow: hidden;
+      min-width: 0;
+      flex: 1;
+      transition: border-color 240ms ease, box-shadow 240ms ease, transform 200ms ease;
+    }
+    .card:hover {
+      border-color: #4f6ef7;
+      box-shadow: 0 8px 32px rgba(79,110,247,.13);
+      transform: translateY(-2px);
+    }
+    /* ══════════════════════════════════════
+       VARIANT D — Popover + dim
+    ══════════════════════════════════════ */
+
+    /* Dim layer sits behind popover, above grid */
+    .grid-d {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+      position: relative;
+    }
+
+    /* Each D card is the popover anchor */
+    .grid-d .card-wrap {
+      position: relative;
+      z-index: 1;
+    }
+    /* Lift active wrap above all sibling grid items so the
+       popover is never obscured by cards in lower rows */
+    .grid-d .card-wrap.d-active {
+      z-index: 100;
+    }
+
+    /* Invisible bridge spans the 3px gap so wrap.mouseleave
+       doesn't fire while the cursor moves card → popover */
+    .grid-d .card-wrap::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      height: 6px;
+    }
+
+    /* D cards: zero visual change on hover — card stays identical */
+    .grid-d .card:hover {
+      border-color: #e8e9f0;
+      box-shadow: none;
+      transform: none;
+    }
+    .grid-d .card:hover .card-icon { background: #f2f3fa; color: #6b7280; }
+    .grid-d .card:hover .card-check { border-color: #d1d5db; }
+
+    /* ── Popover ── */
+    .d-popover {
+      position: absolute;
+      top: calc(100% + 3px);
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border: 1.5px solid #e8e9f0;
+      border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05);
+      overflow: hidden;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .card-wrap.d-active .d-popover {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Inner clip for steps */
+    .d-popover-inner {
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    /* ── Steps ── */
+    .d-steps {
+      position: relative;
+      height: 240px;
+      overflow: hidden;
+    }
+
+    .d-step {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 200ms ease;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+    }
+    .d-step.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Each step: same structure — image on top, text below */
+    .d-step-img {
+      flex: 0 0 150px;
+      background: #ecedf5;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .d-step-img svg { width: 26px; height: 26px; color: #c4c6d6; }
+
+    .d-step-text {
+      flex: 1;
+      padding: 12px 16px 14px;
+      font-size: 13px; color: #6b7280; line-height: 1.6;
+      overflow: hidden;
+    }
+
+    /* Feature list text variant */
+    .d-step-text ul {
+      list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0;
+    }
+    .d-step-text li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12.5px; color: #374151; line-height: 1.45;
+    }
+    .d-step-text li::before {
+      content: ''; flex-shrink: 0;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #4f6ef7; margin-top: 5px;
+    }
+
+    /* Tags text variant */
+    .d-step-text .d-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .d-chip {
+      font-size: 11.5px; font-weight: 550;
+      color: #4f6ef7; background: #eff1fd;
+      padding: 4px 11px; border-radius: 20px;
+    }
+
+    /* ── Navigation bar: dots left · text CTAs right ── */
+    .d-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px 12px;
+      border-top: 1px solid #f0f1f7;
+    }
+
+    .d-dots-row {
+      display: flex; align-items: center; gap: 5px;
+    }
+    .d-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #d1d5db; border: none; cursor: pointer;
+      transition: background 180ms ease, transform 180ms ease;
+      padding: 0; flex-shrink: 0;
+    }
+    .d-dot.active {
+      background: #4f6ef7;
+      transform: scale(1.3);
+    }
+
+    .d-nav-ctas {
+      display: flex; align-items: center; gap: 2px;
+    }
+    .d-nav-arrow {
+      border: none; background: transparent;
+      font-size: 12.5px; font-weight: 550;
+      color: #6b7280; cursor: pointer;
+      padding: 4px 8px; border-radius: 6px;
+      transition: background 140ms ease, color 140ms ease;
+      font-family: inherit;
+    }
+    .d-nav-arrow:hover { background: #f2f3fa; color: #111827; }
+    .d-nav-sep {
+      font-size: 12px; color: #d1d5db; user-select: none;
+    }
+
+    /* ── Card header ── */
+    .card-header { display: flex; align-items: center; gap: 14px; }
+    .card-icon {
+      flex-shrink: 0; width: 40px; height: 40px;
+      border-radius: 10px; background: #f2f3fa;
+      display: flex; align-items: center; justify-content: center;
+      color: #6b7280;
+      transition: background 200ms, color 200ms;
+    }
+    .card:hover .card-icon { background: #eff1fd; color: #4f6ef7; }
+    .card-icon svg { width: 20px; height: 20px; stroke-width: 1.8; flex-shrink: 0; }
+    .card-title {
+      font-size: 15px; font-weight: 650; color: #111827;
+      line-height: 1.3; flex: 1; min-width: 0;
+    }
+    .card-check {
+      flex-shrink: 0; width: 20px; height: 20px;
+      border-radius: 6px; border: 1.5px solid #d1d5db;
+      transition: border-color 200ms, background 200ms;
+    }
+    .card:hover .card-check { border-color: #4f6ef7; }
+    .card.selected .card-check {
+      background: #4f6ef7; border-color: #4f6ef7;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: center;
+    }
+
+    /* ── Inline expand body (A + B only) ── */
+    .card-body {
+      display: grid; grid-template-rows: 0fr;
+      transition: grid-template-rows 280ms ease, opacity 260ms ease;
+      opacity: 0;
+    }
+    .card:hover .card-body { grid-template-rows: 1fr; opacity: 1; }
+    /* D cards never expand inline */
+    .grid-d .card:hover .card-body { grid-template-rows: 0fr; opacity: 0; }
+
+    .card-body-inner { overflow: hidden; }
+    .card-divider { height: 1px; background: #f0f1f7; margin: 16px 0 14px; }
+    .card-desc { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 14px; white-space: normal; }
+
+    .card-visual {
+      width: 100%; border-radius: 10px; overflow: hidden;
+      background: #f8f8fc; aspect-ratio: 16/7; position: relative;
+    }
+    .card-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-visual .visual-label {
+      position: absolute; bottom: 8px; left: 10px;
+      background: rgba(0,0,0,.45); color: #fff;
+      font-size: 10px; font-weight: 600; letter-spacing: .05em;
+      text-transform: uppercase; padding: 3px 8px;
+      border-radius: 4px; backdrop-filter: blur(4px);
+    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag {
+      font-size: 11px; font-weight: 550;
+      color: #4f6ef7; background: #eff1fd;
+      padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+    }
+
+    /* ── Legend ── */
+    .legend { font-size: 12px; color: #b0b3c4; text-align: center; }
+    .legend kbd { background: #e8e9f0; border-radius: 4px; padding: 1px 6px; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Hover Exploration · Feature Cards</h1>
+    <p>Toggle between interaction variants below.</p>
+  </div>
+
+  <div class="toggle-bar">
+    <button class="toggle-btn active" data-target="variant-a">A — Expand in place</button>
+    <button class="toggle-btn"        data-target="variant-b">B — Row takeover</button>
+    <button class="toggle-btn"        data-target="variant-d">C — Popover + dim</button>
+  </div>
+
+  <div class="variant visible" id="variant-a"><div class="grid-a" id="grid-a"></div></div>
+  <div class="variant"         id="variant-b"><div class="grid-b" id="grid-b"></div></div>
+  <div class="variant"         id="variant-d"><div class="grid-d" id="grid-d"></div></div>
+
+  <p class="legend">Hover to expand · Click to select · <kbd>Esc</kbd> to deselect all</p>
+
+  <script>
+    const cards = [
+      {
+        id: "secure",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        title: "Secure & hold digital assets",
+        desc: "Enterprise-grade custody with multi-sig authorization, cold storage vaults, and Go Accounts for treasury management.",
+        longDesc: "BitGo's custody infrastructure is trusted by the world's largest institutions. Every wallet is protected by multi-signature policies, hardware security modules, and insured cold storage — so your assets are safe even in the event of a breach.",
+        features: ["Multi-sig wallet policies with configurable quorum", "HSM-backed cold storage with insurance coverage", "Go Accounts for programmable treasury operations"],
+        tags: ["Custody Wallets", "Cold Storage", "Treasury", "Go Accounts"],
+        gif: "https://media.giphy.com/media/l0HlFZ3j4GvDHArRC/giphy.gif",
+        gifLabel: "Multi-sig vault flow"
+      },
+      {
+        id: "trade",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+        title: "Trade & earn yield",
+        desc: "Institutional liquidity, prime brokerage, DeFi staking, and liquid restaking — all from one platform.",
+        longDesc: "Access deep institutional liquidity across spot, derivatives, and structured products. BitGo Prime aggregates the best prices while keeping assets in custody, eliminating counterparty exposure and settlement risk.",
+        features: ["Off-exchange settlement with no counterparty risk", "Aggregated liquidity across 30+ trading venues", "Native staking and liquid restaking for ETH, SOL, and more"],
+        tags: ["Prime Brokerage", "Staking", "Liquid Restaking", "OTC"],
+        gif: "https://media.giphy.com/media/3oKIPEqDGUULpEU0aQ/giphy.gif",
+        gifLabel: "Live order book"
+      },
+      {
+        id: "move",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`,
+        title: "Move & settle funds",
+        desc: "Instant off-exchange settlement, stablecoin payments, and Go Network transfers that clear in seconds.",
+        longDesc: "Move value at the speed of the internet. BitGo's Go Network connects institutional counterparties for instant, bilateral settlement without touching a blockchain — and our stablecoin infrastructure handles payments at scale.",
+        features: ["Bilateral off-exchange settlement in under 1 second", "Programmable stablecoin payments with USDC and USDT", "Go Network for real-time interbank-style transfers"],
+        tags: ["Off-Exchange", "Stablecoins", "Payments", "Go Network"],
+        gif: "https://media.giphy.com/media/26uf2JHNV0Tq3ugk0/giphy.gif",
+        gifLabel: "Settlement in real time"
+      },
+      {
+        id: "tokenize",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="7" height="7" rx="1"/><rect x="15" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M15 17.5h7M18.5 14v7"/></svg>`,
+        title: "Tokenize real world assets",
+        desc: "End-to-end RWA tokenization — from issuance and transfer agent services to capital formation.",
+        longDesc: "Bring any real-world asset on-chain with a compliant, institutional-grade tokenization stack. BitGo handles the full lifecycle — from smart contract deployment and investor onboarding to transfer agent recordkeeping and secondary liquidity.",
+        features: ["Compliant issuance for funds, bonds, and real estate", "Whitelisted transfer restrictions and investor KYC/AML", "Secondary market facilitation and cap table management"],
+        tags: ["RWA", "Tokenization", "Transfer Agent", "Capital Formation"],
+        gif: "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
+        gifLabel: "Asset tokenization flow"
+      },
+      {
+        id: "manage",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        title: "Manage team & stay compliant",
+        desc: "Granular member roles, approval workflows, immutable audit logs, and automated regulatory reporting.",
+        longDesc: "Enterprise controls built for regulated institutions. Define exactly who can propose, approve, and execute — with full audit trails that satisfy internal compliance and external regulators alike.",
+        features: ["Role-based access with custom permission scopes", "Multi-step approval workflows with time locks", "Automated reporting for FinCEN, MiCA, and SOC 2"],
+        tags: ["Roles", "Approvals", "Audit Logs", "Compliance"],
+        gif: "https://media.giphy.com/media/xT9IgG50Lg7rusRgqU/giphy.gif",
+        gifLabel: "Approval workflow"
+      },
+      {
+        id: "custom",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+        title: "Custom integration",
+        desc: "Connect your stack via REST APIs, webhooks, and SDKs. Fully white-labeled and extensible.",
+        longDesc: "BitGo's API-first architecture means every feature is programmable. Whether you're embedding custody into a neobank, building a trading desk, or automating treasury ops — our SDKs and webhooks get you there fast.",
+        features: ["REST + WebSocket APIs with 99.9% uptime SLA", "JavaScript, Python, and Go SDKs with full type support", "White-label UI components and embeddable flows"],
+        tags: ["REST API", "Webhooks", "SDK", "White-label"],
+        gif: "https://media.giphy.com/media/du3J3cXyzhj75IOgvA/giphy.gif",
+        gifLabel: "API integration demo"
+      },
+    ];
+
+    /* ─── Card factory ─── */
+    function makeCard(c, suffix) {
+      const el = document.createElement("div");
+      el.className = "card";
+      el.dataset.id = `${c.id}-${suffix}`;
+      el.innerHTML = `
+        <div class="card-header">
+          <div class="card-icon">${c.icon}</div>
+          <span class="card-title">${c.title}</span>
+          <div class="card-check"></div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <div class="card-divider"></div>
+            <p class="card-desc">${c.desc}</p>
+            <div class="card-visual">
+              <img src="${c.gif}" alt="${c.title} demo" loading="lazy" />
+              <span class="visual-label">${c.gifLabel}</span>
+            </div>
+            <div class="card-tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+          </div>
+        </div>`;
+      el.addEventListener("click", () => el.classList.toggle("selected"));
+      return el;
+    }
+
+    /* ─── Variant A ─── */
+    const gridA = document.getElementById("grid-a");
+    cards.forEach(c => gridA.appendChild(makeCard(c, "a")));
+
+    /* ─── Variant B ─── */
+    const gridB = document.getElementById("grid-b");
+    for (let i = 0; i < cards.length; i += 2) {
+      const row = document.createElement("div");
+      row.className = "card-row";
+      row.appendChild(makeCard(cards[i], "b"));
+      if (cards[i+1]) row.appendChild(makeCard(cards[i+1], "b"));
+      gridB.appendChild(row);
+    }
+
+    /* ─── Variant D ─── */
+    const gridD = document.getElementById("grid-d");
+
+    const imgPlaceholder = `
+      <div class="d-step-img">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+      </div>`;
+
+
+    cards.forEach((c, idx) => {
+      const wrap = document.createElement("div");
+      wrap.className = "card-wrap" + (idx % 2 === 1 ? " d-right" : "");
+
+      const cardEl = makeCard(c, "d");
+      wrap.appendChild(cardEl);
+
+      // 3 steps — each has same image+text structure
+      const steps = [
+        { text: `<p>${c.desc}</p>` },
+        { text: `<ul>${c.features.map(f => `<li>${f}</li>`).join("")}</ul>` },
+        { text: `<div class="d-chips">${c.tags.map(t => `<span class="d-chip">${t}</span>`).join("")}</div>` }
+      ];
+
+      const stepsHTML = steps.map((s, i) => `
+        <div class="d-step${i === 0 ? " active" : ""}">
+          ${imgPlaceholder}
+          <div class="d-step-text">${s.text}</div>
+        </div>`).join("");
+
+      const dotsHTML = steps.map((_, i) =>
+        `<button class="d-dot${i === 0 ? " active" : ""}" aria-label="Step ${i+1}"></button>`
+      ).join("");
+
+      const popover = document.createElement("div");
+      popover.className = "d-popover";
+      popover.innerHTML = `
+        <div class="d-popover-inner">
+          <div class="d-steps">${stepsHTML}</div>
+          <div class="d-nav">
+            <div class="d-dots-row">${dotsHTML}</div>
+            <div class="d-nav-ctas">
+              <button class="d-nav-arrow" data-dir="-1">Back</button>
+              <span class="d-nav-sep">·</span>
+              <button class="d-nav-arrow" data-dir="1">Next</button>
+            </div>
+          </div>
+        </div>`;
+      wrap.appendChild(popover);
+
+      // Step state
+      let current = 0;
+      const stepEls = [...popover.querySelectorAll(".d-step")];
+      const dotEls  = [...popover.querySelectorAll(".d-dot")];
+
+      function goTo(n) {
+        stepEls[current].classList.remove("active");
+        dotEls[current].classList.remove("active");
+        current = (n + stepEls.length) % stepEls.length;
+        stepEls[current].classList.add("active");
+        dotEls[current].classList.add("active");
+      }
+
+      popover.querySelectorAll(".d-nav-arrow").forEach(btn => {
+        btn.addEventListener("click", e => { e.stopPropagation(); goTo(current + parseInt(btn.dataset.dir)); });
+      });
+      dotEls.forEach((dot, i) => {
+        dot.addEventListener("click", e => { e.stopPropagation(); goTo(i); });
+      });
+
+      let hideTimer;
+
+      function show() {
+        clearTimeout(hideTimer);
+        gridD.classList.add("has-hover");
+        gridD.querySelectorAll(".card-wrap").forEach(w => w.classList.remove("d-active"));
+        wrap.classList.add("d-active");
+      }
+      function scheduleHide() {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          wrap.classList.remove("d-active");
+          if (!gridD.querySelector(".d-active")) gridD.classList.remove("has-hover");
+          setTimeout(() => goTo(0), 180);
+        }, 200);
+      }
+
+      // wrap covers the card; popover is abs-positioned so some browsers
+      // fire wrap.mouseleave when cursor enters the popover — guard against
+      // that by explicitly cancelling on popover.mouseenter
+      wrap.addEventListener("mouseenter", show);
+      wrap.addEventListener("mouseleave", scheduleHide);
+      popover.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+      popover.addEventListener("mouseleave", scheduleHide);
+
+      gridD.appendChild(wrap);
+    });
+
+    /* ─── Toggle ─── */
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".variant").forEach(v => v.classList.remove("visible"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.target).classList.add("visible");
+      });
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape")
+        document.querySelectorAll(".card.selected").forEach(c => c.classList.remove("selected"));
+    });
+  </script>
+</body>
+</html>

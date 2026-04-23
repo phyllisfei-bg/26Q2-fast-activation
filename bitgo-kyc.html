@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BitGo — Account Setup</title>
+<style>
+/* ─── Kintsugi Design System Tokens ─────────────────────────────── */
+:root {
+  --black: #0B0B10;
+  --black-a800: rgba(11,11,16,.80);
+  --black-a600: rgba(11,11,16,.60);
+  --black-a400: rgba(11,11,16,.40);
+  --white: #FFFFFF;
+  --white-a800: rgba(255,255,255,.80);
+  --white-a700: rgba(255,255,255,.70);
+  --white-a500: rgba(255,255,255,.50);
+  --white-a400: rgba(255,255,255,.40);
+  --white-a300: rgba(255,255,255,.30);
+  --white-a200: rgba(255,255,255,.20);
+  --white-a100: rgba(255,255,255,.10);
+  --white-a50:  rgba(255,255,255,.05);
+  --dg-800: #17182A;
+  --dg-700: #1D1F33;
+  --dg-600: #24263C;
+  --dg-500: #2D2F48;
+  --dg-400: #383A54;
+  --dg-200: rgba(255,255,255,.12);
+  --brand-500: #3D65F0;
+  --brand-400: #6080F7;
+  --brand-700: #2B4FD4;
+  --brand-800: #1E3BA8;
+  --brand-a400: rgba(61,101,240,.40);
+  --brand-a300: rgba(61,101,240,.30);
+  --brand-a200: rgba(61,101,240,.20);
+  --brand-a100: rgba(61,101,240,.10);
+  --color-bg:               var(--black);
+  --color-level1:           var(--dg-800);
+  --color-level2:           var(--dg-700);
+  --color-level3:           var(--dg-600);
+  --color-level4:           var(--dg-500);
+  --color-border:           var(--dg-600);
+  --color-border-strong:    var(--dg-500);
+  --color-border-selected:  var(--brand-500);
+  --color-backdrop:         var(--black-a600);
+  --color-primary:          var(--brand-500);
+  --color-primary-hover:    var(--brand-700);
+  --color-primary-light:    var(--brand-a200);
+  --color-text:             var(--white);
+  --color-text-secondary:   var(--white-a700);
+  --color-text-muted:       var(--white-a400);
+  --color-text-placeholder: var(--white-a300);
+  --color-danger:           #F87171;
+  --color-success:          #4ADE80;
+  --color-surface:          var(--color-level1);
+  --color-surface-raised:   var(--color-level2);
+  --btn-ghost:              var(--white-a50);
+  --btn-ghost-hover:        var(--dg-700);
+}
+
+/* ─── Light mode overrides ───────────────────────────────────────── */
+body.light-mode {
+  /* Raw token overrides — auto-fixes every var(--dg-*) and var(--white-a*) in the file */
+  --dg-800: #FFFFFF;
+  --dg-700: #EEF0FA;
+  --dg-600: #E4E7F5;
+  --dg-500: #D6DAF0;
+  --dg-400: #CDD1E8;
+  --white-a50:  rgba(13,14,28,.04);
+  --white-a100: rgba(13,14,28,.07);
+  --white-a200: rgba(13,14,28,.10);
+  --white-a300: rgba(13,14,28,.16);
+  --white-a400: rgba(13,14,28,.24);
+  --white-a500: rgba(13,14,28,.32);
+  --white-a700: rgba(13,14,28,.55);
+  --white-a800: rgba(13,14,28,.65);
+  /* Semantic overrides */
+  --color-bg:               #F5F6FC;
+  --color-level1:           #FFFFFF;
+  --color-level2:           #EEF0FA;
+  --color-level3:           #E4E7F5;
+  --color-level4:           #D6DAF0;
+  --color-border:           #DFE2F2;
+  --color-border-strong:    #CDD1E8;
+  /* Explicit shortcut overrides */
+  --color-surface:          #FFFFFF;
+  --color-surface-raised:   #EEF0FA;
+  --color-backdrop:         rgba(13,14,28,.45);
+  --color-primary-light:    rgba(61,101,240,.12);
+  --color-text:             #0D0E1C;
+  --color-text-secondary:   rgba(13,14,28,.65);
+  --color-text-muted:       rgba(13,14,28,.42);
+  --color-text-placeholder: rgba(13,14,28,.28);
+  --color-danger:           #DC2626;
+  --color-success:          #16A34A;
+  --btn-ghost:              rgba(13,14,28,.05);
+  --btn-ghost-hover:        rgba(13,14,28,.09);
+}
+/* Dropdown chevron: replace white stroke with dark in light mode */
+body.light-mode .form-select,
+body.light-mode .invite-role-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(13,14,28,0.45)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+/* QR cells: white would vanish on light background */
+body.light-mode .qr-cell.on { background: var(--color-text); }
+
+/* ─── Theme toggle button ────────────────────────────────────────── */
+.theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 9999;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-level2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .18s, border-color .18s, color .18s;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+.theme-toggle:hover { background: var(--color-level3); color: var(--color-text); border-color: var(--color-border-strong); }
+.icon-moon { display: none; }
+body.light-mode .icon-sun { display: none; }
+body.light-mode .icon-moon { display: block; }
+
+/* ─── Reset / Base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Page system ────────────────────────────────────────────────── */
+.page-view { display: none; }
+.page-view.active { display: flex; animation: fadeUp .22s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Shared layout ──────────────────────────────────────────────── */
+.screen-full {
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+.screen-flow {
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+/* ─── Shared header (flow screens) ──────────────────────────────── */
+.flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.flow-header-logo {
+  display: flex; align-items: center; gap: 9px;
+}
+.flow-header-logo span { font-size: 15px; font-weight: 700; letter-spacing: -.2px; }
+.flow-header-step {
+  font-size: 13px; color: var(--color-text-muted);
+}
+.flow-progress {
+  padding: 0 28px; padding-top: 14px; flex-shrink: 0;
+}
+.progress-track {
+  width: 100%; height: 3px;
+  background: var(--color-level3);
+  border-radius: 99px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 99px;
+  background: var(--color-primary);
+  transition: width .4s ease;
+}
+.flow-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 36px 16px 48px;
+  overflow-y: auto;
+}
+.flow-inner {
+  width: 100%; max-width: 720px;
+}
+
+/* Step label / title / sub */
+.step-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--color-primary);
+  margin-bottom: 8px;
+}
+.step-title {
+  font-size: 30px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; margin-bottom: 6px;
+}
+.step-sub {
+  font-size: 14px; color: var(--color-text-secondary);
+  line-height: 1.6; margin-bottom: 28px;
+}
+
+/* ─── Form primitives ────────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--color-text-secondary); margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 14px; color: var(--color-text);
+  outline: none; transition: border-color .15s;
+}
+.form-input::placeholder { color: var(--color-text-placeholder); }
+.form-input:focus { border-color: var(--color-border-selected); }
+.form-input:read-only { opacity: .5; cursor: not-allowed; }
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 16px;
+}
+.form-select {
+  width: 100%;
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 8px; padding: 11px 14px;
+  font-size: 14px; color: var(--color-text);
+  outline: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  cursor: pointer; transition: border-color .15s;
+}
+.form-select:focus { border-color: var(--color-border-selected); }
+.form-select option { background: var(--dg-700); }
+
+/* ─── Footer nav ─────────────────────────────────────────────────── */
+.flow-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 24px; margin-top: 8px;
+}
+.flow-footer-right { display: flex; align-items: center; gap: 10px; }
+.btn-back {
+  background: var(--btn-ghost); border: 1px solid var(--color-border);
+  border-radius: 99px; padding: 10px 22px;
+  font-size: 14px; font-weight: 500; color: var(--color-text-secondary);
+  cursor: pointer; transition: background .15s;
+}
+.btn-back:hover { background: var(--btn-ghost-hover); }
+.btn-continue {
+  background: var(--color-primary); border: none; border-radius: 99px;
+  padding: 10px 28px; font-size: 14px; font-weight: 600; color: var(--white);
+  cursor: pointer; transition: background .15s;
+}
+.btn-continue:hover { background: var(--color-primary-hover); }
+.btn-skip {
+  background: none; border: none;
+  font-size: 13px; color: var(--color-text-muted);
+  cursor: pointer; padding: 10px 4px;
+  transition: color .15s;
+}
+.btn-skip:hover { color: var(--color-text-secondary); }
+
+/* ─── Selection card (account type, goals, role) ─────────────────── */
+.sel-grid {
+  display: grid; gap: 10px; margin-bottom: 4px;
+}
+.sel-grid-2 { grid-template-columns: 1fr 1fr; }
+.sel-grid-1 { grid-template-columns: 1fr; }
+.sel-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--color-level1);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px; padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.sel-card:hover { border-color: var(--color-border-strong); background: var(--color-level2); }
+.sel-card.selected {
+  border-color: var(--color-border-selected);
+}
+.sel-card-icon {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--color-level2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s;
+}
+.sel-card.selected .sel-card-icon { background: var(--color-level2); }
+.sel-card-text { flex: 1; min-width: 0; }
+.sel-card-label { font-size: 14px; font-weight: 600; }
+.sel-card-desc { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.sel-card-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .15s, background .15s;
+}
+.sel-card.selected .sel-card-check {
+  border-color: var(--color-primary); background: var(--color-primary);
+}
+
+/* Multi-select badge (goals) */
+.sel-card-badge {
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .15s, background .15s;
+}
+.sel-card.selected .sel-card-badge {
+  border-color: var(--color-primary); background: var(--color-primary);
+}
+
+/* "+ Add My Own" CTA — lives inside the 2-col grid as cell 6 */
+.goals-other-row {
+  display: flex; align-items: stretch;
+}
+.btn-add-other {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer;
+  color: var(--color-primary); font-size: 13.5px; font-weight: 500;
+  padding: 6px 4px; border-radius: 8px;
+  transition: opacity .15s;
+  font-family: inherit;
+}
+.btn-add-other:hover { opacity: .75; }
+.btn-add-other svg { flex-shrink: 0; }
+.sel-card-remove {
+  background: none; border: none; cursor: pointer; padding: 2px; flex-shrink: 0;
+  color: var(--color-text-muted); display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; transition: color .15s, background .15s;
+}
+.sel-card-remove:hover { color: var(--color-text); background: var(--color-level3); }
+/* Custom goal card — secondary until selected */
+.custom-goal-card {
+  border-style: dashed !important;
+  background: transparent !important;
+  transition: border-color .15s, background .15s, opacity .15s;
+}
+.custom-goal-card:hover {
+  border-color: var(--color-border-strong) !important;
+  background: var(--white-a50) !important;
+}
+.custom-goal-card .sel-card-icon {
+  background: transparent !important;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  transition: opacity .15s;
+}
+.custom-goal-card .sel-card-badge {
+  opacity: 0.35; transition: opacity .15s, border-color .15s, background .15s;
+  cursor: pointer;
+}
+.custom-goal-card:hover .sel-card-icon,
+.custom-goal-card:hover .sel-card-badge { opacity: 0.65; }
+.custom-goal-card .sel-card-badge:hover { opacity: 1 !important; border-color: var(--color-primary) !important; }
+/* When selected: restore solid look like other cards */
+.custom-goal-card.selected {
+  border-style: solid !important;
+  background: var(--brand-a100) !important;
+}
+.custom-goal-card.selected .sel-card-icon { opacity: 1; }
+.custom-goal-card.selected .sel-card-badge { opacity: 1; }
+/* Editable label */
+.custom-goal-card .sel-card-label[contenteditable] {
+  outline: none; cursor: text; border-radius: 4px;
+  transition: background .15s;
+  /* Override .sel-card's user-select:none so text stays editable after input */
+  user-select: text;
+  -webkit-user-select: text;
+}
+.custom-goal-card .sel-card-label[contenteditable]:empty::before {
+  content: 'Add your own goal…';
+  color: var(--color-text-placeholder);
+  pointer-events: none;
+  font-weight: 400;
+}
+.custom-goal-card .sel-card-label[contenteditable]:hover { background: var(--white-a100); }
+.custom-goal-card .sel-card-label[contenteditable]:focus {
+  background: var(--white-a100);
+  box-shadow: 0 0 0 2px var(--brand-a300);
+}
+/* Card-style input — same dimensions/style as .sel-card */
+.goals-other-card {
+  display: none; align-items: center; gap: 14px;
+  width: 100%;
+  background: var(--brand-a100);
+  border: 1.5px solid var(--color-border-selected);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: text;
+}
+.goals-other-card.visible { display: flex; }
+.goals-other-card-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--brand-a200);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.goals-other-inline-input {
+  flex: 1; min-width: 0;
+  background: none; border: none; outline: none;
+  font-size: 14px; font-weight: 600; font-family: inherit;
+  color: var(--color-text);
+}
+.goals-other-inline-input::placeholder { color: var(--color-text-placeholder); font-weight: 400; }
+.goals-other-badge {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 1.5px solid var(--color-border-selected);
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, background .15s;
+}
+.goals-other-cancel {
+  background: none; border: none; cursor: pointer; padding: 2px;
+  color: var(--color-text-muted); display: flex; align-items: center;
+  transition: color .15s; flex-shrink: 0;
+}
+.goals-other-cancel:hover { color: var(--color-text); }
+
+/* ─── Goal cards: Option C popover ───────────────────────────────── */
+/* Hide inline description — detail moves to popover */
+.kyc-goal-wrap .sel-card-desc { display: none; }
+
+/* Card fades out when the unified overlay covers it */
+.kyc-goal-wrap.kgw-unified .sel-card {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+/* Below-card style: subtle elevation */
+.kyc-goal-wrap.kgw-active .sel-card {
+  box-shadow: 0 6px 24px rgba(0,0,0,.22);
+  border-color: var(--color-border-strong);
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
+/* Global overlay — appended to body, positioned by JS */
+#kyc-goal-overlay {
+  position: fixed;
+  background: var(--color-level1);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.14);
+  overflow: hidden;
+  z-index: 10001;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease, border-color 140ms ease;
+  top: 0; left: 0; width: 0;
+  cursor: pointer;
+}
+#kyc-goal-overlay.kgo-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* Selected state — blue outline only, shadow preserved, no background change */
+#kyc-goal-overlay.kgo-selected {
+  border-color: var(--color-border-selected);
+}
+
+/* ── Unified header (mirrors the original card row) ── */
+.kgo-card-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px;
+  background: var(--color-level1);
+  flex-shrink: 0;
+}
+.kgo-card-icon {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--color-level2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.kgo-card-label {
+  flex: 1; min-width: 0;
+  font-size: 14px; font-weight: 600; color: var(--color-text);
+}
+.kgo-card-badge {
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.kgo-card-badge:not(.selected):hover {
+  border-color: var(--color-primary);
+}
+.kgo-card-badge.selected {
+  border-color: var(--color-primary); background: var(--color-primary);
+}
+/* Selected state: icon keeps its default background, no tint on header */
+.kgo-card-header.card-selected .kgo-card-icon {
+  background: var(--color-level2);
+}
+.kgo-divider {
+  height: 1px; background: var(--color-border);
+  flex-shrink: 0;
+}
+.kyc-goal-steps {
+  position: relative;
+  height: 196px;
+  overflow: hidden;
+}
+.kyc-goal-step {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+.kyc-goal-step.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Image placeholder area */
+.kyc-goal-step-img {
+  flex: 0 0 112px;
+  background: var(--color-level2);
+  display: flex; align-items: center; justify-content: center;
+}
+.kyc-goal-step-img svg {
+  width: 24px; height: 24px;
+  color: var(--color-text-muted); opacity: 0.4;
+}
+/* Text content area */
+.kyc-goal-step-text {
+  flex: 1;
+  padding: 12px 14px 10px;
+  overflow: hidden;
+}
+/* Description — max 2 lines */
+.kyc-goal-step-desc {
+  font-size: 12px; line-height: 1.55; color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Features list */
+.kyc-goal-step-text ul {
+  list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0;
+}
+.kyc-goal-step-text li {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; color: var(--color-text-secondary); line-height: 1.45;
+}
+.kyc-goal-step-text li::before {
+  content: ''; flex-shrink: 0;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--brand-500); margin-top: 5px;
+}
+/* Tags */
+.kyc-goal-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.kyc-goal-chip {
+  font-size: 11px; font-weight: 550;
+  color: var(--brand-400); background: var(--brand-a100);
+  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+}
+.kyc-goal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--color-border);
+}
+.kyc-goal-dots { display: flex; align-items: center; gap: 5px; }
+.kyc-goal-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--color-border-strong);
+  border: none; cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background 180ms ease, transform 180ms ease;
+}
+.kyc-goal-dot.active { background: var(--brand-500); transform: scale(1.3); }
+.kyc-goal-arrows { display: flex; align-items: center; gap: 2px; }
+.kyc-goal-arrow {
+  border: none; background: transparent;
+  font-size: 12px; font-weight: 550;
+  color: var(--color-text-muted); cursor: pointer;
+  padding: 3px 8px; border-radius: 6px;
+  transition: background 140ms ease, color 140ms ease;
+  font-family: inherit;
+}
+.kyc-goal-arrow:hover { background: var(--color-level2); color: var(--color-text); }
+.kyc-goal-sep { font-size: 11px; color: var(--color-text-muted); user-select: none; }
+
+/* Role pills (compact grid) */
+.role-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 4px;
+}
+.role-card {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 8px;
+  background: var(--color-level1);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px; padding: 14px 14px 12px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.role-card:hover { border-color: var(--color-border-strong); background: var(--color-level2); }
+.role-card.selected {
+  border-color: var(--color-border-selected);
+  background: var(--brand-a100);
+}
+.role-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--color-level2);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.role-card.selected .role-icon { background: var(--brand-a200); }
+.role-label { font-size: 13px; font-weight: 600; }
+
+/* ─── Divider ────────────────────────────────────────────────────── */
+.form-divider { height: 1px; background: var(--color-border); margin: 20px 0; }
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 12px;
+}
+
+/* ─── Screen 1 — Password ────────────────────────────────────────── */
+.pw-wrap { position: relative; }
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--color-text-muted);
+  cursor: pointer; padding: 0; line-height: 1;
+}
+.pw-toggle:hover { color: var(--color-text-secondary); }
+.strength-bar { display: flex; gap: 4px; margin-top: 8px; }
+.strength-seg {
+  flex: 1; height: 3px; border-radius: 99px;
+  background: var(--color-border-strong); transition: background .2s;
+}
+.strength-seg.active { background: var(--color-success); }
+.strength-checks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.strength-check {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--color-text-muted); transition: color .2s;
+}
+.strength-check.pass { color: var(--color-success); }
+.strength-check-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .2s, background .2s;
+}
+.strength-check.pass .strength-check-dot {
+  border-color: var(--color-success); background: var(--color-success);
+}
+
+.auth-card { width: 100%; max-width: 420px; }
+.auth-logo {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 32px;
+}
+.auth-logo span { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+.auth-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+.auth-sub {
+  font-size: 14px; color: var(--color-text-secondary);
+  text-align: center; margin-bottom: 28px; line-height: 1.5;
+}
+.btn-primary-full {
+  width: 100%; background: var(--color-primary); border: none; border-radius: 8px;
+  padding: 13px 20px; font-size: 15px; font-weight: 600; color: var(--white);
+  cursor: pointer; transition: background .15s; margin-top: 4px;
+}
+.btn-primary-full:hover { background: var(--color-primary-hover); }
+.signin-link {
+  text-align: center; margin-top: 18px;
+  font-size: 13px; color: var(--color-text-muted);
+}
+.signin-link a { color: var(--color-primary); text-decoration: none; }
+.signin-link a:hover { text-decoration: underline; }
+
+/* ─── Screen 5 — Download App ────────────────────────────────────── */
+.app-download-card {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+}
+.app-phone-mock {
+  width: 160px; height: 280px;
+  background: var(--color-level1);
+  border: 1.5px solid var(--color-border);
+  border-radius: 28px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 28px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.app-phone-mock::before {
+  content: '';
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 5px;
+  background: var(--color-level3); border-radius: 99px;
+}
+.app-phone-screen {
+  width: 120px; height: 200px;
+  background: var(--color-level2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.app-qr {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 3px;
+  width: 80px;
+}
+.qr-cell {
+  width: 12px; height: 12px; border-radius: 2px;
+}
+.qr-cell.on { background: var(--white); }
+.qr-cell.off { background: transparent; }
+.app-badges { display: flex; gap: 10px; margin-bottom: 28px; }
+.app-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 10px 16px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.app-badge:hover { border-color: var(--color-border-strong); background: var(--color-level2); }
+.app-badge-text { text-align: left; }
+.app-badge-sub { font-size: 10px; color: var(--color-text-muted); }
+.app-badge-name { font-size: 13px; font-weight: 600; }
+
+/* ─── Screen 6 — Personal Info ───────────────────────────────────── */
+.pep-question { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px; line-height: 1.5; }
+.radio-group { display: flex; gap: 10px; }
+.radio-option {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  background: transparent; border: 1.5px solid var(--color-border);
+  border-radius: 10px; padding: 12px 14px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.radio-option.selected { border-color: var(--color-border-selected); background: var(--brand-a100); }
+.radio-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .15s;
+}
+.radio-option.selected .radio-dot { border-color: var(--color-primary); }
+.radio-dot-inner {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--color-primary); display: none;
+}
+.radio-option.selected .radio-dot-inner { display: block; }
+.radio-label { font-size: 14px; font-weight: 500; }
+.manual-link {
+  font-size: 12px; color: var(--color-primary);
+  cursor: pointer; margin-top: 6px; display: inline-block;
+}
+.manual-link:hover { text-decoration: underline; }
+.check-row { display: flex; align-items: center; gap: 8px; margin: -8px 0 16px; }
+.check-row label { font-size: 13px; color: var(--color-text-muted); cursor: pointer; }
+.custom-checkbox {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid var(--color-border-strong);
+  background: transparent; flex-shrink: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, border-color .15s;
+}
+.custom-checkbox.checked { background: var(--color-primary); border-color: var(--color-primary); }
+
+/* ─── Screen 7 — Upload Photo ID ─────────────────────────────────── */
+.doc-checklist {
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+}
+.doc-checklist-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--color-text-muted); margin-bottom: 10px;
+}
+.doc-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+.doc-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--color-text-secondary); }
+.doc-check-icon {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--brand-a200);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.upload-label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; }
+.upload-zone {
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: 12px; padding: 28px 20px;
+  text-align: center; cursor: pointer;
+  transition: border-color .15s, background .15s;
+  margin-bottom: 14px; position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--color-primary); background: var(--brand-a100);
+}
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0;
+  cursor: pointer; width: 100%; height: 100%;
+}
+.upload-icon {
+  width: 40px; height: 40px; background: var(--color-level2);
+  border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 10px;
+}
+.upload-main-text { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.upload-sub-text { font-size: 12px; color: var(--color-text-muted); }
+
+/* ─── Screen 8 — Choose Org ──────────────────────────────────────── */
+.org-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.org-card {
+  display: flex; align-items: center; gap: 14px;
+  background: transparent; border: 1.5px solid var(--color-border);
+  border-radius: 12px; padding: 14px 16px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.org-card:hover { border-color: var(--color-border-strong); background: var(--color-level2); }
+.org-card.selected { border-color: var(--color-border-selected); background: var(--brand-a100); }
+.org-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--color-level3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; flex-shrink: 0;
+  letter-spacing: -.5px;
+}
+.org-info { flex: 1; min-width: 0; }
+.org-name { font-size: 14px; font-weight: 600; }
+.org-meta { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.org-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 8px;
+  border-radius: 99px; background: var(--brand-a200);
+  color: var(--brand-400); border: 1px solid var(--brand-a300);
+}
+.org-radio-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color .15s;
+}
+.org-card.selected .org-radio-dot { border-color: var(--color-primary); background: var(--color-primary); }
+.org-or-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0; color: var(--color-text-muted); font-size: 12px;
+}
+.org-or-divider::before, .org-or-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--color-border);
+}
+.btn-new-org {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--btn-ghost); border: 1px dashed var(--color-border-strong);
+  border-radius: 12px; padding: 13px 16px;
+  font-size: 14px; font-weight: 500; color: var(--color-text-secondary);
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.btn-new-org:hover { background: var(--btn-ghost-hover); border-color: var(--color-primary); color: var(--color-text); }
+
+/* ─── Screen 9 — Invite Members ─────────────────────────────────── */
+.btn-add-row {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; padding: 12px 0 4px;
+  font-size: 14px; font-weight: 500; color: var(--color-primary);
+  cursor: pointer; font-family: inherit; transition: opacity .15s;
+}
+.btn-add-row:hover { opacity: .72; }
+
+/* Agreement checkbox */
+.agree-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 20px 0 4px;
+}
+.agree-checkbox {
+  width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px;
+  accent-color: var(--color-primary); cursor: pointer;
+}
+.agree-label {
+  font-size: 13.5px; line-height: 1.5; color: var(--color-text-secondary); cursor: pointer;
+}
+.agree-label a { color: var(--color-primary); text-decoration: none; }
+.agree-label a:hover { text-decoration: underline; }
+
+.invite-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.invite-row {
+  display: flex; align-items: center; gap: 8px;
+  animation: fadeUp .18s ease;
+}
+.invite-field-wrap {
+  display: flex; flex-direction: column; gap: 5px; min-width: 0;
+}
+.invite-field-wrap.email-wrap { width: 220px; flex-shrink: 0; }
+.invite-field-wrap.role-wrap  { flex: 1; }
+.invite-field-label {
+  font-size: 12px; font-weight: 500; color: var(--color-text-secondary);
+  letter-spacing: 0.01em;
+}
+.invite-email-field {
+  width: 100%; box-sizing: border-box;
+  background: var(--color-level1); border: 1px solid var(--color-border);
+  border-radius: 8px; padding: 10px 13px;
+  font-size: 14px; color: var(--color-text); outline: none;
+  transition: border-color .15s; font-family: inherit;
+}
+.invite-email-field:focus { border-color: var(--color-border-selected); }
+.invite-email-field::placeholder { color: var(--color-text-placeholder); }
+
+/* Role multiselect */
+.role-ms { position: relative; flex: 1; min-width: 0; }
+.role-ms-trigger {
+  width: 100%; display: flex; align-items: center; gap: 6px;
+  background: var(--color-level1); border: 1px solid var(--color-border);
+  border-radius: 8px; padding: 8px 10px 8px 12px; min-height: 42px;
+  font-size: 13px; color: var(--color-text); cursor: pointer;
+  font-family: inherit; text-align: left; transition: border-color .15s;
+}
+.role-ms.open .role-ms-trigger,
+.role-ms-trigger:focus { border-color: var(--color-border-selected); outline: none; }
+.role-ms-placeholder { color: var(--color-text-placeholder); flex: 1; font-size: 14px; }
+.role-ms-tags { display: flex; flex-wrap: nowrap; gap: 4px; flex: 1; overflow: hidden; }
+.role-ms-tag {
+  font-size: 11px; font-weight: 500; padding: 3px 8px;
+  background: var(--color-level3); border-radius: 5px;
+  color: var(--color-text-secondary); white-space: nowrap;
+}
+.role-ms-more { color: var(--color-text-muted); background: transparent; padding-left: 2px; }
+.role-ms-chevron { color: var(--color-text-muted); flex-shrink: 0; transition: transform .15s; }
+.role-ms.open .role-ms-chevron { transform: rotate(180deg); }
+
+.role-ms-dropdown {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 4px 0; z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22); max-height: 220px; overflow-y: auto;
+}
+.role-ms.open .role-ms-dropdown { display: block; }
+.role-ms-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; font-size: 13px; cursor: pointer;
+  transition: background .12s; user-select: none;
+}
+.role-ms-option:hover { background: var(--white-a50); }
+.role-ms-cb {
+  width: 15px; height: 15px; border-radius: 4px; flex-shrink: 0;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, border-color .12s;
+}
+.role-ms-option.checked .role-ms-cb { background: var(--color-primary); border-color: var(--color-primary); }
+
+.btn-remove-row {
+  background: none; border: none; color: var(--color-text-muted);
+  cursor: pointer; padding: 6px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+}
+.btn-remove-row:hover { color: var(--color-danger); }
+
+/* ─── Screen 9 — Scenario FAB (left-side toggle) ────────────────── */
+.invite-fab {
+  position: fixed;
+  left: calc(max(12px, 50% - 500px));
+  top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 3px; z-index: 200;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+  cursor: grab;
+  user-select: none;
+}
+.ifab-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; border-radius: 7px;
+  padding: 10px 14px; cursor: pointer; font-family: inherit;
+  transition: background .15s; min-width: 120px; text-align: center;
+}
+.ifab-label {
+  font-size: 16px; font-weight: 600; color: var(--color-text-secondary);
+  letter-spacing: 0.01em; line-height: 1.3; white-space: nowrap;
+}
+.ifab-sub {
+  font-size: 13px; color: var(--color-text-muted);
+  line-height: 1.3; white-space: normal;
+}
+.ifab-btn.active { background: var(--color-primary); }
+.ifab-btn.active .ifab-label,
+.ifab-btn.active .ifab-sub { color: #fff; }
+.ifab-btn:not(.active):hover { background: var(--white-a50); }
+.ifab-divider { height: 1px; background: var(--color-border); margin: 1px 3px; }
+
+/* ─── Screen 9 — Scenario 2 — Invited members list ──────────────── */
+.imc-section-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.imc-section-title {
+  font-size: 13px; font-weight: 600; color: var(--color-text);
+}
+.imc-count-badge {
+  font-size: 11px; font-weight: 600; color: var(--color-text-secondary);
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  border-radius: 20px; padding: 1px 7px;
+}
+/* Card style removed — members render as a plain list */
+.invite-members-card {
+  margin-bottom: 0;
+}
+.imc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 0;
+}
+/* Gap between Members Invited list and New Members section */
+.invite-new-section {
+  margin-top: 24px;
+}
+.invite-new-header {
+  font-size: 13px; font-weight: 600; color: var(--color-text);
+  margin-bottom: 8px;
+}
+.imc-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.imc-avatar.av-blue  { background: #dbeafe; color: #2563eb; }
+.imc-avatar.av-teal  { background: #ccfbf1; color: #0d9488; }
+.imc-avatar.av-purple{ background: #ede9fe; color: #7c3aed; }
+.imc-avatar.av-amber { background: #fef3c7; color: #d97706; }
+.imc-info { flex: 1; min-width: 0; }
+.imc-name {
+  font-size: 13px; font-weight: 500; color: var(--color-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.imc-email {
+  font-size: 11.5px; color: var(--color-text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.imc-badge {
+  font-size: 11px; font-weight: 500; color: var(--color-text-secondary);
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  border-radius: 6px; padding: 3px 8px; flex-shrink: 0; white-space: nowrap;
+}
+
+/* ─── Account Type Cards (Screen 2) ─────────────────────────────── */
+.acct-type-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 4px; }
+.acct-card {
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+  user-select: none;
+}
+.acct-card:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-level1);
+  transform: translateY(-1px);
+}
+.acct-card:active { transform: translateY(0); }
+.acct-card-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--color-level3);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.acct-card-title {
+  font-size: 17px; font-weight: 700;
+  margin-bottom: 8px; color: var(--color-text);
+}
+.acct-card-desc {
+  font-size: 14px; color: var(--color-text-secondary);
+  line-height: 1.55; margin-bottom: 10px;
+}
+.acct-card-note {
+  font-size: 13px; color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 28px;
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--dg-500); color: var(--color-text);
+  border: 1px solid var(--color-border-strong); border-radius: 10px;
+  padding: 12px 20px; font-size: 14px; font-weight: 500;
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .2s, transform .2s; z-index: 9999;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--dg-500); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 1 — Email & Name
+════════════════════════════════════════════════════════════════ -->
+<section id="page1" class="page-view screen-full active">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg width="30" height="34" viewBox="0 0 32 36" fill="none">
+        <path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/>
+        <path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>BitGo</span>
+    </div>
+
+    <h1 class="auth-title">Create Your Account</h1>
+    <p class="auth-sub">Enter your details to get started with BitGo</p>
+
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input id="s1-email" type="email" class="form-input" value="phyllisfei804@bitgo.com" readonly />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Create Password <span style="color:var(--color-danger)">*</span></label>
+      <div class="pw-wrap">
+        <input id="s1-password" type="password" class="form-input" placeholder="Choose a strong password" style="padding-right:42px" oninput="updateStrength(this.value)" />
+        <button class="pw-toggle" onclick="togglePw('s1-password',this)" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="strength-bar">
+        <div class="strength-seg" id="seg0"></div>
+        <div class="strength-seg" id="seg1"></div>
+        <div class="strength-seg" id="seg2"></div>
+        <div class="strength-seg" id="seg3"></div>
+      </div>
+      <div class="strength-checks">
+        <div class="strength-check" id="chk-len">
+          <div class="strength-check-dot"><svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          At least 8 characters
+        </div>
+        <div class="strength-check" id="chk-upper">
+          <div class="strength-check-dot"><svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          Uppercase letter
+        </div>
+        <div class="strength-check" id="chk-num">
+          <div class="strength-check-dot"><svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+          Number or symbol
+        </div>
+      </div>
+    </div>
+
+    <div class="agree-row" style="margin-top:20px">
+      <input type="checkbox" class="agree-checkbox" id="agreeTerms" />
+      <label class="agree-label" for="agreeTerms">
+        I agree to BitGo's <a href="#" onclick="return false">Terms of Service</a> and <a href="#" onclick="return false">Privacy Policy</a>, and confirm I am authorized to create this account.
+      </label>
+    </div>
+
+    <button class="btn-primary-full" style="margin-top:16px" onclick="validateScreen1()">Continue</button>
+
+    <p class="signin-link">Already have an account? <a href="#">Sign In</a></p>
+  </div>
+</section>
+
+
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 3 — Goals
+════════════════════════════════════════════════════════════════ -->
+<section id="page3" class="page-view screen-flow">
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Step 1 of 6</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:17%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Your Goals</p>
+      <h2 class="step-title">What do you hope to achieve with BitGo?</h2>
+      <p class="step-sub">Select all that apply. This helps us tailor your experience.</p>
+
+      <div class="sel-grid sel-grid-2" id="goals-group">
+
+        <!-- Row 1: Trade & earn yield | Move & settle funds -->
+        <div class="kyc-goal-wrap">
+          <div class="sel-card" data-group="goals" data-val="trade-earn" onclick="toggleMulti(this)">
+            <div class="sel-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            </div>
+            <div class="sel-card-text">
+              <div class="sel-card-label">Trade &amp; earn yield</div>
+              <div class="sel-card-desc">Institutional trading, prime brokerage, staking, and liquid restaking</div>
+            </div>
+            <div class="sel-card-badge">
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="kyc-goal-wrap">
+          <div class="sel-card" data-group="goals" data-val="payments" onclick="toggleMulti(this)">
+            <div class="sel-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="sel-card-text">
+              <div class="sel-card-label">Move &amp; settle funds</div>
+              <div class="sel-card-desc">Off-exchange settlement, stablecoins, payments, and Go Network transfers</div>
+            </div>
+            <div class="sel-card-badge">
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Manage team | Secure & hold -->
+        <div class="kyc-goal-wrap">
+          <div class="sel-card" data-group="goals" data-val="ops-compliance" onclick="toggleMulti(this)">
+            <div class="sel-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="sel-card-text">
+              <div class="sel-card-label">Manage team &amp; stay compliant</div>
+              <div class="sel-card-desc">Member roles, approval workflows, audit logs, and regulatory reporting</div>
+            </div>
+            <div class="sel-card-badge">
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="kyc-goal-wrap">
+          <div class="sel-card" data-group="goals" data-val="secure-assets" onclick="toggleMulti(this)">
+            <div class="sel-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div class="sel-card-text">
+              <div class="sel-card-label">Secure &amp; hold digital assets</div>
+              <div class="sel-card-desc">Custody wallets, cold storage, treasury management, and Go Accounts</div>
+            </div>
+            <div class="sel-card-badge">
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Tokenize | Add your own -->
+        <div class="kyc-goal-wrap">
+          <div class="sel-card" data-group="goals" data-val="tokenize" onclick="toggleMulti(this)">
+            <div class="sel-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div class="sel-card-text">
+              <div class="sel-card-label">Tokenize real world assets</div>
+              <div class="sel-card-desc">RWA tokenization, transfer agent services, and capital formation</div>
+            </div>
+            <div class="sel-card-badge">
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- "Add My Own" — always-present secondary card, cell 6 (col 2, row 3) -->
+        <div class="sel-card custom-goal-card" id="goalsOtherRow"
+             data-group="goals" data-val="other-custom"
+             onclick="focusCustomGoalLabel(this)">
+          <div class="sel-card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="sel-card-text">
+            <div class="sel-card-label" contenteditable="true" spellcheck="false"
+                 onclick="event.stopPropagation()"
+                 onkeydown="if(event.key==='Enter'||event.key==='Escape'){event.preventDefault();this.blur()}"
+                 onblur="handleCustomGoalBlur(this)"
+            ></div>
+          </div>
+          <div class="sel-card-badge" onclick="event.stopPropagation(); toggleCustomGoalBadge(this.closest('.sel-card'))">
+            <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flow-footer">
+        <button class="btn-back" onclick="goToStep(1)">Back</button>
+        <button class="btn-continue" onclick="validateGoals()">Continue</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 3b — What Do You Value Most?
+════════════════════════════════════════════════════════════════ -->
+<section id="page3b" class="page-view screen-flow">
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Step 2 of 6</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:25%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Your Priorities</p>
+      <h2 class="step-title">What do you value most?</h2>
+      <p class="step-sub">Select one — we'll use this to shape your experience.</p>
+
+      <div class="sel-grid sel-grid-1" style="gap:12px; margin-top:4px;">
+
+        <div class="sel-card" data-val="speed" style="padding:20px 20px 20px; cursor:pointer;" onclick="selectValue(this,'speed')">
+          <div class="sel-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div class="sel-card-text">
+            <div class="sel-card-label">Speed &amp; ease of use</div>
+            <div class="sel-card-desc">Fast approvals, streamlined workflows, and less operational overhead</div>
+          </div>
+          <div class="sel-card-check">
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="sel-card" data-val="security" style="padding:20px 20px 20px; cursor:pointer;" onclick="selectValue(this,'security')">
+          <div class="sel-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="sel-card-text">
+            <div class="sel-card-label">Security of assets</div>
+            <div class="sel-card-desc">Maximum protection, strict controls, and institutional-grade safeguards</div>
+          </div>
+          <div class="sel-card-check">
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="sel-card" data-val="both" style="padding:20px 20px 20px; cursor:pointer;" onclick="selectValue(this,'both')">
+          <div class="sel-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          </div>
+          <div class="sel-card-text">
+            <div class="sel-card-label">Both equally</div>
+            <div class="sel-card-desc">I need a balance of speed and security without compromising either</div>
+          </div>
+          <div class="sel-card-check">
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flow-footer" style="margin-top:24px;">
+        <button class="btn-back" onclick="goToStep(3)">Back</button>
+        <button class="btn-continue" onclick="validateValue()">Next</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 5 — Download Mobile App (Optional · Last Step)
+════════════════════════════════════════════════════════════════ -->
+<section id="page5" class="page-view screen-flow">
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Optional</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Optional</p>
+      <h2 class="step-title">Get the BitGo Mobile App</h2>
+      <p class="step-sub">Approve transactions, manage your wallet, and get real-time alerts on the go. You can always do this later.</p>
+
+      <div class="app-download-card">
+        <!-- Phone mockup -->
+        <div class="app-phone-mock">
+          <div class="app-phone-screen">
+            <!-- Mini QR pattern (decorative) -->
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;width:72px">
+              <!-- row 1 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+              <!-- row 2 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+              <!-- row 3 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+              <!-- row 4 --> <div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div>
+              <!-- row 5 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+              <!-- row 6 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+              <!-- row 7 --> <div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:transparent"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div><div style="aspect-ratio:1;border-radius:2px;background:white"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- App store badges -->
+        <div class="app-badges">
+          <div class="app-badge" onclick="showToast('Opening App Store…')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="var(--dg-400)"/><path d="M15.5 8.5C15.5 6.57 13.93 5 12 5S8.5 6.57 8.5 8.5c0 .56.14 1.09.38 1.56L6 15h2.5l1-2h5l1 2H18l-2.88-4.94c.24-.47.38-1 .38-1.56z" fill="white"/></svg>
+            <div class="app-badge-text">
+              <div class="app-badge-sub">Download on the</div>
+              <div class="app-badge-name">App Store</div>
+            </div>
+          </div>
+          <div class="app-badge" onclick="showToast('Opening Google Play…')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 3l18 9-18 9V3z" fill="var(--dg-400)"/><path d="M3 3l7 9-7 9" stroke="var(--brand-400)" stroke-width="1.2"/><path d="M21 12L3 3" stroke="var(--color-success)" stroke-width="1.2"/><path d="M21 12L3 21" stroke="var(--color-danger)" stroke-width="1.2"/></svg>
+            <div class="app-badge-text">
+              <div class="app-badge-sub">Get it on</div>
+              <div class="app-badge-name">Google Play</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-footer">
+        <button class="btn-back" onclick="goToStep(9)">Back</button>
+        <div class="flow-footer-right">
+          <button class="btn-skip" onclick="completeSetup()">Skip for Now</button>
+          <button class="btn-continue" onclick="completeSetup()">I've Downloaded It</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 6 — Verify Identity: Personal Information
+════════════════════════════════════════════════════════════════ -->
+<section id="page6" class="page-view screen-flow">
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Step 3 of 6</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Verify Identity · 1 of 2</p>
+      <h2 class="step-title">Personal Information</h2>
+      <p class="step-sub">Enter your legal name exactly as it appears on your government-issued ID.</p>
+
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">First Name <span style="color:var(--color-danger)">*</span></label>
+          <input type="text" class="form-input" id="p6-first" placeholder="First name" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Middle Name</label>
+          <input type="text" class="form-input" id="p6-middle" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-label">Last Name <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" class="form-input" id="p6-last" placeholder="Last name" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date of Birth <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" class="form-input" id="p6-dob" placeholder="MM / DD / YYYY" />
+      </div>
+
+      <div class="form-divider"></div>
+      <p class="section-label">Residency &amp; Identification</p>
+
+      <div class="form-group">
+        <label class="form-label">Country of Legal Residence <span style="color:var(--color-danger)">*</span></label>
+        <select class="form-select" id="p6-country" onchange="syncCountry()">
+          <option value="">Select country…</option>
+          <option value="US" selected>United States</option>
+          <option value="CA">Canada</option>
+          <option value="GB">United Kingdom</option>
+          <option value="AU">Australia</option>
+          <option value="DE">Germany</option>
+          <option value="SG">Singapore</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="check-row">
+        <div class="custom-checkbox checked" id="same-country-box" onclick="toggleSameCountry()">
+          <svg viewBox="0 0 12 10" width="10" height="10" fill="none"><path d="M1 5l3 3 7-7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <label onclick="toggleSameCountry()">Same country for Government ID</label>
+      </div>
+
+      <div class="form-group" id="gov-country-group">
+        <label class="form-label">Government ID Country</label>
+        <select class="form-select" id="p6-gov-country">
+          <option value="US" selected>United States</option>
+          <option value="CA">Canada</option>
+          <option value="GB">United Kingdom</option>
+          <option value="AU">Australia</option>
+          <option value="DE">Germany</option>
+          <option value="SG">Singapore</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Social Security Number (SSN) <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" class="form-input" id="p6-ssn" placeholder="XXX - XX - XXXX" maxlength="14" oninput="formatSSN(this)" />
+      </div>
+
+      <div class="form-divider"></div>
+      <p class="section-label">Physical Address</p>
+
+      <div class="form-group">
+        <label class="form-label">Street Address <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" class="form-input" id="p6-address" placeholder="Start typing your address…" />
+        <span class="manual-link" onclick="showToast('Manual address entry enabled')">Or Enter Manually</span>
+      </div>
+
+      <div class="form-divider"></div>
+      <p class="section-label">Political Exposure</p>
+
+      <p class="pep-question">Are you, or have you ever been, a Politically Exposed Person (PEP)?</p>
+      <div class="radio-group">
+        <div class="radio-option" id="pep-yes" onclick="selectPEP('yes')">
+          <div class="radio-dot"><div class="radio-dot-inner"></div></div>
+          <span class="radio-label">Yes</span>
+        </div>
+        <div class="radio-option selected" id="pep-no" onclick="selectPEP('no')">
+          <div class="radio-dot"><div class="radio-dot-inner"></div></div>
+          <span class="radio-label">No</span>
+        </div>
+      </div>
+
+      <div class="flow-footer">
+        <button class="btn-back" onclick="goToStep('3b')">Back</button>
+        <button class="btn-continue" onclick="validateScreen6()">Continue</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 7 — Verify Identity: Upload Photo ID
+════════════════════════════════════════════════════════════════ -->
+<section id="page7" class="page-view screen-flow">
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Step 4 of 6</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:67%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Verify Identity · 2 of 2</p>
+      <h2 class="step-title">Upload Photo ID</h2>
+      <p class="step-sub">We accept the following government-issued documents. Ensure all corners are visible and the image is clear.</p>
+
+      <div class="doc-checklist">
+        <p class="doc-checklist-title">Accepted Documents</p>
+        <div class="doc-list">
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>Driver License</div>
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>State ID</div>
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>Permanent Resident Card</div>
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>Non-Citizen Travel Doc</div>
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>Passport</div>
+          <div class="doc-item"><div class="doc-check-icon"><svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3l2.5 2.5 5-5" stroke="#6080F7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>Passport Card</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Document Type <span style="color:var(--color-danger)">*</span></label>
+        <select class="form-select" id="doc-type">
+          <option value="">Choose document type…</option>
+          <option value="dl">Driver License</option>
+          <option value="state-id">State ID</option>
+          <option value="prc">Permanent Resident Card</option>
+          <option value="travel">Non-Citizen Travel Document</option>
+          <option value="passport">Passport</option>
+          <option value="passport-card">Passport Card</option>
+        </select>
+      </div>
+
+      <p class="upload-label">Front of Document <span style="color:var(--color-danger)">*</span></p>
+      <div class="upload-zone" id="front-zone" ondragover="handleDragOver(event,'front-zone')" ondragleave="handleDragLeave('front-zone')" ondrop="handleDrop(event,'front-zone','front-name')">
+        <input type="file" accept="image/*,.pdf" onchange="handleFileSelect(this,'front-zone','front-name')" />
+        <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <p class="upload-main-text">Drag &amp; drop or <span style="color:var(--color-primary)">browse</span></p>
+        <p class="upload-sub-text" id="front-name">JPG, PNG, or PDF · Max 10 MB</p>
+      </div>
+
+      <p class="upload-label">Back of Document <span style="color:var(--color-danger)">*</span></p>
+      <div class="upload-zone" id="back-zone" ondragover="handleDragOver(event,'back-zone')" ondragleave="handleDragLeave('back-zone')" ondrop="handleDrop(event,'back-zone','back-name')">
+        <input type="file" accept="image/*,.pdf" onchange="handleFileSelect(this,'back-zone','back-name')" />
+        <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <p class="upload-main-text">Drag &amp; drop or <span style="color:var(--color-primary)">browse</span></p>
+        <p class="upload-sub-text" id="back-name">JPG, PNG, or PDF · Max 10 MB</p>
+      </div>
+
+      <div class="flow-footer">
+        <button class="btn-back" onclick="goToStep(6)">Back</button>
+        <button class="btn-continue" onclick="goToStep(9)">Continue</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREEN 9 — Invite Members
+════════════════════════════════════════════════════════════════ -->
+<section id="page9" class="page-view screen-flow">
+
+  <!-- Left-side scenario FAB — position:fixed, hidden with parent when page9 inactive -->
+  <div class="invite-fab">
+    <button class="ifab-btn active" id="ifab-btn-1" onclick="setInviteScenario(1)">
+      <span class="ifab-label">1st PA</span>
+      <span class="ifab-sub">1st time exp</span>
+    </button>
+    <div class="ifab-divider"></div>
+    <button class="ifab-btn" id="ifab-btn-2" onclick="setInviteScenario(2)">
+      <span class="ifab-label">Non-1st PA</span>
+      <span class="ifab-sub">1st time exp</span>
+      <span class="ifab-sub">includes PAs and invited org admins</span>
+    </button>
+  </div>
+
+  <header class="flow-header">
+    <div class="flow-header-logo">
+      <svg width="20" height="22" viewBox="0 0 32 36" fill="none"><path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="#3D65F0"/><path d="M10 18l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>BitGo</span>
+    </div>
+    <span class="flow-header-step">Step 5 of 5</span>
+  </header>
+  <div class="flow-progress"><div class="progress-track"><div class="progress-fill" style="width:100%"></div></div></div>
+
+  <div class="flow-body">
+    <div class="flow-inner">
+      <p class="step-eyebrow">Almost Done</p>
+      <h2 class="step-title">Invite Your Team</h2>
+      <p class="step-sub">Add teammates to your organization. They'll receive an email invitation with setup instructions.</p>
+
+      <!-- ── Scenario 1: 1st PA — 1st time experience ───────────── -->
+      <div id="invite-scenario-1">
+        <div class="invite-rows" id="invite-rows"></div>
+        <button class="btn-add-row" onclick="addRow()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add
+        </button>
+        <div class="flow-footer">
+          <button class="btn-back" onclick="goToStep(7)">Back</button>
+          <button class="btn-continue" onclick="sendAndContinue()">Send Invites</button>
+        </div>
+      </div>
+
+      <!-- ── Scenario 2: Non-1st PA — 1st time experience ──────── -->
+      <div id="invite-scenario-2" style="display:none">
+
+        <!-- Members Invited section: header outside, plain list -->
+        <div class="imc-section-header">
+          <span class="imc-section-title">Members Invited</span>
+          <span class="imc-count-badge">4</span>
+        </div>
+        <div class="invite-members-card">
+          <div class="imc-row">
+            <div class="imc-avatar av-blue">AR</div>
+            <div class="imc-info">
+              <div class="imc-name">Alex Rivera</div>
+              <div class="imc-email">alex.rivera@enterprise.com</div>
+            </div>
+            <span class="imc-badge">Org Admin</span>
+          </div>
+          <div class="imc-row">
+            <div class="imc-avatar av-teal">JK</div>
+            <div class="imc-info">
+              <div class="imc-name">Jordan Kim</div>
+              <div class="imc-email">j.kim@enterprise.com</div>
+            </div>
+            <span class="imc-badge">Wallet Admin</span>
+          </div>
+          <div class="imc-row">
+            <div class="imc-avatar av-purple">SP</div>
+            <div class="imc-info">
+              <div class="imc-name">Sam Patel</div>
+              <div class="imc-email">s.patel@enterprise.com</div>
+            </div>
+            <span class="imc-badge">Auditor</span>
+          </div>
+          <div class="imc-row">
+            <div class="imc-avatar av-amber">ML</div>
+            <div class="imc-info">
+              <div class="imc-name">Morgan Lee</div>
+              <div class="imc-email">m.lee@enterprise.com</div>
+            </div>
+            <span class="imc-badge">Wallet Viewer</span>
+          </div>
+        </div>
+
+        <!-- New Members section: always visible, Add CTA lives here -->
+        <div class="invite-new-section">
+          <div class="invite-new-header">New Members</div>
+          <div class="invite-rows" id="invite-rows-2"></div>
+          <button class="btn-add-row" onclick="addRow('invite-rows-2')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add
+          </button>
+        </div>
+
+        <div class="flow-footer">
+          <button class="btn-back" onclick="goToStep(7)">Back</button>
+          <div class="flow-footer-right">
+            <button class="btn-skip" onclick="goToStep(5)">Skip</button>
+            <button class="btn-continue" onclick="sendAndContinue2()">Send Invites</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+
+<script>
+/* ─── Navigation ─────────────────────────────────────────────────── */
+function goToStep(n) {
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page' + n);
+  if (target) { target.classList.add('active'); window.scrollTo(0,0); }
+}
+
+/* ─── Screen 2 — Account Type ────────────────────────────────────── */
+function pickAccountType(type) {
+  selections['account'] = type;
+  goToStep(3);
+}
+
+/* ─── Screen 1 ───────────────────────────────────────────────────── */
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
+function updateStrength(val) {
+  const hasAny = val.length > 0;
+  ['chk-len','chk-upper','chk-num'].forEach(id => {
+    document.getElementById(id).classList.toggle('pass', hasAny);
+  });
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('seg' + i).classList.toggle('active', hasAny);
+  }
+}
+
+function validateScreen1() {
+  const pw = document.getElementById('s1-password').value;
+  if (!pw) { showToast('Please create a password'); return; }
+  if (!document.getElementById('agreeTerms').checked) { showToast('Please agree to the Terms of Service to continue'); return; }
+  goToStep(3);
+}
+
+/* ─── Single-select cards ────────────────────────────────────────── */
+const selections = {};
+function selectOne(group, cardEl) {
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+  selections[group] = cardEl.dataset.val;
+}
+
+/* ─── Multi-select cards (goals) ─────────────────────────────────── */
+const multiSelections = new Set();
+function toggleMulti(cardEl) {
+  const val = cardEl.dataset.val;
+  if (cardEl.classList.contains('selected')) {
+    cardEl.classList.remove('selected');
+    multiSelections.delete(val);
+  } else {
+    cardEl.classList.add('selected');
+    multiSelections.add(val);
+  }
+}
+function handleCustomGoalBlur(labelEl) {
+  // If card was selected but text cleared → deselect
+  const card = labelEl.closest('.sel-card');
+  if (card && !labelEl.textContent.trim() && card.classList.contains('selected')) {
+    card.classList.remove('selected');
+    multiSelections.delete('other-custom');
+  }
+}
+
+/* Card body click → focus the label and place cursor at end of any existing text */
+function focusCustomGoalLabel(cardEl) {
+  const label = cardEl.querySelector('.sel-card-label');
+  if (!label) return;
+  label.focus();
+  // Move cursor to end of existing content so user can continue editing
+  const range = document.createRange();
+  const sel   = window.getSelection();
+  range.selectNodeContents(label);
+  range.collapse(false); // false = collapse to end
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/* Badge/checkbox click → toggle selection */
+function toggleCustomGoalBadge(cardEl) {
+  if (cardEl.classList.contains('selected')) {
+    cardEl.classList.remove('selected');
+    multiSelections.delete('other-custom');
+  } else {
+    cardEl.classList.add('selected');
+    multiSelections.add('other-custom');
+  }
+}
+
+/* Legacy — kept for compatibility */
+function toggleCustomGoal(cardEl) { focusCustomGoalLabel(cardEl); }
+
+function removeCustomGoal(btn) {
+  const card = btn.closest ? btn.closest('.sel-card') : btn;
+  if (!card) return;
+  card.style.transition = 'opacity .15s';
+  card.style.opacity = '0';
+  setTimeout(() => {
+    card.remove();
+    // Only clear from selections if no more custom cards remain
+    if (!document.querySelectorAll('[data-val="other-custom"]').length) {
+      multiSelections.delete('other-custom');
+    }
+  }, 160);
+}
+
+function validateGoals() {
+  if (multiSelections.size === 0) { showToast('Please select at least one goal'); return; }
+  try { localStorage.setItem('bitgo-goals', JSON.stringify([...multiSelections])); } catch(e) {}
+  goToStep('3b');
+}
+
+/* ─── Priority select (values screen) ───────────────────────────── */
+let selectedPriority = null;
+function selectValue(el, val) {
+  document.querySelectorAll('#page3b .sel-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPriority = val;
+}
+function validateValue() {
+  if (!selectedPriority) { showToast('Please select an option'); return; }
+  goToStep(6);
+}
+
+/* ─── Generic single-select validator ───────────────────────────── */
+function validateAndNext(currentStep, group, errMsg) {
+  if (!selections[group]) { showToast(errMsg); return; }
+  goToStep(currentStep + 1);
+}
+
+/* ─── Screen 6 — Personal Info ───────────────────────────────────── */
+let sameCountry = true;
+let pepSelection = 'no';
+
+function toggleSameCountry() {
+  sameCountry = !sameCountry;
+  const box   = document.getElementById('same-country-box');
+  const group = document.getElementById('gov-country-group');
+  box.classList.toggle('checked', sameCountry);
+  box.innerHTML = sameCountry
+    ? '<svg viewBox="0 0 12 10" width="10" height="10" fill="none"><path d="M1 5l3 3 7-7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '';
+  group.style.display = sameCountry ? 'block' : 'none';
+  if (sameCountry) syncCountry();
+}
+
+function syncCountry() {
+  if (!sameCountry) return;
+  document.getElementById('p6-gov-country').value = document.getElementById('p6-country').value;
+}
+
+function selectPEP(val) {
+  pepSelection = val;
+  document.getElementById('pep-yes').classList.toggle('selected', val === 'yes');
+  document.getElementById('pep-no').classList.toggle('selected', val === 'no');
+}
+
+function formatSSN(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (v.length > 9) v = v.slice(0,9);
+  if (v.length > 5)      input.value = v.slice(0,3) + ' - ' + v.slice(3,5) + ' - ' + v.slice(5);
+  else if (v.length > 3) input.value = v.slice(0,3) + ' - ' + v.slice(3);
+  else                   input.value = v;
+}
+
+function validateScreen6() {
+  goToStep(7);
+}
+
+/* ─── Screen 7 — Photo ID ────────────────────────────────────────── */
+function handleDragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function handleDragLeave(zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function handleDrop(e, zoneId, nameId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) setFileUploaded(zoneId, nameId, file.name);
+}
+function handleFileSelect(input, zoneId, nameId) {
+  if (input.files[0]) setFileUploaded(zoneId, nameId, input.files[0].name);
+}
+function setFileUploaded(zoneId, nameId, name) {
+  const zone = document.getElementById(zoneId);
+  const nameEl = document.getElementById(nameId);
+  zone.style.borderColor  = 'var(--color-success)';
+  zone.style.background   = 'rgba(74,222,128,.05)';
+  nameEl.style.color      = 'var(--color-success)';
+  nameEl.textContent      = '✓ ' + name;
+}
+
+function validateScreen7() {
+  goToStep(8);
+}
+
+/* ─── Screen 8 — Choose Org ──────────────────────────────────────── */
+let selectedOrg = null;
+function selectOrg(cardEl) {
+  document.querySelectorAll('.org-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+  selectedOrg = cardEl.dataset.val;
+}
+
+function validateScreen8() {
+  if (!selectedOrg) { showToast('Please select an organization'); return; }
+  goToStep(9);
+}
+
+/* ─── Screen 9 — Invite Members ──────────────────────────────────── */
+const ROLES = ['Organization Admin','Enterprise Admin','Wallet Admin','Wallet Spender','Wallet Viewer','Trader','Auditor','Video ID User'];
+let rowCounter = 0;
+
+function addRow(containerId) {
+  rowCounter++;
+  const id  = 'irow_' + rowCounter;
+  const rms = 'rms_'  + rowCounter;
+  const optionsHtml = ROLES.map(r => `
+    <div class="role-ms-option" onclick="event.stopPropagation();toggleRole('${rms}','${r}',this)">
+      <div class="role-ms-cb">
+        <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      ${r}
+    </div>`).join('');
+
+  const html = `
+    <div class="invite-row" id="${id}">
+      <div class="invite-field-wrap email-wrap">
+        <span class="invite-field-label">Email Address</span>
+        <input type="email" class="invite-email-field" placeholder="name@company.com" />
+      </div>
+      <div class="invite-field-wrap role-wrap">
+        <span class="invite-field-label">Role</span>
+        <div class="role-ms" id="${rms}">
+          <button type="button" class="role-ms-trigger" onclick="toggleRMS('${rms}',event)">
+            <span class="role-ms-placeholder">Select roles…</span>
+            <svg class="role-ms-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="role-ms-dropdown">${optionsHtml}</div>
+        </div>
+      </div>
+      <button type="button" class="btn-remove-row" onclick="removeRow('${id}')" title="Remove">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  document.getElementById(containerId || 'invite-rows').insertAdjacentHTML('beforeend', html);
+}
+
+function removeRow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.transition = 'opacity .18s';
+  el.style.opacity = '0';
+  setTimeout(() => el.remove(), 180);
+}
+
+function toggleRMS(rmsId, e) {
+  e.stopPropagation();
+  const el = document.getElementById(rmsId);
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.role-ms.open').forEach(x => x.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+function updateRMSTrigger(rms, selected) {
+  const trigger = rms.querySelector('.role-ms-trigger');
+  const chevron = `<svg class="role-ms-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  if (selected.length === 0) {
+    trigger.innerHTML = `<span class="role-ms-placeholder">Select roles…</span>${chevron}`;
+    return;
+  }
+  // Render all tags with wrap enabled so we can measure overflow
+  const tagsHtml = selected.map(r => `<span class="role-ms-tag">${r}</span>`).join('');
+  trigger.innerHTML = `<span class="role-ms-tags" style="flex-wrap:wrap">${tagsHtml}</span>${chevron}`;
+  const container = trigger.querySelector('.role-ms-tags');
+  const tagEls = [...container.querySelectorAll('.role-ms-tag')];
+  if (tagEls.length > 1) {
+    const baseTop = Math.round(tagEls[0].getBoundingClientRect().top);
+    let cutIdx = tagEls.length;
+    for (let i = 1; i < tagEls.length; i++) {
+      if (Math.round(tagEls[i].getBoundingClientRect().top) > baseTop) { cutIdx = i; break; }
+    }
+    if (cutIdx < tagEls.length) {
+      let hidden = tagEls.length - cutIdx;
+      tagEls.slice(cutIdx).forEach(t => t.remove());
+      const more = document.createElement('span');
+      more.className = 'role-ms-tag role-ms-more';
+      more.textContent = `+${hidden} more`;
+      container.appendChild(more);
+      // If "+N more" itself wraps, bump one more tag into overflow
+      if (Math.round(more.getBoundingClientRect().top) > baseTop) {
+        const vis = [...container.querySelectorAll('.role-ms-tag:not(.role-ms-more)')];
+        if (vis.length > 0) { vis[vis.length - 1].remove(); more.textContent = `+${hidden + 1} more`; }
+      }
+    }
+  }
+  container.style.flexWrap = ''; // back to nowrap
+}
+
+function toggleRole(rmsId, role, optionEl) {
+  optionEl.classList.toggle('checked');
+  const rms = document.getElementById(rmsId);
+  const selected = [...rms.querySelectorAll('.role-ms-option.checked')].map(el => el.textContent.trim());
+  updateRMSTrigger(rms, selected);
+  // Keep dropdown open — closes only on outside click
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.role-ms.open').forEach(el => el.classList.remove('open'));
+});
+
+/* ─── Screen 9 — Scenario toggle ────────────────────────────────── */
+function setInviteScenario(n) {
+  document.getElementById('invite-scenario-1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('invite-scenario-2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('ifab-btn-1').classList.toggle('active', n === 1);
+  document.getElementById('ifab-btn-2').classList.toggle('active', n === 2);
+}
+
+/* ── Draggable FAB ── */
+(function () {
+  function initFabDrag() {
+    const fab = document.querySelector('.invite-fab');
+    if (!fab) return;
+    let dragging = false, ox = 0, oy = 0, hasMoved = false;
+
+    fab.addEventListener('mousedown', function (e) {
+      /* Resolve computed position to pixels so transform is no longer needed */
+      const r = fab.getBoundingClientRect();
+      fab.style.left      = r.left + 'px';
+      fab.style.top       = r.top  + 'px';
+      fab.style.transform = 'none';
+
+      dragging = true;
+      hasMoved = false;
+      ox = e.clientX - r.left;
+      oy = e.clientY - r.top;
+      fab.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      hasMoved = true;
+      const x = Math.min(Math.max(0, e.clientX - ox), window.innerWidth  - fab.offsetWidth);
+      const y = Math.min(Math.max(0, e.clientY - oy), window.innerHeight - fab.offsetHeight);
+      fab.style.left = x + 'px';
+      fab.style.top  = y + 'px';
+    });
+
+    document.addEventListener('mouseup', function (e) {
+      if (!dragging) return;
+      dragging = false;
+      fab.style.cursor = 'grab';
+      /* If mouse barely moved, let the click on the child button fire normally */
+      if (hasMoved) e.stopImmediatePropagation();
+    }, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFabDrag);
+  } else {
+    initFabDrag();
+  }
+})();
+
+function sendAndContinue() {
+  const rows = document.querySelectorAll('#invite-rows .invite-row');
+  const filledEmails = Array.from(rows)
+    .map(r => r.querySelector('.invite-email-field').value.trim())
+    .filter(Boolean);
+  if (filledEmails.length > 0) {
+    showToast(`Invitations sent to ${filledEmails.length} member${filledEmails.length !== 1 ? 's' : ''}!`);
+    setTimeout(() => goToStep(5), 800);
+  } else {
+    goToStep(5); // no emails entered — proceed without sending
+  }
+}
+
+function sendAndContinue2() {
+  const rows = document.querySelectorAll('#invite-rows-2 .invite-row');
+  let allFilled = true;
+  rows.forEach(row => { if (!row.querySelector('.invite-email-field').value.trim()) allFilled = false; });
+  if (!allFilled) { showToast('Please enter an email for each added member'); return; }
+  const total = 4 + rows.length; // 4 pre-seeded + any added
+  showToast(`Invitations sent to ${total} member${total > 1 ? 's' : ''}!`);
+  setTimeout(() => goToStep(5), 800);
+}
+
+// Auto-add one empty row for scenario 1 (1st PA default quick-start state)
+document.addEventListener('DOMContentLoaded', () => { addRow(); });
+
+function completeSetup() {
+  showToast('Welcome to BitGo! Setting up your dashboard…');
+  setTimeout(() => { window.location.href = 'bitgo-dashboard.html'; }, 1000);
+}
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ─── Goal cards: Option C popover interaction ───────────────────── */
+(function() {
+  const IMG_PH = `<div class="kyc-goal-step-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+  const goalData = {
+    'secure-assets': {
+      desc: 'Enterprise-grade custody with multi-sig authorization, cold storage vaults, and Go Accounts for treasury management.',
+      features: ['Multi-sig wallet policies with configurable quorum', 'HSM-backed cold storage with insurance coverage', 'Go Accounts for programmable treasury operations'],
+      tags: ['Custody Wallets', 'Cold Storage', 'Treasury', 'Go Accounts']
+    },
+    'trade-earn': {
+      desc: 'Institutional liquidity, prime brokerage, DeFi staking, and liquid restaking — all from one platform.',
+      features: ['Off-exchange settlement with no counterparty risk', 'Aggregated liquidity across 30+ trading venues', 'Native staking and liquid restaking for ETH, SOL, and more'],
+      tags: ['Prime Brokerage', 'Staking', 'Liquid Restaking', 'OTC']
+    },
+    'payments': {
+      desc: 'Instant off-exchange settlement, stablecoin payments, and Go Network transfers that clear in seconds.',
+      features: ['Bilateral off-exchange settlement in under 1 second', 'Programmable stablecoin payments with USDC and USDT', 'Go Network for real-time interbank-style transfers'],
+      tags: ['Off-Exchange', 'Stablecoins', 'Payments', 'Go Network']
+    },
+    'tokenize': {
+      desc: 'End-to-end RWA tokenization — from issuance and transfer agent services to capital formation.',
+      features: ['Compliant issuance for funds, bonds, and real estate', 'Whitelisted transfer restrictions and investor KYC/AML', 'Secondary market facilitation and cap table management'],
+      tags: ['RWA', 'Tokenization', 'Transfer Agent', 'Capital Formation']
+    },
+    'ops-compliance': {
+      desc: 'Granular member roles, approval workflows, immutable audit logs, and automated regulatory reporting.',
+      features: ['Role-based access with custom permission scopes', 'Multi-step approval workflows with time locks', 'Automated reporting for FinCEN, MiCA, and SOC 2'],
+      tags: ['Roles', 'Approvals', 'Audit Logs', 'Compliance']
+    }
+  };
+
+  /* ── Single global overlay appended to body ── */
+  const overlay = document.createElement('div');
+  overlay.id = 'kyc-goal-overlay';
+  document.body.appendChild(overlay);
+
+  let activeWrap = null;
+  let activeCard = null;   // tracked to restore opacity on hide
+  let activeMode = null;   // 'unified' | 'below'
+  let hideTimer  = null;
+  let current    = 0;
+  let stepEls    = [];
+  let dotEls     = [];
+
+  const clearHide = () => { clearTimeout(hideTimer); hideTimer = null; };
+
+  const goTo = (n) => {
+    if (!stepEls.length) return;
+    stepEls[current].classList.remove('active');
+    dotEls[current].classList.remove('active');
+    current = ((n % stepEls.length) + stepEls.length) % stepEls.length;
+    stepEls[current].classList.add('active');
+    dotEls[current].classList.add('active');
+  };
+
+  const stepsHTML = (data) => {
+    const steps = [
+      `${IMG_PH}<div class="kyc-goal-step-text"><p class="kyc-goal-step-desc">${data.desc}</p></div>`,
+      `${IMG_PH}<div class="kyc-goal-step-text"><ul>${data.features.map(f => `<li>${f}</li>`).join('')}</ul></div>`,
+      `${IMG_PH}<div class="kyc-goal-step-text"><div class="kyc-goal-chips">${data.tags.map(t => `<span class="kyc-goal-chip">${t}</span>`).join('')}</div></div>`
+    ];
+    return { steps, html: `
+      <div class="kyc-goal-steps">
+        ${steps.map((s, i) => `<div class="kyc-goal-step${i === 0 ? ' active' : ''}">${s}</div>`).join('')}
+      </div>
+      <div class="kyc-goal-nav">
+        <div class="kyc-goal-dots">
+          ${steps.map((_, i) => `<button class="kyc-goal-dot${i === 0 ? ' active' : ''}" aria-label="Step ${i + 1}"></button>`).join('')}
+        </div>
+        <div class="kyc-goal-arrows">
+          <button class="kyc-goal-arrow" data-dir="-1">Back</button>
+          <span class="kyc-goal-sep">·</span>
+          <button class="kyc-goal-arrow" data-dir="1">Next</button>
+        </div>
+      </div>`
+    };
+  };
+
+  const buildCardHeader = (card) => {
+    const iconEl    = card.querySelector('.sel-card-icon');
+    const labelEl   = card.querySelector('.sel-card-label');
+    const isSelected = card.classList.contains('selected');
+    const iconHTML  = iconEl  ? iconEl.innerHTML : '';
+    const labelText = labelEl ? (labelEl.textContent.trim() || '') : '';
+    return `
+      <div class="kgo-card-header${isSelected ? ' card-selected' : ''}">
+        <div class="kgo-card-icon">${iconHTML}</div>
+        <div class="kgo-card-label">${labelText}</div>
+        <div class="kgo-card-badge${isSelected ? ' selected' : ''}">
+          <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="kgo-divider"></div>`;
+  };
+
+  const buildContent = (card, data, mode) => {
+    const { html } = stepsHTML(data);
+    /* Unified: card header at top, then steps content below (overlay grows downward from card top) */
+    overlay.innerHTML = (mode === 'unified' ? buildCardHeader(card) : '') + html;
+    current = 0;
+    stepEls = Array.from(overlay.querySelectorAll('.kyc-goal-step'));
+    dotEls  = Array.from(overlay.querySelectorAll('.kyc-goal-dot'));
+    Array.from(overlay.querySelectorAll('.kyc-goal-arrow')).forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); goTo(current + parseInt(btn.dataset.dir)); });
+    });
+    dotEls.forEach((dot, i) => {
+      dot.addEventListener('click', e => { e.stopPropagation(); goTo(i); });
+    });
+    // Unified mode: badge click also toggles selection (stopPropagation so overlay click doesn't double-fire)
+    if (mode === 'unified') {
+      const badge = overlay.querySelector('.kgo-card-badge');
+      if (badge) {
+        badge.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleMulti(card);
+          syncOverlayState();
+        });
+      }
+    }
+  };
+
+  const resetPrev = () => {
+    if (activeWrap) {
+      activeWrap.classList.remove('kgw-active', 'kgw-unified');
+    }
+    if (activeCard) {
+      activeCard.style.opacity = '';
+    }
+  };
+
+  /* mode: 'unified' = overlay starts at card top (covers card)
+           'below'   = overlay starts at card bottom (separate)  */
+  const showFor = (wrap, card, data, mode) => {
+    clearHide();
+    if (activeWrap !== wrap) {
+      resetPrev();
+      buildContent(card, data, mode);
+    }
+    activeWrap = wrap;
+    activeCard = card;
+    activeMode = mode;
+    wrap.classList.add('kgw-active');
+
+    const rect = card.getBoundingClientRect();
+    overlay.style.left  = rect.left + 'px';
+    overlay.style.width = rect.width + 'px';
+
+    if (mode === 'unified') {
+      overlay.style.top = rect.top + 'px';
+      wrap.classList.add('kgw-unified');
+      card.style.opacity = '0';
+    } else {
+      overlay.style.top = rect.bottom + 'px';
+    }
+    overlay.classList.add('kgo-visible');
+    syncOverlayState(); // reflect card's current selected state immediately
+  };
+
+  const scheduleHide = () => {
+    clearHide();
+    hideTimer = setTimeout(() => {
+      overlay.classList.remove('kgo-visible', 'kgo-selected');
+      resetPrev();
+      activeWrap = null;
+      activeCard = null;
+      activeMode = null;
+      setTimeout(() => goTo(0), 180);
+    }, 120);
+  };
+
+  /* Sync overlay visual state to match the underlying card's selected state */
+  const syncOverlayState = () => {
+    if (!activeCard) return;
+    const sel    = activeCard.classList.contains('selected');
+    overlay.classList.toggle('kgo-selected', sel);
+    const header = overlay.querySelector('.kgo-card-header');
+    const badge  = overlay.querySelector('.kgo-card-badge');
+    const icon   = overlay.querySelector('.kgo-card-icon');
+    if (header) header.classList.toggle('card-selected', sel);
+    if (badge)  badge.classList.toggle('selected', sel);
+  };
+
+  /* Overlay click: if the click lands over the custom card's area, dismiss the overlay
+     and forward the interaction to the custom card instead of selecting a goal card */
+  overlay.addEventListener('click', e => {
+    const customCard = document.getElementById('goalsOtherRow');
+    if (customCard) {
+      const r = customCard.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right &&
+          e.clientY >= r.top  && e.clientY <= r.bottom) {
+        // Dismiss overlay immediately
+        clearHide();
+        overlay.classList.remove('kgo-visible', 'kgo-selected');
+        resetPrev();
+        activeWrap = null; activeCard = null; activeMode = null;
+        // Forward to badge or label depending on click position
+        const badgeEl = customCard.querySelector('.sel-card-badge');
+        const badgeR  = badgeEl ? badgeEl.getBoundingClientRect() : null;
+        if (badgeR && e.clientX >= badgeR.left && e.clientX <= badgeR.right &&
+            e.clientY >= badgeR.top  && e.clientY <= badgeR.bottom) {
+          toggleCustomGoalBadge(customCard);
+        } else {
+          focusCustomGoalLabel(customCard);
+        }
+        return;
+      }
+    }
+    // Normal case: toggle selection on the active goal card
+    if (!activeCard) return;
+    toggleMulti(activeCard);
+    syncOverlayState();
+  });
+
+  overlay.addEventListener('mouseenter', clearHide);
+  overlay.addEventListener('mouseleave', scheduleHide);
+
+  /* No mousemove dismiss guard needed: the click guard above correctly forwards
+     any clicks landing over the custom card's bounds to the custom card, so it
+     remains fully interactive even when the tokenize overlay covers it.
+     A guard that dismisses on mousemove is incompatible with the tokenize card
+     because the overlay content extends into the custom card's y-range — any
+     attempt to interact with the steps/nav area would immediately dismiss. */
+
+  function initGoalPopovers() {
+    const group = document.getElementById('goals-group');
+    if (!group) return;
+    const allWraps = Array.from(group.querySelectorAll('.kyc-goal-wrap'));
+    for (const [i, wrap] of allWraps.entries()) {
+      const card = wrap.querySelector('.sel-card');
+      if (!card) continue;
+      const data = goalData[card.dataset.val];
+      if (!data) continue;
+      const mode = 'unified';
+      card.addEventListener('mouseenter', () => showFor(wrap, card, data, mode));
+      card.addEventListener('mouseleave', e => {
+        if (e.relatedTarget && (e.relatedTarget === overlay || overlay.contains(e.relatedTarget))) return;
+        scheduleHide();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGoalPopovers);
+  } else {
+    initGoalPopovers();
+  }
+})();
+
+/* ─── Theme toggle ────────────────────────────────────────────────── */
+(function() {
+  try { if (localStorage.getItem('bitgo-theme') === 'light') document.body.classList.add('light-mode'); } catch(e) {}
+})();
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  try { localStorage.setItem('bitgo-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); } catch(e) {}
+}
+</script>
+
+<!-- ── Theme toggle ── -->
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+</body>
+</html>

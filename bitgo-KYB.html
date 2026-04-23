@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BitGo Trust Application</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ══════════════════════════════════════════
+       KINTSUGI DESIGN SYSTEM TOKENS (corrected)
+       Source: Common/White, Common/Black, Theme/Background, Theme/Primary
+    ══════════════════════════════════════════ */
+    :root {
+      /* ── Common / Black ── */
+      --black:          #0B0B10;
+      --black-a800:     rgba(11,11,16,.80);
+      --black-a600:     rgba(11,11,16,.60);  /* backdrop */
+      --black-a400:     rgba(11,11,16,.40);  /* overlay  */
+      --black-a300:     rgba(11,11,16,.30);
+
+      /* ── Common / White ── */
+      --white:          #FFFFFF;
+      --white-a800:     rgba(255,255,255,.80);
+      --white-a700:     rgba(255,255,255,.70);
+      --white-a500:     rgba(255,255,255,.50);
+      --white-a400:     rgba(255,255,255,.40);
+      --white-a300:     rgba(255,255,255,.30);
+      --white-a200:     rgba(255,255,255,.20);
+      --white-a100:     rgba(255,255,255,.10);
+      --white-a50:      rgba(255,255,255,.05);
+
+      /* ── Dark Grey scale (Dark theme surfaces) ──
+         800 = darkest card  →  400 = lightest raised */
+      --dg-800:         #17182A;
+      --dg-700:         #1D1F33;
+      --dg-600:         #24263C;
+      --dg-500:         #2D2F48;
+      --dg-400:         #383A54;
+      --dg-200:         rgba(255,255,255,.12);
+
+      /* ── Brand / Primary scale ── */
+      --brand-500:      #3D65F0;   /* primary-main  */
+      --brand-400:      #6080F7;   /* primary-light */
+      --brand-700:      #2B4FD4;   /* primary-dark  */
+      --brand-800:      #1E3BA8;   /* disabled      */
+      --brand-a400:     rgba(61,101,240,.40);
+      --brand-a300:     rgba(61,101,240,.30);
+      --brand-a200:     rgba(61,101,240,.20);
+      --brand-a100:     rgba(61,101,240,.10);
+
+      /* ── Semantic aliases (Theme tokens) ── */
+      --color-bg:              var(--black);        /* background/body        */
+      --color-level1:          var(--dg-800);       /* background/level1      */
+      --color-level2:          var(--dg-700);       /* background/level2      */
+      --color-level3:          var(--dg-600);       /* background/level3      */
+      --color-level4:          var(--dg-500);       /* background/level4      */
+      --color-border:          var(--dg-600);       /* border-primary         */
+      --color-border-strong:   var(--dg-500);       /* border-secondary       */
+      --color-border-selected: var(--brand-500);    /* border-selected        */
+      --color-backdrop:        var(--black-a600);   /* backdrop               */
+      --color-overlay:         var(--black-a400);   /* overlay                */
+
+      /* ── Primary colours ── */
+      --color-primary:         var(--brand-500);
+      --color-primary-hover:   var(--brand-700);
+      --color-primary-light:   var(--brand-a200);   /* tonal / light bg       */
+      --color-primary-tonal:   var(--brand-a400);   /* tonal button bg        */
+
+      /* ── Text ── (White alpha on dark bg) */
+      --color-text:            var(--white);
+      --color-text-secondary:  var(--white-a700);
+      --color-text-muted:      var(--white-a400);
+      --color-text-placeholder:var(--white-a300);
+
+      /* ── Semantic ── */
+      --color-danger:          #F87171;
+
+      /* ── Surface shortcuts (used throughout) ── */
+      --color-surface:         var(--color-level1);
+      --color-surface-raised:  var(--color-level2);
+      --color-surface-overlay: var(--color-level1);
+
+      /* ── Button ghost ── (Buttons/Ghost/Secondary) */
+      --btn-ghost:             var(--white-a50);
+      --btn-ghost-hover:       var(--dg-700);
+    }
+
+    /* ─── Light mode overrides ─────────────────────────────────────── */
+    body.light-mode {
+      /* Raw token overrides — auto-fixes every var(--dg-*) and var(--white-a*) in the file */
+      --dg-800: #FFFFFF;
+      --dg-700: #EEF0FA;
+      --dg-600: #E4E7F5;
+      --dg-500: #D6DAF0;
+      --dg-400: #CDD1E8;
+      --white-a50:  rgba(13,14,28,.04);
+      --white-a100: rgba(13,14,28,.07);
+      --white-a200: rgba(13,14,28,.10);
+      --white-a300: rgba(13,14,28,.16);
+      --white-a400: rgba(13,14,28,.24);
+      --white-a500: rgba(13,14,28,.32);
+      --white-a700: rgba(13,14,28,.55);
+      --white-a800: rgba(13,14,28,.65);
+      /* Semantic overrides */
+      --color-bg:               #F5F6FC;
+      --color-level1:           #FFFFFF;
+      --color-level2:           #EEF0FA;
+      --color-level3:           #E4E7F5;
+      --color-level4:           #D6DAF0;
+      --color-border:           #DFE2F2;
+      --color-border-strong:    #CDD1E8;
+      /* Explicit shortcut overrides — required because chained var() refs don't
+         always cascade reliably; these must be declared directly */
+      --color-surface:          #FFFFFF;
+      --color-surface-raised:   #EEF0FA;
+      --color-surface-overlay:  #FFFFFF;
+      --color-backdrop:         rgba(13,14,28,.45);
+      --color-overlay:          rgba(13,14,28,.25);
+      --color-primary-light:    rgba(61,101,240,.12);
+      --color-text:             #0D0E1C;
+      --color-text-secondary:   rgba(13,14,28,.65);
+      --color-text-muted:       rgba(13,14,28,.42);
+      --color-text-placeholder: rgba(13,14,28,.28);
+      --color-danger:           #DC2626;
+      --btn-ghost:              rgba(13,14,28,.05);
+      --btn-ghost-hover:        rgba(13,14,28,.09);
+    }
+    /* Hardcoded rgba(white) hover states — need explicit overrides */
+    body.light-mode .btn-add:hover         { border-color: rgba(13,14,28,.15); }
+    body.light-mode .person-row:hover      { background: rgba(13,14,28,.04); }
+    body.light-mode .btn-circle-menu:hover { border-color: rgba(13,14,28,.18); }
+
+    /* ─── Theme toggle button ──────────────────────────────────────── */
+    .theme-toggle {
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      z-index: 9999;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: var(--color-level2);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .18s, border-color .18s, color .18s;
+      box-shadow: 0 2px 10px rgba(0,0,0,.18);
+    }
+    .theme-toggle:hover { background: var(--color-level3); color: var(--color-text); border-color: var(--color-border-strong); }
+    .icon-moon { display: none; }
+    body.light-mode .icon-sun { display: none; }
+    body.light-mode .icon-moon { display: block; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ══════════ HEADER ══════════ */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 56px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-bg);
+      position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+    }
+    .header-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.2px; }
+    .btn-logout {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; color: var(--color-text-secondary);
+      background: none; border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 6px 14px; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .btn-logout:hover {
+      background: var(--btn-ghost-hover); color: var(--color-text);
+      border-color: var(--color-border-strong);
+    }
+
+    /* ══════════ LAYOUT ══════════ */
+    .layout { display: flex; flex: 1; height: calc(100vh - 56px); overflow: hidden; }
+
+    /* ══════════ SIDEBAR ══════════ */
+    .sidebar {
+      width: 254px; flex-shrink: 0;
+      border-right: 1px solid var(--color-border);
+      padding: 20px 10px; overflow-y: auto;
+      background: var(--color-bg);
+    }
+    .sidebar-hint {
+      font-size: 11.5px; color: var(--color-text-muted);
+      line-height: 1.65; padding: 0 8px 16px;
+    }
+    .step {
+      display: flex; align-items: flex-start; gap: 11px;
+      padding: 9px 10px; border-radius: 10px; cursor: pointer;
+      transition: background .15s; border: 1px solid transparent;
+      margin-bottom: 1px;
+    }
+    .step:hover { background: var(--btn-ghost); }
+    .step.active {
+      background: var(--color-primary-light);
+      border-color: rgba(81,98,240,.3);
+    }
+    .step-icon {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px; font-size: 11.5px; font-weight: 700;
+    }
+    .step-icon.done   { background: var(--color-primary); color: #fff; }
+    .step-icon.active { background: var(--color-primary); color: #fff; }
+    .step-icon.pending{ background: var(--color-surface-raised); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+    .step-icon svg { width: 12px; height: 12px; }
+    .step-label { font-size: 12.5px; font-weight: 500; line-height: 1.3; }
+    .step.done-step .step-label, .step.active .step-label { color: var(--color-text); }
+    .step.pending .step-label { color: var(--color-text-muted); }
+    .step-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; line-height: 1.4; }
+    .step.active .step-sub { color: var(--color-text-secondary); }
+
+    /* ══════════ MAIN SCROLL AREA ══════════ */
+    .main { flex: 1; overflow-y: auto; }
+
+    /* Progress bar */
+    .progress-wrap { padding: 20px 40px 6px; }
+    .progress-track {
+      width: 100%; height: 4px;
+      background: var(--color-surface-raised); border-radius: 99px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand-500), var(--brand-400));
+      border-radius: 99px; transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Centered content wrapper */
+    .content {
+      padding: 22px 40px 60px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* ══════════ PAGE VIEWS ══════════ */
+    .page-view { display: none; }
+    .page-view.active { display: block; animation: pageIn .22s ease; }
+    @keyframes pageIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ══════════ PAGE HEADER ROW ══════════ */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .page-title { font-size: 30px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; }
+    .btn-help {
+      display: flex; align-items: center; gap: 6px; font-size: 12.5px;
+      color: var(--color-text-secondary); background: none;
+      border: 1px solid var(--color-border); border-radius: 99px;
+      padding: 6px 13px; cursor: pointer; white-space: nowrap;
+      transition: background .15s, color .15s;
+    }
+    .btn-help:hover { background: var(--btn-ghost); color: var(--color-text); }
+    .btn-help svg { width: 14px; height: 14px; }
+
+    /* ══════════ SECTION CARD ══════════ */
+    .section-card {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: 14px; padding: 20px; margin-bottom: 14px;
+    }
+    .card-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 14px; margin-bottom: 10px;
+    }
+    .card-title { font-size: 14.5px; font-weight: 600; margin-bottom: 5px; }
+    .card-desc  { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.65; }
+
+    /* ══════════ BUTTONS ══════════ */
+    .btn-add {
+      flex-shrink: 0; font-size: 13px; font-weight: 500;
+      color: var(--color-text); background: var(--color-surface-raised);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px; padding: 7px 18px; cursor: pointer;
+      transition: background .15s, border-color .15s; white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn-add:hover { background: var(--btn-ghost-hover); border-color: rgba(255,255,255,.2); }
+
+    .btn-primary {
+      font-size: 13.5px; font-weight: 600; color: #fff;
+      background: var(--color-primary); border: none;
+      border-radius: 99px; padding: 9px 30px; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+
+    .btn-ghost-pill {
+      font-size: 13.5px; font-weight: 500; color: var(--color-text-secondary);
+      background: var(--color-surface-raised); border: 1px solid var(--color-border);
+      border-radius: 99px; padding: 9px 26px; cursor: pointer;
+      transition: background .15s, color .15s; font-family: inherit;
+    }
+    .btn-ghost-pill:hover { background: var(--btn-ghost-hover); color: var(--color-text); }
+
+    .btn-action {
+      font-size: 12.5px; font-weight: 500;
+      padding: 7px 16px; border-radius: 99px; border: none; cursor: pointer;
+      background: var(--color-primary); color: #fff;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-action:hover { background: var(--color-primary-hover); }
+
+    .btn-dots {
+      width: 30px; height: 30px; border-radius: 50%; background: none; border: none;
+      cursor: pointer; color: var(--color-text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .btn-dots:hover { background: var(--btn-ghost-hover); color: var(--color-text); }
+
+    /* ══════════ CHECKBOX ══════════ */
+    .checkbox-row {
+      display: flex; align-items: center; gap: 10px;
+      margin: 12px 0 4px; cursor: pointer; user-select: none;
+    }
+    .custom-cb {
+      width: 16px; height: 16px; border: 1.5px solid var(--color-text-muted);
+      border-radius: 4px; background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .15s, border-color .15s;
+    }
+    .custom-cb.checked { background: var(--color-primary); border-color: var(--color-primary); }
+    .custom-cb svg { width: 10px; height: 10px; display: none; }
+    .custom-cb.checked svg { display: block; }
+    .checkbox-row span { font-size: 13px; color: var(--color-text-secondary); }
+
+    /* ══════════ PERSON LIST ══════════ */
+    .person-section {
+      margin-top: 12px; border: 1px solid var(--color-border);
+      border-radius: 10px; background: var(--color-bg); overflow: hidden;
+    }
+    .person-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--color-text-muted);
+      padding: 8px 16px; border-bottom: 1px solid var(--color-border);
+    }
+    .person-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--color-border);
+      transition: background .12s;
+    }
+    .person-row:last-child { border-bottom: none; }
+    .person-row:hover { background: rgba(255,255,255,.025); }
+    .person-name  { font-size: 13.5px; font-weight: 500; }
+    .person-email { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+    .person-actions { display: flex; align-items: center; gap: 8px; }
+
+    /* ══════════ DROPDOWN ══════════ */
+    .dots-wrapper { position: relative; }
+    .dropdown-menu {
+      position: absolute; right: 0; top: 36px;
+      background: var(--color-surface-overlay); border: 1px solid var(--color-border);
+      border-radius: 10px; min-width: 150px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.55);
+      z-index: 100; overflow: hidden; display: none;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-item {
+      padding: 10px 16px; font-size: 13px; color: var(--color-text-secondary);
+      cursor: pointer; transition: background .12s, color .12s;
+    }
+    .dropdown-item:hover { background: var(--btn-ghost); color: var(--color-text); }
+    .dropdown-item.danger { color: var(--color-danger); }
+    .dropdown-item.danger:hover { background: rgba(248,113,113,.08); }
+
+    /* ══════════ FOOTER BTNS ══════════ */
+    .footer-btns {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 28px; padding-top: 22px;
+    }
+
+    /* ══════════ MODAL OVERLAY ══════════ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: var(--color-backdrop); z-index: 200;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    /* ══════════ MODAL BOX ══════════ */
+    .modal {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 16px; width: 520px; max-width: 100%;
+      max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,.7);
+      animation: modalIn .2s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 24px 18px; border-bottom: 1px solid var(--color-border);
+    }
+    .modal-title { font-size: 15.5px; font-weight: 700; letter-spacing: -.3px; }
+    .modal-close {
+      width: 28px; height: 28px; border-radius: 6px; background: none;
+      border: none; cursor: pointer; color: var(--color-text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: var(--btn-ghost-hover); color: var(--color-text); }
+
+    .modal-body { padding: 20px 24px 24px; }
+
+    /* Form section label */
+    .form-section-label {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--color-text-muted);
+      margin-bottom: 14px;
+    }
+
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .form-row  { margin-bottom: 14px; }
+
+    .form-label {
+      display: block; font-size: 11.5px; font-weight: 600;
+      color: var(--color-text-secondary); margin-bottom: 7px;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    .form-input {
+      width: 100%; padding: 10px 13px; font-size: 13.5px;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      border-radius: 8px; color: var(--color-text); outline: none;
+      transition: border-color .15s, box-shadow .15s; font-family: inherit;
+    }
+    .form-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+    .form-input::placeholder { color: var(--color-text-placeholder); }
+
+    /* Divider */
+    .modal-divider { height: 1px; background: var(--color-border); margin: 18px 0; }
+
+    /* ══════════ TOGGLE ROW ══════════ */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 2px 0;
+    }
+    .toggle-text-group { display: flex; align-items: center; gap: 8px; }
+    .toggle-text { font-size: 13.5px; color: var(--color-text-secondary); }
+    .help-icon { color: var(--color-text-muted); cursor: help; line-height: 0; }
+    .help-icon svg { width: 15px; height: 15px; }
+
+    .toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0; background: var(--color-surface-raised);
+      border: 1px solid var(--color-border); border-radius: 99px; cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .toggle-track::after {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; top: 2px; left: 2px;
+      transition: transform .2s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .toggle-switch input:checked + .toggle-track {
+      background: var(--color-primary); border-color: var(--color-primary);
+    }
+    .toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+
+    /* ══════════ IDENTITY VERIFICATION BOX ══════════ */
+    .verify-box {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .verify-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px;
+    }
+    .verify-item + .verify-item { border-top: 1px solid var(--color-border); }
+    .verify-item-icon {
+      width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+      background: var(--color-primary-light);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .verify-item-icon svg { width: 14px; height: 14px; color: var(--color-primary); }
+    .verify-item-text { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.55; padding-top: 4px; }
+    .verify-item-text strong { color: var(--color-text); font-weight: 500; }
+
+    /* ══════════ MODAL FOOTER ══════════ */
+    .modal-footer {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 16px 24px; border-top: 1px solid var(--color-border);
+    }
+    .btn-modal-cancel {
+      font-size: 13px; font-weight: 500; color: var(--color-text-secondary);
+      background: var(--color-surface-raised); border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 9px 20px; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-modal-cancel:hover { background: var(--btn-ghost-hover); }
+    .btn-modal-submit {
+      font-size: 13px; font-weight: 600; color: #fff;
+      background: var(--color-primary); border: none;
+      border-radius: 8px; padding: 9px 24px; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-modal-submit:hover { background: var(--color-primary-hover); }
+
+    /* ══════════ TOAST ══════════ */
+    .toast {
+      position: fixed; bottom: 26px; right: 26px;
+      background: var(--color-surface-overlay);
+      border: 1px solid rgba(81,98,240,.35);
+      border-radius: 10px; padding: 11px 18px; font-size: 13px;
+      color: var(--color-text); z-index: 400;
+      box-shadow: 0 8px 24px rgba(0,0,0,.45);
+      transform: translateY(10px); opacity: 0;
+      transition: transform .25s ease, opacity .25s ease;
+      pointer-events: none; max-width: 300px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ══════════ PLATFORM ADMIN PAGE (flat, no card) ══════════ */
+    .pa-page-title {
+      font-size: 30px; font-weight: 700; letter-spacing: -.02em;
+      line-height: 1.1; margin-bottom: 14px;
+    }
+    .pa-page-desc {
+      font-size: 15px; color: var(--color-text-secondary);
+      line-height: 1.7; margin-bottom: 36px; max-width: 580px;
+    }
+
+    /* Flat person list — no box */
+    .pa-list { margin-bottom: 8px; }
+    .pa-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 0;
+      transition: background .12s;
+    }
+    .pa-row-name  { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .pa-row-meta  { font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 0; }
+    .pa-row-dot   { margin: 0 8px; opacity: .45; }
+    .pa-row-tag   { color: var(--color-text-secondary); }
+    .pa-row-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn-resend-invite {
+      font-size: 13px; font-weight: 600; color: var(--color-text);
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 99px; padding: 9px 20px; cursor: pointer;
+      transition: background .15s; font-family: inherit; white-space: nowrap;
+    }
+    .btn-resend-invite:hover { background: var(--btn-ghost-hover); }
+
+    .btn-circle-menu {
+      background: none; border: none; padding: 6px; flex-shrink: 0;
+      cursor: pointer; color: var(--color-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: color .15s, background .15s;
+    }
+    .btn-circle-menu:hover { color: var(--color-danger); background: rgba(248,113,113,.10); }
+
+    /* "+ Add" text link */
+    .pa-add-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--color-primary); font-size: 15px; font-weight: 500;
+      background: none; border: none; cursor: pointer;
+      padding: 14px 0 0; font-family: inherit; transition: opacity .15s;
+    }
+    .pa-add-link:hover { opacity: .78; }
+    .pa-add-link:disabled { color: var(--color-text-muted); cursor: default; opacity: .5; pointer-events: none; }
+    .pa-add-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Inline admin rows */
+    .pa-inline-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 4px; }
+    .pa-inline-row {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: 14px; padding: 20px;
+      animation: fadeUp .18s ease;
+    }
+
+    /* Row top: name + email + remove */
+    .pa-inline-top {
+      display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px;
+    }
+    .pa-inline-field {
+      display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0;
+    }
+    .pa-inline-field.email-wrap { flex: 1.5; }
+    .pa-inline-field-label {
+      font-size: 12px; font-weight: 500; color: var(--color-text-secondary);
+      letter-spacing: 0.01em;
+    }
+    .pa-inline-top input {
+      width: 100%; background: var(--color-level1);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 10px; padding: 10px 13px;
+      font-size: 14px; color: var(--color-text);
+      font-family: inherit; outline: none; transition: border-color .15s;
+      min-width: 0; box-sizing: border-box;
+    }
+    .pa-inline-top input::placeholder { color: var(--color-text-placeholder); }
+    .pa-inline-top input:focus { border-color: var(--color-primary); }
+
+    /* Divider */
+    .pa-inline-divider { height: 1px; background: var(--color-border); margin-bottom: 16px; }
+
+    /* Toggle row */
+    .pa-inline-toggle-row {
+      display: flex; align-items: center; gap: 12px; margin-top: 14px;
+    }
+    .pa-inline-toggle-label {
+      font-size: 13.5px; color: var(--color-text-secondary); line-height: 1.4;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Card label (Admin 1 / 2 / 3…) */
+    .pa-inline-label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 14px; font-weight: 600; color: var(--color-text-secondary);
+      margin-bottom: 16px; line-height: 1.2;
+    }
+
+    /* Shared section title style (Member Information, IDV, etc.) */
+    .pa-inline-section-title {
+      font-size: 14px; font-weight: 400; color: var(--color-text);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .pa-inline-section-divider {
+      height: 1px; background: var(--color-border);
+      margin: 16px 0;
+    }
+
+    /* IDV radios — inline row */
+    .pa-inline-idv-title {
+      font-size: 14px; font-weight: 400; color: var(--color-text);
+      margin-bottom: 8px; margin-top: 0;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .pa-inline-idv-title .help-icon { display: inline-flex; align-items: center; }
+    .pa-inline-idv-row { display: flex; gap: 8px; }
+    .pa-inline-radio {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--color-border); background: var(--color-level1);
+      transition: border-color .15s, background .15s;
+    }
+    .pa-inline-radio.selected { border-color: var(--color-primary); background: var(--brand-a100); }
+    .pa-inline-radio-circle {
+      width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--color-border-strong);
+      flex-shrink: 0; position: relative; transition: border-color .15s;
+    }
+    .pa-inline-radio.selected .pa-inline-radio-circle { border-color: var(--color-primary); }
+    .pa-inline-radio.selected .pa-inline-radio-circle::after {
+      content: ''; position: absolute; inset: 2px; border-radius: 50%; background: var(--color-primary);
+    }
+    .pa-inline-radio-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.4; }
+
+    .pa-inline-remove {
+      background: none; border: none; padding: 4px; flex-shrink: 0;
+      color: var(--color-text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: color .15s, background .15s;
+    }
+    .pa-inline-remove:hover { color: var(--color-danger); background: rgba(248,113,113,.10); }
+
+    /* ══════════ PLATFORM ADMIN MODAL ══════════ */
+    .pa-modal {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 20px; width: 600px; max-width: 100%;
+      max-height: 94vh; overflow-y: auto;
+      box-shadow: 0 40px 100px rgba(0,0,0,.75);
+      animation: modalIn .2s cubic-bezier(.4,0,.2,1);
+    }
+    .pa-modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 32px 32px 24px;
+    }
+    .pa-modal-title { font-size: 24px; font-weight: 700; letter-spacing: -.4px; }
+    .pa-modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--color-text-secondary); line-height: 0;
+      padding: 4px; transition: color .15s; margin-top: 4px;
+    }
+    .pa-modal-close:hover { color: var(--color-text); }
+    .pa-modal-close svg { width: 20px; height: 20px; }
+    .pa-modal-body { padding: 0 32px 8px; }
+
+    .pa-section-title {
+      font-size: 15px; font-weight: 600; color: var(--color-text);
+      margin-bottom: 18px;
+    }
+    .pa-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .pa-form-row  { margin-bottom: 16px; }
+    .pa-form-label {
+      display: block; font-size: 13px; font-weight: 400;
+      color: var(--color-text-secondary); margin-bottom: 8px;
+    }
+    .pa-input {
+      width: 100%; padding: 14px 16px; font-size: 15px;
+      background: var(--color-surface-raised);
+      border: 1.5px solid transparent;
+      border-radius: 12px; color: var(--color-text); outline: none;
+      transition: border-color .15s, box-shadow .15s; font-family: inherit;
+    }
+    .pa-input::placeholder { color: var(--color-text-muted); font-size: 15px; }
+    .pa-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    /* Toggle: toggle LEFT, text right */
+    .pa-toggle-row { display: flex; align-items: center; gap: 14px; padding: 6px 0; }
+    .pa-toggle-label { font-size: 14.5px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+    .pa-toggle-label .help-icon svg { width: 16px; height: 16px; }
+
+    /* Radio options */
+    .pa-radio-group { display: flex; flex-direction: column; gap: 0; }
+    .pa-radio-option {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 0; cursor: pointer; border-bottom: 1px solid var(--color-border);
+      user-select: none;
+    }
+    .pa-radio-option:last-child { border-bottom: none; }
+    .pa-radio-circle {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+      border: 2px solid var(--color-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s;
+    }
+    .pa-radio-circle.selected { border-color: var(--color-primary); }
+    .pa-radio-circle.selected::after {
+      content: ''; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--color-primary); display: block;
+    }
+    .pa-radio-text { font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; padding-top: 1px; }
+
+    .pa-modal-footer {
+      display: flex; justify-content: flex-end;
+      padding: 20px 32px 28px;
+    }
+    .btn-pa-submit {
+      font-size: 14px; font-weight: 600; color: #fff;
+      background: var(--color-primary); border: none;
+      border-radius: 99px; padding: 12px 32px; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .btn-pa-submit:hover { background: var(--color-primary-hover); }
+
+    /* ══════════ SUCCESS / UNDER REVIEW SCREEN ══════════ */
+    #successScreen {
+      display: none;
+      position: fixed; inset: 0; z-index: 500;
+      background: var(--color-bg);
+      flex-direction: column;
+    }
+    #successScreen.visible { display: flex; animation: pageIn .35s ease; }
+
+    .success-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 56px; flex-shrink: 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .success-body {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 24px; gap: 0;
+    }
+    .success-placeholder {
+      width: min(680px, 90vw); height: 310px;
+      background: var(--dg-500);
+      border-radius: 16px; margin-bottom: 36px;
+      flex-shrink: 0;
+    }
+    .success-title {
+      font-size: 36px; font-weight: 700; letter-spacing: -.6px;
+      text-align: center; margin-bottom: 14px;
+    }
+    .success-sub {
+      font-size: 16px; color: var(--color-text-secondary);
+      text-align: center; line-height: 1.65;
+      max-width: 520px;
+    }
+
+    /* ══════════ SCROLLBAR ══════════ */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-surface-overlay); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ HEADER ════════════════════ -->
+<header class="header">
+  <span class="header-title">BitGo Trust Application</span>
+  <button class="btn-logout" onclick="showToast('You have been logged out.')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+    </svg>
+    Log Out
+  </button>
+</header>
+
+<div class="layout">
+
+  <!-- ════════════════════ SIDEBAR ════════════════════ -->
+  <aside class="sidebar">
+    <p class="sidebar-hint">Complete the following steps to submit your application</p>
+
+    <div class="step done-step" id="s1" onclick="sidebarClick(1)">
+      <div class="step-icon done" id="si1"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div>
+      <div><div class="step-label">Business Details</div><div class="step-sub">Input entity information</div></div>
+    </div>
+    <div class="step done-step" id="s2" onclick="sidebarClick(2)">
+      <div class="step-icon done" id="si2"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div>
+      <div><div class="step-label">Business Documents</div><div class="step-sub">Review entity information</div></div>
+    </div>
+    <div class="step done-step" id="s3" onclick="sidebarClick(3)">
+      <div class="step-icon done" id="si3"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div>
+      <div><div class="step-label">Asset Questionnaire</div><div class="step-sub">Tell us about your digital assets</div></div>
+    </div>
+    <div class="step done-step" id="s4" onclick="sidebarClick(4)">
+      <div class="step-icon done" id="si4"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div>
+      <div><div class="step-label">Authorized Signer</div><div class="step-sub">Signer Details</div></div>
+    </div>
+    <div class="step active" id="s5" onclick="sidebarClick(5)">
+      <div class="step-icon active" id="si5"><span>5</span></div>
+      <div><div class="step-label">People of Interest Information</div><div class="step-sub">People and contacts from your Business</div></div>
+    </div>
+    <div class="step pending" id="s6" onclick="sidebarClick(6)">
+      <div class="step-icon pending" id="si6"><span>6</span></div>
+      <div><div class="step-label">Platform Administrator</div><div class="step-sub">Designate platform managers</div></div>
+    </div>
+    <div class="step pending" id="s7" onclick="sidebarClick(7)">
+      <div class="step-icon pending" id="si7"><span>7</span></div>
+      <div><div class="step-label">Agreements</div><div class="step-sub">Review and Sign Agreements</div></div>
+    </div>
+    <div class="step pending" id="s8" onclick="sidebarClick(8)">
+      <div class="step-icon pending" id="si8"><span>8</span></div>
+      <div><div class="step-label">Review &amp; Submit</div><div class="step-sub">Let's make sure everything looks good</div></div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════ MAIN ════════════════════ -->
+  <main class="main" id="mainScroll">
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:62%"></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══════ PAGE 5 — ASSOCIATED PEOPLE ══════ -->
+      <div class="page-view active" id="page5">
+        <div class="page-header">
+          <h2 class="page-title">Associated People</h2>
+          <button class="btn-help" onclick="showToast('Help center coming soon.')">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+            Need Help?
+          </button>
+        </div>
+
+        <!-- Beneficial Owner -->
+        <div class="section-card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Beneficial Owner</div>
+              <div class="card-desc">Any individual who directly or indirectly owns 25% or more of the equity interests of the legal entity. There can be multiple beneficial owners.</div>
+            </div>
+            <button class="btn-add" onclick="openGenericModal('Beneficial Owner')">Add New</button>
+          </div>
+          <label class="checkbox-row" onclick="toggleNoBeneficiary(event)">
+            <div class="custom-cb" id="noBeneficiaryCb">
+              <svg fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+            </div>
+            <span>There are no Beneficiary Owners to Declare</span>
+          </label>
+          <div id="beneficialPersons">
+            <div class="pa-row">
+              <div>
+                <div class="pa-row-name">Jon Doe</div>
+                <div class="pa-row-meta">jondoe@mtfinancial.com</div>
+              </div>
+              <div class="pa-row-actions">
+                <button class="btn-resend-invite" onclick="showToast('Verification email sent!')">Verify</button>
+                <button class="btn-circle-menu" onclick="removePerson(this)" title="Remove">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="pa-row">
+              <div>
+                <div class="pa-row-name">Jon Doe</div>
+                <div class="pa-row-meta">jondoe@mtfinancial.com</div>
+              </div>
+              <div class="pa-row-actions">
+                <button class="btn-resend-invite" onclick="showToast('Verification link resent!')">Resend Link</button>
+                <button class="btn-circle-menu" onclick="removePerson(this)" title="Remove">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Control Person -->
+        <div class="section-card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Control Person</div>
+              <div class="card-desc">An individual with significant responsibility for the legal entity (e.g. CEO, CFO, COO, Managing Member, President, etc.)</div>
+            </div>
+          </div>
+          <div>
+            <div class="pa-row">
+              <div>
+                <div class="pa-row-name">Jon Doe</div>
+                <div class="pa-row-meta">jondoe@mtfinancial.com</div>
+              </div>
+              <div class="pa-row-actions">
+                <button class="btn-resend-invite" onclick="showToast('Verification email sent!')">Verify</button>
+                <button class="btn-circle-menu" onclick="removePerson(this)" title="Remove">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-btns">
+          <button class="btn-ghost-pill" onclick="showToast('Going back…')">Back</button>
+          <button class="btn-primary" onclick="goToStep(6)">Continue</button>
+        </div>
+      </div><!-- /page5 -->
+
+
+      <!-- ══════ PAGE 6 — PLATFORM ADMINISTRATOR ══════ -->
+      <div class="page-view" id="page6">
+
+        <!-- Header row: large title + Need Help pill -->
+        <div class="page-header" style="margin-bottom:12px; align-items:flex-start;">
+          <h2 class="pa-page-title">Platform Administrator</h2>
+          <button class="btn-help" style="margin-top:8px;" onclick="showToast('Help center coming soon.')">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+            Need Help?
+          </button>
+        </div>
+
+        <!-- Description (no card) -->
+        <p class="pa-page-desc">
+          Designate individuals to oversee administrative functions on the BitGo platform:
+          adding users, creating wallet policies, and initiating deposits/withdrawals.
+          A minimum of 3 and a maximum of 5 administrators are required.
+        </p>
+
+        <!-- Inline admin rows — 3 seeded by default -->
+        <div class="pa-inline-list" id="paInlineList"></div>
+
+        <!-- "+ Add" text link (hidden at 5) -->
+        <button class="pa-add-link" id="paAddBtn" onclick="addPAInlineRow()">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          Add administrator
+        </button>
+
+        <div class="footer-btns">
+          <button class="btn-ghost-pill" onclick="goToStep(5)">Back</button>
+          <button class="btn-primary" onclick="paValidateAndContinue()">Continue</button>
+        </div>
+      </div><!-- /page6 -->
+
+
+      <!-- ══════ PAGE 7 — AGREEMENTS (placeholder) ══════ -->
+      <div class="page-view" id="page7">
+        <div class="page-header"><h2 class="page-title">Agreements</h2></div>
+        <div class="section-card" style="text-align:center;padding:56px 24px;">
+          <div style="font-size:40px;margin-bottom:14px">📄</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:8px">Review &amp; Sign Agreements</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);max-width:340px;margin:0 auto;line-height:1.6">Your agreements will appear here for review and digital signature before final submission.</div>
+        </div>
+        <div class="footer-btns">
+          <button class="btn-ghost-pill" onclick="goToStep(6)">Back</button>
+          <button class="btn-primary" onclick="showSuccessScreen()">Submit Application</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /layout -->
+
+
+<!-- ════════════════════ GENERIC ADD PERSON MODAL ════════════════════ -->
+<div class="modal-overlay" id="genericModal" onclick="overlayClose(event,'genericModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="genericModalTitle">Add Beneficial Owner</span>
+      <button class="modal-close" onclick="closeAllModals()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-2col">
+        <div>
+          <label class="form-label">First Name</label>
+          <input class="form-input" type="text" placeholder="Enter first name" id="g-first"/>
+        </div>
+        <div>
+          <label class="form-label">Last Name</label>
+          <input class="form-input" type="text" placeholder="Enter last name" id="g-last"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" placeholder="Enter email address" id="g-email"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Ownership %</label>
+        <input class="form-input" type="number" placeholder="e.g. 30" id="g-ownership" min="0" max="100"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeAllModals()">Cancel</button>
+      <button class="btn-modal-submit" onclick="submitGenericPerson()">Add Person</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════ PLATFORM ADMIN MODAL ════════════════════ -->
+<div class="modal-overlay" id="platformModal" onclick="overlayClose(event,'platformModal')">
+  <div class="pa-modal">
+
+    <!-- Header: large title + plain × -->
+    <div class="pa-modal-header">
+      <span class="pa-modal-title">Add Platform Administrator</span>
+      <button class="pa-modal-close" onclick="closeAllModals()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="pa-modal-body">
+
+      <!-- Personal Information -->
+      <div class="pa-section-title">Personal Information</div>
+
+      <div class="pa-form-2col">
+        <div>
+          <label class="pa-form-label">First Name</label>
+          <input class="pa-input" type="text" placeholder="Enter First Name" id="pa-first"/>
+        </div>
+        <div>
+          <label class="pa-form-label">Last Name</label>
+          <input class="pa-input" type="text" placeholder="Enter Last Name" id="pa-last"/>
+        </div>
+      </div>
+
+      <div class="pa-form-row">
+        <label class="pa-form-label">Email Address</label>
+        <input class="pa-input" type="email" placeholder="Enter Email Address" id="pa-email"/>
+      </div>
+
+      <!-- Toggle: switch LEFT, label RIGHT -->
+      <div class="pa-toggle-row" style="margin: 18px 0 22px;">
+        <label class="toggle-switch">
+          <input type="checkbox" id="pa-toggle" checked/>
+          <div class="toggle-track"></div>
+        </label>
+        <span class="pa-toggle-label">
+          Person will actively manage the platform
+          <span class="help-icon" title="Grants full admin access: manage wallets, users, and policies.">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          </span>
+        </span>
+      </div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:var(--color-border);margin-bottom:22px;"></div>
+
+      <!-- Identity Verification — radio buttons -->
+      <div class="pa-section-title">Identity Verification</div>
+
+      <div class="pa-radio-group">
+        <label class="pa-radio-option" onclick="selectRadio('idv',0)">
+          <div class="pa-radio-circle" id="idv-0"></div>
+          <span class="pa-radio-text">I will upload Personal Information and a Government ID on behalf of this individual</span>
+        </label>
+        <label class="pa-radio-option" onclick="selectRadio('idv',1)">
+          <div class="pa-radio-circle" id="idv-1"></div>
+          <span class="pa-radio-text">They will receive an email from BitGo to complete verification themselves</span>
+        </label>
+      </div>
+
+    </div><!-- /pa-modal-body -->
+
+    <!-- Footer: Submit only, right-aligned -->
+    <div class="pa-modal-footer">
+      <button class="btn-pa-submit" onclick="submitPlatformAdmin()">Submit</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════════════════════ TOAST ════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════ SUCCESS / UNDER REVIEW SCREEN ════════════════════ -->
+<div id="successScreen">
+  <header class="success-header">
+    <span class="header-title">BitGo Trust Application</span>
+    <button class="btn-logout" onclick="showToast('You have been logged out.')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      Log Out
+    </button>
+  </header>
+  <div class="success-body">
+    <div class="success-placeholder"></div>
+    <h2 class="success-title">We Will Contact You Soon</h2>
+    <p class="success-sub">Your application has been completed. Our team will contact you soon with next steps.</p>
+  </div>
+</div>
+
+
+<script>
+  /* ════ STATE ════ */
+  let currentStep = 5;
+  let noBeneficiary = false;
+  let ddId = 200;
+
+  /* ════ PROGRESS MAP ════ */
+  const progress = { 5:'62%', 6:'75%', 7:'88%', 8:'100%' };
+
+  /* ════ NAVIGATION ════ */
+  function goToStep(n) {
+    const pageMap = { 5:'page5', 6:'page6', 7:'page7' };
+    if (!pageMap[n]) { showToast('Coming soon!'); return; }
+
+    document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageMap[n]).classList.add('active');
+
+    // Sidebar state update (steps 5–8)
+    for (let i = 5; i <= 8; i++) {
+      const el = document.getElementById('s' + i);
+      const ic = document.getElementById('si' + i);
+      if (!el || !ic) continue;
+      el.className = 'step';
+      ic.className = 'step-icon';
+      if (i < n) {
+        el.classList.add('done-step'); ic.classList.add('done');
+        ic.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+      } else if (i === n) {
+        el.classList.add('active'); ic.classList.add('active');
+        ic.innerHTML = '<span>' + i + '</span>';
+      } else {
+        el.classList.add('pending'); ic.classList.add('pending');
+        ic.innerHTML = '<span>' + i + '</span>';
+      }
+    }
+
+    document.getElementById('progressFill').style.width = progress[n] || '62%';
+    document.getElementById('mainScroll').scrollTo({ top: 0, behavior: 'smooth' });
+    currentStep = n;
+  }
+
+  function sidebarClick(n) {
+    if (n < 5) { showToast('Step ' + n + ' is already completed.'); return; }
+    if (n > currentStep + 1) { showToast('Please complete the current step first.'); return; }
+    if (n <= currentStep + 1) goToStep(n);
+  }
+
+  /* ════ CHECKBOX ════ */
+  function toggleNoBeneficiary(e) {
+    e.preventDefault();
+    noBeneficiary = !noBeneficiary;
+    document.getElementById('noBeneficiaryCb').classList.toggle('checked', noBeneficiary);
+    document.getElementById('beneficialPersons').style.display = noBeneficiary ? 'none' : '';
+  }
+
+  /* ════ DROPDOWNS ════ */
+  let openDD = null;
+  function toggleDropdown(id, e) {
+    if (e) e.stopPropagation();
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (openDD && openDD !== el) openDD.classList.remove('open');
+    el.classList.toggle('open');
+    openDD = el.classList.contains('open') ? el : null;
+  }
+  function closeDropdowns() {
+    document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('open'));
+    openDD = null;
+  }
+  document.addEventListener('click', closeDropdowns);
+
+  /* ════ REMOVE PERSON ════ */
+  function removePerson(btn) {
+    const row = btn.closest('.pa-row');
+    row.style.transition = 'opacity .2s';
+    row.style.opacity = '0';
+    setTimeout(() => {
+      row.remove();
+      // Check if platform list is now empty
+      const section = document.getElementById('platformPersons');
+      if (section && section.querySelectorAll('.pa-row').length === 0) {
+        section.style.display = 'none';
+        document.getElementById('paEmptyState').style.display = 'flex';
+      }
+      showToast('Person removed.');
+    }, 200);
+  }
+
+  /* ════ MODALS ════ */
+  function openGenericModal(type) {
+    document.getElementById('genericModalTitle').textContent = 'Add ' + (type || 'Person');
+    ['g-first','g-last','g-email','g-ownership'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('genericModal').classList.add('open');
+    setTimeout(() => document.getElementById('g-first').focus(), 100);
+  }
+
+  function openPlatformAdminModal() {
+    // Legacy — no longer used for page6 inline flow
+    ['pa-first','pa-last','pa-email'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('pa-toggle').checked = true;
+    // Reset radio buttons
+    selectedRadio.idv = -1;
+    document.querySelectorAll('[id^="idv-"]').forEach(el => el.classList.remove('selected'));
+    document.getElementById('platformModal').classList.add('open');
+    setTimeout(() => document.getElementById('pa-first').focus(), 100);
+  }
+
+  function closeAllModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+  }
+  function overlayClose(e, id) {
+    if (e.target === document.getElementById(id)) closeAllModals();
+  }
+
+  /* ════ SUBMIT GENERIC ════ */
+  function submitGenericPerson() {
+    const first = document.getElementById('g-first').value.trim();
+    const last  = document.getElementById('g-last').value.trim();
+    const email = document.getElementById('g-email').value.trim();
+    if (!first || !last || !email) { showToast('Please fill in all required fields.'); return; }
+    addPersonRow('beneficialPersons', first + ' ' + last, email, false);
+    if (noBeneficiary) {
+      noBeneficiary = false;
+      document.getElementById('noBeneficiaryCb').classList.remove('checked');
+      document.getElementById('beneficialPersons').style.display = '';
+    }
+    closeAllModals();
+    showToast(first + ' ' + last + ' added successfully.');
+  }
+
+  /* ════ RADIO SELECTION ════ */
+  let selectedRadio = { idv: -1 };
+  function selectRadio(group, idx) {
+    selectedRadio[group] = idx;
+    document.querySelectorAll(`[id^="${group}-"]`).forEach((el, i) => {
+      el.classList.toggle('selected', i === idx);
+    });
+  }
+
+  /* ════ INLINE PLATFORM ADMIN ROWS ════ */
+  const PA_MIN = 3;
+  const PA_MAX = 5;
+  let paCount = 0;
+  let paRowId = 0;
+
+  function addPAInlineRow(required = false) {
+    if (paCount >= PA_MAX) return;
+    paCount++;
+    paRowId++;
+    const id   = 'pa-inline-' + paRowId;
+    const r0   = `${id}-idv0`, r1 = `${id}-idv1`;
+    const label = 'Admin ' + paCount;
+    const removeBtn = required ? '' : `
+      <button type="button" class="pa-inline-remove" onclick="removePAInlineRow('${id}')" title="Remove">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>`;
+    const html = `
+      <div class="pa-inline-row" id="${id}" ${required ? 'data-required="true"' : ''}>
+
+        <!-- Card label + optional remove -->
+        <div class="pa-inline-label">${label}${removeBtn}</div>
+
+        <!-- Contact info -->
+        <div class="pa-inline-section-title">Member Information</div>
+        <div class="pa-inline-top">
+          <div class="pa-inline-field">
+            <span class="pa-inline-field-label">First Name</span>
+            <input type="text" placeholder="First name" class="pa-first-field" />
+          </div>
+          <div class="pa-inline-field">
+            <span class="pa-inline-field-label">Last Name</span>
+            <input type="text" placeholder="Last name" class="pa-last-field" />
+          </div>
+          <div class="pa-inline-field email-wrap">
+            <span class="pa-inline-field-label">Email Address</span>
+            <input type="email" placeholder="Email address" class="pa-email-field" />
+          </div>
+        </div>
+
+        <!-- Active management toggle -->
+        <div class="pa-inline-toggle-row" style="margin-top:0">
+          <label class="toggle-switch">
+            <input type="checkbox" />
+            <div class="toggle-track"></div>
+          </label>
+          <span class="pa-inline-toggle-label">
+            Person will actively manage the platform
+            <span class="help-icon" title="Grants full admin access: manage wallets, users, and policies.">
+              <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+            </span>
+          </span>
+        </div>
+
+        <!-- Divider -->
+        <div class="pa-inline-section-divider"></div>
+
+        <!-- Identity Verification — two inline options -->
+        <div class="pa-inline-idv-title">
+          Identity Verification
+          <span class="help-icon" title="Choose how this administrator's identity will be confirmed before they gain access.">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          </span>
+        </div>
+        <div class="pa-inline-idv-row">
+          <div class="pa-inline-radio" id="${r0}" onclick="selectPAIdv('${id}', 0)">
+            <div class="pa-inline-radio-circle"></div>
+            <span class="pa-inline-radio-text">I will help verify</span>
+          </div>
+          <div class="pa-inline-radio" id="${r1}" onclick="selectPAIdv('${id}', 1)">
+            <div class="pa-inline-radio-circle"></div>
+            <span class="pa-inline-radio-text">Person verifies on their own</span>
+          </div>
+        </div>
+
+      </div>`;
+    document.getElementById('paInlineList').insertAdjacentHTML('beforeend', html);
+    updatePAUI();
+  }
+
+  function selectPAIdv(rowId, idx) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    row.querySelectorAll('.pa-inline-radio').forEach((el, i) => {
+      el.classList.toggle('selected', i === idx);
+    });
+  }
+
+  function removePAInlineRow(id) {
+    if (paCount <= PA_MIN) { showToast('A minimum of 3 administrators is required.'); return; }
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'opacity .18s';
+    el.style.opacity = '0';
+    setTimeout(() => { el.remove(); paCount--; updatePAUI(); }, 180);
+  }
+
+  function updatePAUI() {
+    // Only optional rows have a remove button — no changes needed for required ones
+    const addBtn = document.getElementById('paAddBtn');
+    if (addBtn) { addBtn.style.display = paCount >= PA_MAX ? 'none' : ''; }
+  }
+
+  function paValidateAndContinue() {
+    const rows = document.querySelectorAll('#paInlineList .pa-inline-row');
+    if (rows.length < PA_MIN) { showToast('Please add at least 3 administrators.'); return; }
+    let allFilled = true, allIdv = true;
+    rows.forEach(row => {
+      const first = row.querySelector('.pa-first-field');
+      const last  = row.querySelector('.pa-last-field');
+      const email = row.querySelector('.pa-email-field');
+      if (!first?.value.trim() || !last?.value.trim() || !email?.value.trim()) allFilled = false;
+      if (!row.querySelector('.pa-inline-radio.selected')) allIdv = false;
+    });
+    if (!allFilled) { showToast('Please fill in all name and email fields.'); return; }
+    if (!allIdv)    { showToast('Please select an Identity Verification method for each administrator.'); return; }
+    goToStep(7);
+  }
+
+  /* ════ SUBMIT PLATFORM ADMIN (modal — legacy) ════ */
+  let paCount_modal = 0;
+
+  function submitPlatformAdmin() {
+    const first  = document.getElementById('pa-first').value.trim();
+    const last   = document.getElementById('pa-last').value.trim();
+    const email  = document.getElementById('pa-email').value.trim();
+    const active = document.getElementById('pa-toggle').checked;
+
+    if (!first || !last || !email) { showToast('Please fill in all required fields.'); return; }
+    if (selectedRadio.idv === -1) { showToast('Please select an Identity Verification method.'); return; }
+    if (paCount_modal >= PA_MAX) { showToast('Maximum of 5 administrators reached.'); return; }
+
+    addPARow(first + ' ' + last, email, active);
+    closeAllModals();
+    showToast(first + ' ' + last + ' added. Verification will be sent shortly.');
+    // Reset radio
+    selectRadio('idv', -1);
+  }
+
+  /* ════ ADD PLATFORM ADMIN ROW (flat, no card) — legacy modal ════ */
+  function addPARow(name, email, manageActively) {
+    paCount_modal++;
+    ddId++;
+    const did = 'padd_' + ddId;
+
+    const metaHtml = manageActively
+      ? `${escHtml(email)}<span class="pa-row-dot">•</span><span class="pa-row-tag">Will manage actively</span>`
+      : escHtml(email);
+
+    const html = `
+      <div class="pa-row" style="opacity:0;transition:opacity .3s" data-pa-row>
+        <div>
+          <div class="pa-row-name">${escHtml(name)}</div>
+          <div class="pa-row-meta">${metaHtml}</div>
+        </div>
+        <div class="pa-row-actions">
+          <button class="btn-resend-invite" onclick="showToast('Invite resent to ${escHtml(email)}')">Resend Invite</button>
+          <button class="btn-circle-menu" onclick="removePARow(this)" title="Remove">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>`;
+
+    const list = document.getElementById('paList');
+    list.style.display = 'block';
+    list.insertAdjacentHTML('beforeend', html);
+    const newRow = list.querySelector('[data-pa-row]:last-child');
+    requestAnimationFrame(() => { newRow.style.opacity = '1'; });
+
+    // Disable Add link at limit
+    if (paCount_modal >= PA_MAX) {
+      document.getElementById('paAddBtn').disabled = true;
+    }
+  }
+
+  /* ════ REMOVE PA ROW (legacy modal) ════ */
+  function removePARow(btn) {
+    const row = btn.closest('[data-pa-row]');
+    row.style.transition = 'opacity .2s';
+    row.style.opacity = '0';
+    setTimeout(() => {
+      row.remove();
+      paCount_modal = Math.max(0, paCount_modal - 1);
+      document.getElementById('paAddBtn').disabled = false;
+      showToast('Administrator removed.');
+    }, 200);
+  }
+
+  /* ════ ADD PERSON ROW HELPER (Step 5 lists) ════ */
+  function addPersonRow(sectionId, name, email, isResend) {
+    ddId++;
+    const did = 'dd_' + ddId;
+    const actionBtn = isResend
+      ? `<button class="btn-resend-invite" onclick="showToast('Link resent!')">Resend Link</button>`
+      : `<button class="btn-resend-invite" onclick="showToast('Verification sent to ${escHtml(email)}')">Verify</button>`;
+
+    const html = `
+      <div class="pa-row" style="opacity:0;transition:opacity .3s">
+        <div>
+          <div class="pa-row-name">${escHtml(name)}</div>
+          <div class="pa-row-meta">${escHtml(email)}</div>
+        </div>
+        <div class="pa-row-actions">
+          ${actionBtn}
+          <button class="btn-circle-menu" onclick="removePerson(this)" title="Remove">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>`;
+
+    document.getElementById(sectionId).insertAdjacentHTML('beforeend', html);
+    const row = document.getElementById(sectionId).querySelector('.pa-row:last-child');
+    requestAnimationFrame(() => { row.style.opacity = '1'; });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ════ TOAST ════ */
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  /* ════ SUCCESS SCREEN ════ */
+  function showSuccessScreen() {
+    document.getElementById('successScreen').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  /* ════ KEYBOARD ════ */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAllModals();
+  });
+
+  /* ─── Theme toggle ─────────────────────────────────────────────── */
+  (function() {
+    try { if (localStorage.getItem('bitgo-theme') === 'light') document.body.classList.add('light-mode'); } catch(e) {}
+  })();
+  function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    try { localStorage.setItem('bitgo-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); } catch(e) {}
+  }
+
+  // Seed 3 required Platform Admin rows on load
+  document.addEventListener('DOMContentLoaded', () => {
+    addPAInlineRow(true); addPAInlineRow(true); addPAInlineRow(true);
+  });
+</script>
+
+<!-- ── Theme toggle ── -->
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">
+  <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+</body>
+</html>

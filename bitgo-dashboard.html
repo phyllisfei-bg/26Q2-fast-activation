@@ -1,0 +1,3592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BitGo — Dashboard</title>
+<style>
+/* ─── Kintsugi Design System Tokens ─────────────────────────────── */
+:root {
+  --black: #0B0B10;
+  --black-a800: rgba(11,11,16,.80);
+  --black-a600: rgba(11,11,16,.60);
+  --white: #FFFFFF;
+  --white-a800: rgba(255,255,255,.80);
+  --white-a700: rgba(255,255,255,.70);
+  --white-a500: rgba(255,255,255,.50);
+  --white-a400: rgba(255,255,255,.40);
+  --white-a300: rgba(255,255,255,.30);
+  --white-a200: rgba(255,255,255,.20);
+  --white-a100: rgba(255,255,255,.10);
+  --white-a50:  rgba(255,255,255,.05);
+  --dg-800: #17182A;
+  --dg-700: #1D1F33;
+  --dg-600: #24263C;
+  --dg-500: #2D2F48;
+  --dg-400: #383A54;
+  --brand-500: #3D65F0;
+  --brand-400: #6080F7;
+  --brand-700: #2B4FD4;
+  --brand-a200: rgba(61,101,240,.20);
+  --brand-a100: rgba(61,101,240,.10);
+  --color-bg:              var(--black);
+  --color-level1:          var(--dg-800);
+  --color-level2:          var(--dg-700);
+  --color-level3:          var(--dg-600);
+  --color-level4:          var(--dg-500);
+  --color-border:          var(--dg-600);
+  --color-border-strong:   var(--dg-500);
+  --color-primary:         var(--brand-500);
+  --color-primary-hover:   var(--brand-700);
+  --color-text:            var(--white);
+  --color-text-secondary:  var(--white-a700);
+  --color-text-muted:      var(--white-a400);
+  --color-text-placeholder:var(--white-a300);
+  --color-success:         #4ADE80;
+  --color-gold:            #F59E0B;
+}
+
+/* ─── Light mode overrides ───────────────────────────────────────── */
+body.light-mode {
+  /* Raw token overrides — auto-fixes every var(--dg-*) and var(--white-a*) in the file */
+  --dg-800: #FFFFFF;
+  --dg-700: #EEF0FA;
+  --dg-600: #E4E7F5;
+  --dg-500: #D6DAF0;
+  --dg-400: #CDD1E8;
+  --white-a50:  rgba(13,14,28,.04);
+  --white-a100: rgba(13,14,28,.07);
+  --white-a200: rgba(13,14,28,.10);
+  --white-a300: rgba(13,14,28,.16);
+  --white-a400: rgba(13,14,28,.24);
+  --white-a500: rgba(13,14,28,.32);
+  --white-a700: rgba(13,14,28,.55);
+  --white-a800: rgba(13,14,28,.65);
+  /* Semantic overrides */
+  --color-bg:               #FFFFFF;
+  --color-level1:           #FFFFFF;
+  --color-level2:           #EEF0FA;
+  --color-level3:           #E4E7F5;
+  --color-level4:           #D6DAF0;
+  --color-border:           #DFE2F2;
+  --color-border-strong:    #CDD1E8;
+  --color-text:             #0D0E1C;
+  --color-text-secondary:   rgba(13,14,28,.65);
+  --color-text-muted:       rgba(13,14,28,.42);
+  --color-text-placeholder: rgba(13,14,28,.28);
+  --color-success:          #16A34A;
+  --color-gold:             #D97706;
+  --btn-ghost:              rgba(13,14,28,.05);
+  --btn-ghost-hover:        rgba(13,14,28,.09);
+}
+
+/* ─── Theme toggle button ────────────────────────────────────────── */
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-level3);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .18s, border-color .18s, color .18s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { background: var(--color-level4); color: var(--color-text); border-color: var(--color-border-strong); }
+.icon-moon { display: none; }
+body.light-mode .icon-sun { display: none; }
+body.light-mode .icon-moon { display: block; }
+
+/* Donut light-mode ring overrides */
+body.light-mode .donut-ring-bg   { stroke: #D6DAF0; }
+body.light-mode .donut-ring-idle { stroke: #CDD1E8; }
+
+/* ─── Reset ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── App Shell ──────────────────────────────────────────────────── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── Sidebar ────────────────────────────────────────────────────── */
+.sidebar {
+  width: 192px;
+  flex-shrink: 0;
+  background: var(--color-level1);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-top {
+  padding: 14px 12px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.sidebar-logo-mark {
+  width: 28px;
+  height: 28px;
+  background: var(--brand-500);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.sidebar-toggle:hover { background: var(--white-a50); color: var(--color-text-secondary); }
+
+.sidebar-search {
+  margin: 10px 10px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-level3);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color .15s;
+  flex-shrink: 0;
+}
+.sidebar-search:hover { border-color: var(--color-border-strong); }
+.sidebar-search-icon { color: var(--color-text-muted); flex-shrink: 0; }
+.sidebar-search-text { font-size: 13px; color: var(--color-text-muted); flex: 1; }
+.sidebar-search-kbd {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.kbd {
+  background: var(--color-level4);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 10px 8px;
+}
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  transition: background .12s, color .12s;
+  user-select: none;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--white-a50); color: var(--color-text); }
+.nav-item.active { background: var(--white-a100); color: var(--color-text); }
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.nav-item-label { flex: 1; }
+.nav-item-chevron { color: var(--color-text-muted); }
+.nav-item-badge {
+  font-size: 11px;
+  background: var(--color-level4);
+  color: var(--color-text-muted);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.nav-section-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 14px 10px 4px;
+}
+
+.sidebar-footer {
+  padding: 8px 10px 16px;
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ─── Workspace ──────────────────────────────────────────────────── */
+.workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ─── Topbar ─────────────────────────────────────────────────────── */
+.topbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+.topbar-enterprise {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: border-color .15s;
+  min-width: 170px;
+}
+.topbar-enterprise:hover { border-color: var(--color-border-strong); }
+.topbar-enterprise-chevron { color: var(--color-text-muted); margin-left: auto; }
+
+.topbar-spacer { flex: 1; }
+
+.btn-move-funds {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--brand-500);
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  transition: background .15s;
+  overflow: hidden;
+}
+.btn-move-funds:hover { background: var(--brand-700); }
+.btn-move-funds-label { padding: 8px 14px; }
+.btn-move-funds-divider { width: 1px; height: 100%; background: rgba(255,255,255,.25); }
+.btn-move-funds-arrow { padding: 8px 10px; display: flex; align-items: center; }
+
+.topbar-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: background .15s, color .15s;
+  border: none;
+  background: transparent;
+}
+.topbar-icon-btn:hover { background: var(--white-a50); color: var(--color-text-secondary); }
+
+/* ─── Content Area ───────────────────────────────────────────────── */
+.content-area {
+  flex: 1;
+  display: flex;
+  overflow-y: auto;
+  align-items: flex-start;
+  min-height: 0;
+}
+.content-area::-webkit-scrollbar { width: 5px; }
+.content-area::-webkit-scrollbar-track { background: transparent; }
+.content-area::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+.main-panel {
+  flex: 1;
+  padding: 28px 28px 40px;
+  min-width: 0;
+}
+
+/* ─── Portfolio Section ──────────────────────────────────────────── */
+.portfolio-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.portfolio-value-block {}
+.portfolio-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+.portfolio-amount {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.asset-custody-toggle {
+  display: flex;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+.toggle-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.toggle-btn.active {
+  background: var(--color-level4);
+  color: var(--color-text);
+}
+
+.portfolio-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* Donut chart */
+.donut-wrap {
+  flex-shrink: 0;
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+.donut-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+}
+.donut-center-label { font-size: 11px; color: var(--color-text-muted); }
+.donut-center-value { font-size: 20px; font-weight: 700; }
+
+/* Value cards */
+.value-cards { display: flex; flex-direction: column; gap: 8px; width: 300px; flex-shrink: 0; }
+.value-card {
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.value-card-accent {
+  width: 3px;
+  height: 26px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.value-card-accent.gold { background: var(--color-gold); }
+.value-card-accent.blue { background: var(--brand-400); }
+.value-card-body { flex: 1; min-width: 0; }
+.value-card-label { font-size: 11px; color: var(--color-text-muted); margin-bottom: 2px; }
+.value-card-amount { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.value-card:hover { border-color: var(--brand-500); box-shadow: 0 0 0 3px rgba(99,102,241,.10); }
+
+/* Deposit CTA — inline on the right, hidden until hover */
+.value-card-deposit-hint {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; font-weight: 500; color: var(--brand-500);
+  background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.22);
+  border-radius: 6px; padding: 4px 9px; flex-shrink: 0;
+  opacity: 0; transform: translateX(6px);
+  transition: opacity .18s, transform .18s;
+  white-space: nowrap;
+}
+.value-card:hover .value-card-deposit-hint {
+  opacity: 1; transform: translateX(0);
+}
+
+/* ─── Deposit modal tabs ──────────────────────────────────────── */
+.dep-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+.dep-tab {
+  flex: 1; padding: 9px 0; border-radius: 8px; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--color-border); background: var(--color-level2);
+  color: var(--color-text-secondary); cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.dep-tab.active {
+  background: var(--brand-500); color: #fff; border-color: var(--brand-500);
+}
+.dep-panel { display: none; }
+.dep-panel.active { display: block; }
+.dep-address-box {
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  border-radius: 8px; padding: 12px 14px;
+  font-size: 13px; font-family: monospace; color: var(--color-text);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 4px; word-break: break-all;
+}
+.dep-copy-btn {
+  background: none; border: none; cursor: pointer; color: var(--color-text-muted);
+  flex-shrink: 0; padding: 2px; transition: color .15s;
+}
+.dep-copy-btn:hover { color: var(--brand-400); }
+
+/* ─── FOR YOU section ────────────────────────────────────────────── */
+/* ─── Get Started (Stripe-style) ─────────────────────────────────── */
+.gs-card {
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  animation: gsFadeIn .4s ease both;
+}
+@keyframes gsFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gs-card-header { margin-bottom: 20px; }
+.gs-card-title-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 6px;
+}
+.gs-card-close {
+  width: 28px; height: 28px; border-radius: 50%; border: none; flex-shrink: 0;
+  background: transparent; color: var(--color-text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.gs-card-close:hover { background: var(--color-level3); color: var(--color-text); }
+.gs-card-eyebrow { display: none; }
+.gs-progress-ring { display: none; }
+.gs-progress-label { display: none; }
+.gs-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.gs-card-sub {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+/* 3-column action grid */
+.gs-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 0;
+}
+.gs-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: default;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  animation: gsActionIn .38s ease both;
+  height: 100%;
+}
+.gs-action:nth-child(1) { animation-delay: .06s; }
+.gs-action:nth-child(2) { animation-delay: .13s; }
+.gs-action:nth-child(3) { animation-delay: .20s; }
+@keyframes gsActionIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gs-action.done { pointer-events: none; }
+.gs-action.done .gs-action-title { color: var(--color-text-muted); }
+.gs-action.done .gs-action-start { display: none; }
+.gs-action.done .gs-preview { opacity: .35; filter: grayscale(1); }
+.gs-action-done-check {
+  display: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--color-success);
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.gs-action.done .gs-action-done-check { display: inline-flex; }
+
+/* pill tag — inline in title row */
+.gs-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: var(--color-level1);
+  flex-shrink: 0;
+}
+.gs-action.done .gs-action-pill { display: none; }
+.gs-action-pill-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gs-action.wallet     .gs-action-pill-dot { background: var(--brand-500); }
+.gs-action.go-account .gs-action-pill-dot { background: var(--color-gold); }
+.gs-action.policy     .gs-action-pill-dot { background: #8B5CF6; }
+
+.gs-action.wallet .gs-action-start,
+.gs-action.go-account .gs-action-start,
+.gs-action.policy .gs-action-start { color: var(--brand-500); }
+
+/* section title + start link */
+.gs-action-title-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.gs-action-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+.gs-action-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  background: var(--brand-500);
+  color: #fff !important;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 10px 4px 12px;
+  border-radius: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: background .15s, box-shadow .15s;
+}
+.gs-action-start:hover { background: var(--brand-700); box-shadow: 0 2px 8px rgba(61,101,240,.35); }
+.gs-action.done .gs-action-start { display: none; }
+
+/* CTA row — overlaid at bottom of preview on hover */
+.gs-action-cta-row {
+  display: flex; align-items: center; gap: 8px;
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 28px 14px 14px;
+  background: linear-gradient(to top, var(--color-level2) 10%, transparent 100%);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+  margin-bottom: 0;
+}
+.gs-action:hover .gs-action-cta-row { opacity: 1; pointer-events: auto; }
+.gs-action-cta-row .gs-action-start { margin-bottom: 0; }
+.gs-action-learn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 400; color: var(--color-text-secondary);
+  background: none; border: none;
+  border-radius: 8px; padding: 6px 12px;
+  cursor: pointer; font-family: inherit; text-decoration: none;
+  transition: color .15s;
+}
+.gs-action-learn:hover { color: var(--color-text); }
+.gs-action.done .gs-action-cta-row { display: none; }
+
+/* visual preview card */
+/* image placeholder */
+.gs-preview {
+  border: 1.5px dashed var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-level2);
+  position: relative;
+  flex: 1;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: box-shadow .2s, transform .2s, border-color .2s;
+  pointer-events: none;
+}
+.gs-action:hover .gs-preview {
+  box-shadow: 0 8px 28px rgba(0,0,0,.07);
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+}
+.gs-preview-img-icon {
+  width: 36px; height: 36px; opacity: .35;
+}
+.gs-preview-img-label {
+  font-size: 12px; color: var(--color-text-muted);
+  font-weight: 500; letter-spacing: .01em;
+}
+
+/* done overlay on preview */
+.gs-action.done .gs-preview { opacity: .45; }
+.gs-done-badge { display: none; }
+
+/* ─── Full-page Wallet Creation Flow ─────────────────────────────── */
+.wallet-flow-page {
+  position: fixed; inset: 0; z-index: 800;
+  background: #fff;
+  display: none;
+  flex-direction: column;
+}
+.wallet-flow-page.open { display: flex; }
+.wallet-flow-inner {
+  display: flex; flex: 1; overflow: hidden;
+}
+.wallet-flow-sidebar {
+  width: 280px; flex-shrink: 0;
+  border-right: 1px solid #E8EAF2;
+  padding: 32px 28px;
+  display: flex; flex-direction: column;
+  background: #fff;
+  overflow-y: auto;
+}
+.wallet-flow-logo {
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 52px;
+}
+.wallet-flow-logo-mark {
+  width: 32px; height: 32px;
+  background: #2B4FD4;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.wallet-flow-logo-text { font-size: 16px; font-weight: 700; color: #0D0E1C; letter-spacing: -.01em; }
+
+/* Stepper */
+.wallet-flow-steps { display: flex; flex-direction: column; gap: 0; }
+.wallet-flow-step  { display: flex; gap: 16px; position: relative; }
+.wallet-flow-step-left {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0;
+}
+.wallet-flow-step-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid #CDD1E8;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #7A7F9A;
+  flex-shrink: 0; z-index: 1;
+  transition: border-color .2s, background .2s, color .2s;
+}
+.wallet-flow-step.active .wallet-flow-step-circle {
+  background: #2B4FD4; border-color: #2B4FD4; color: #fff;
+}
+.wallet-flow-step.done .wallet-flow-step-circle {
+  background: #2B4FD4; border-color: #2B4FD4; color: #fff;
+}
+.wallet-flow-step-line {
+  width: 2px; background: #E8EAF2;
+  flex: 1; min-height: 32px; margin: 4px 0;
+}
+.wallet-flow-step:last-child .wallet-flow-step-line { display: none; }
+.wallet-flow-step-content { padding: 4px 0 32px; }
+.wallet-flow-step-title {
+  font-size: 13.5px; font-weight: 600; color: #0D0E1C;
+  margin-bottom: 4px; line-height: 1.3;
+}
+.wallet-flow-step.inactive .wallet-flow-step-title { color: #7A7F9A; }
+.wallet-flow-step-desc {
+  font-size: 12px; color: #6B7280; line-height: 1.55;
+}
+.wallet-flow-step.inactive .wallet-flow-step-desc { color: #B0B5C8; }
+
+/* Main content area */
+.wallet-flow-main {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; background: #fff;
+}
+.wallet-flow-close {
+  position: absolute; top: 20px; right: 24px;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid #E8EAF2; background: #fff;
+  color: #6B7280; font-size: 18px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .14s, color .14s;
+  z-index: 10;
+}
+.wallet-flow-close:hover { background: #F4F5FC; color: #0D0E1C; }
+.wallet-flow-body {
+  flex: 1; padding: 60px 72px 24px;
+  overflow-y: auto;
+}
+.wallet-flow-step-heading {
+  font-size: 28px; font-weight: 700; color: #0D0E1C;
+  letter-spacing: -.02em; margin-bottom: 18px; line-height: 1.2;
+}
+.wallet-flow-step-subheading {
+  font-size: 22px; font-weight: 700; color: #0D0E1C;
+  letter-spacing: -.015em; margin: 28px 0 8px;
+}
+.wallet-flow-input {
+  width: 100%; height: 44px;
+  border: 1.5px solid #DFE2F2;
+  border-radius: 8px; padding: 0 14px;
+  font-size: 14.5px; font-family: inherit; color: #0D0E1C;
+  outline: none; background: #fff;
+  transition: border-color .15s;
+}
+.wallet-flow-input:focus { border-color: #2B4FD4; }
+.wallet-flow-input::placeholder { color: #B0B5C8; }
+.wallet-flow-select-wrap { position: relative; }
+.wallet-flow-select {
+  width: 100%; height: 44px;
+  border: 1.5px solid #DFE2F2;
+  border-radius: 8px; padding: 0 14px;
+  font-size: 14.5px; font-family: inherit; color: #0D0E1C;
+  outline: none; background: #fff; cursor: pointer;
+  appearance: none;
+  transition: border-color .15s;
+}
+.wallet-flow-select:focus { border-color: #2B4FD4; }
+.wallet-flow-select-wrap svg {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; color: #7A7F9A;
+}
+.wallet-flow-field-label {
+  font-size: 12.5px; font-weight: 500; color: #6B7280;
+  margin-bottom: 7px; display: block;
+}
+
+/* Footer bar */
+.wallet-flow-footer {
+  display: flex; gap: 12px; align-items: center;
+  padding: 18px 72px;
+  border-top: 1px solid #F0F2F9;
+  background: #fff; flex-shrink: 0;
+}
+.wallet-flow-btn-back {
+  flex: 1; height: 48px;
+  border: none; border-radius: 40px;
+  background: #F0F2F9; color: #0D0E1C;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .14s;
+}
+.wallet-flow-btn-back:hover { background: #E4E7F5; }
+.wallet-flow-btn-continue {
+  flex: 1; height: 48px;
+  border: none; border-radius: 40px;
+  background: #2B4FD4; color: #fff;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: background .14s;
+}
+.wallet-flow-btn-continue:hover { background: #1E3BA8; }
+
+/* ─── Wallet Detail Page ──────────────────────────────────────────── */
+.wallet-detail-page {
+  position: fixed; inset: 0; z-index: 800;
+  background: var(--color-bg);
+  display: none; flex-direction: row; /* mirrors .app */
+  overflow: hidden;
+}
+.wallet-detail-page.open { display: flex; }
+/* Topbar */
+.wallet-detail-topbar {
+  height: 52px; border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; padding: 0 18px; gap: 10px;
+  flex-shrink: 0; background: var(--color-bg);
+}
+.wallet-detail-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--color-text-secondary);
+}
+.wallet-detail-breadcrumb-sep { color: var(--color-text-muted); font-size: 15px; }
+.wallet-detail-breadcrumb-current { color: var(--color-text); font-weight: 500; }
+/* workspace shell inside wallet detail */
+.wallet-detail-workspace {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; min-width: 0;
+}
+.wallet-detail-body { flex: 1; overflow-y: auto; padding: 32px 36px 48px; }
+.wallet-detail-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px;
+}
+.wallet-detail-icon-wrap {
+  position: relative; width: 52px; height: 52px; flex-shrink: 0;
+  margin-right: 14px;
+}
+.wallet-detail-icon-bg {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: #FFF8EC;
+  display: flex; align-items: center; justify-content: center;
+}
+.wallet-detail-coin-badge {
+  position: absolute; bottom: -3px; right: -5px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #F7931A;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  border: 2px solid var(--color-bg);
+}
+.wallet-detail-title-group {
+  display: flex; align-items: flex-start; gap: 0;
+}
+.wallet-detail-name { font-size: 28px; font-weight: 700; color: #0D0E1C; letter-spacing: -.02em; line-height: 1.2; }
+.wallet-detail-id-row {
+  display: flex; align-items: center; gap: 6px; margin-top: 4px;
+  font-size: 12px; color: #6B7280;
+}
+.wallet-detail-id-copy {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: #9099BB; display: flex; align-items: center;
+  transition: color .15s;
+}
+.wallet-detail-id-copy:hover { color: #2B4FD4; }
+.wallet-detail-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+}
+.wallet-detail-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  background: #F4F5FC; color: #374151; border: 1px solid #E8EAF2;
+}
+.wallet-detail-type-badge {
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  background: #F4F5FC; color: #6B7280; border: 1px solid #E8EAF2;
+}
+/* Right side: avatar + menu */
+.wallet-detail-header-right {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.wd-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #C7D2FE; color: #2B4FD4;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.wd-menu-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  color: #6B7280; display: flex; align-items: center; justify-content: center;
+  transition: background .14s;
+}
+.wd-menu-btn:hover { background: #F4F5FC; }
+.wallet-detail-stats {
+  display: flex; gap: 16px; margin-bottom: 32px;
+}
+.wallet-detail-stat {
+  flex: 1; background: #F9FAFB; border: 1px solid #E8EAF2;
+  border-radius: 12px; padding: 18px 20px;
+}
+.wallet-detail-stat-val { font-size: 22px; font-weight: 700; color: #0D0E1C; margin-bottom: 4px; }
+.wallet-detail-stat-label { font-size: 12px; color: #6B7280; }
+.wallet-detail-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #E8EAF2; margin-bottom: 28px;
+}
+.wallet-detail-tab {
+  padding: 10px 18px; font-size: 13.5px; font-weight: 500;
+  color: #6B7280; border-bottom: 2px solid transparent;
+  cursor: pointer; margin-bottom: -1px; transition: color .14s, border-color .14s;
+}
+.wallet-detail-tab.active { color: #2B4FD4; border-color: #2B4FD4; }
+.wallet-detail-tab:hover:not(.active) { color: #0D0E1C; }
+.wallet-detail-empty {
+  text-align: center; padding: 64px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.wallet-detail-empty-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: #EEF2FF; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+}
+.wallet-detail-empty-title { font-size: 15px; font-weight: 600; color: #0D0E1C; }
+.wallet-detail-empty-sub { font-size: 13px; color: #6B7280; }
+.wallet-detail-action-row {
+  display: flex; gap: 10px; margin-bottom: 0;
+}
+.wallet-detail-action-btn {
+  height: 38px; padding: 0 18px;
+  border-radius: 8px; border: 1px solid #DFE2F2;
+  background: #fff; color: #0D0E1C;
+  font-size: 13.5px; font-weight: 500; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; gap: 7px;
+  transition: background .14s, border-color .14s;
+}
+.wallet-detail-action-btn:hover { background: #F4F5FC; border-color: #CDD1E8; }
+.wallet-detail-action-btn.primary {
+  background: #2B4FD4; color: #fff; border-color: #2B4FD4;
+}
+.wallet-detail-action-btn.primary:hover { background: #1E3BA8; border-color: #1E3BA8; }
+
+/* Deposit / Invite nudge callout */
+.wd-deposit-callout {
+  position: fixed;
+  width: 260px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.14), 0 1px 4px rgba(0,0,0,.07);
+  padding: 14px 16px;
+  z-index: 900;
+  display: none;
+  animation: stepperIn .22s cubic-bezier(.16,1,.3,1);
+}
+.wd-deposit-callout.show { display: block; }
+/* Left-pointing caret (callout sits to the right of the deposit card) */
+.wd-deposit-callout-caret {
+  position: absolute;
+  left: -10px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid #fff;
+  filter: drop-shadow(-2px 0 2px rgba(0,0,0,.06));
+}
+.wd-deposit-callout-title {
+  font-size: 13px; font-weight: 600; color: #0D0E1C; margin-bottom: 4px;
+}
+.wd-deposit-callout-body {
+  font-size: 12px; line-height: 1.55; color: #6B7280;
+}
+.wd-deposit-callout-dismiss {
+  position: absolute; top: 10px; right: 10px;
+  background: none; border: none; cursor: pointer;
+  color: #9099BB; font-size: 16px; line-height: 1; padding: 0;
+  transition: color .15s;
+}
+.wd-deposit-callout-dismiss:hover { color: #0D0E1C; }
+.wd-deposit-callout-cta {
+  display: inline-block; margin-top: 10px;
+  background: none; border: 1px solid #DFE2F2; border-radius: 8px;
+  padding: 7px 12px; font-size: 12px; font-weight: 600;
+  color: #2B4FD4; cursor: pointer; font-family: inherit;
+  transition: background .14s, border-color .14s; width: 100%;
+}
+.wd-deposit-callout-cta:hover { background: #EEF2FF; border-color: #C7D2FE; }
+
+/* Policies callout — two-button action row */
+.wd-callout-actions {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.wd-callout-btn-primary {
+  flex: 1; padding: 7px 12px; font-size: 12px; font-weight: 600;
+  background: #2B4FD4; color: #fff; border: none; border-radius: 8px;
+  cursor: pointer; font-family: inherit; transition: background .14s;
+}
+.wd-callout-btn-primary:hover { background: #1E3BA8; }
+.wd-callout-btn-ghost {
+  flex: 1; padding: 7px 12px; font-size: 12px; font-weight: 600;
+  background: none; border: none; color: #2B4FD4;
+  cursor: pointer; font-family: inherit; transition: color .14s;
+}
+.wd-callout-btn-ghost:hover { color: #1E3BA8; }
+
+/* Wallet action banner */
+.wd-banner {
+  display: flex; gap: 14px;
+  margin-bottom: 28px;
+}
+.wd-banner-card {
+  flex: 1; display: flex; align-items: center; gap: 16px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1.5px solid #E8EAF2;
+  background: #FAFBFF;
+  cursor: pointer;
+  transition: border-color .16s, box-shadow .16s, background .16s;
+  text-decoration: none;
+}
+.wd-banner-card:hover {
+  border-color: #C7D2FE;
+  background: #F5F7FF;
+  box-shadow: 0 4px 16px rgba(43,79,212,.08);
+}
+.wd-banner-icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.wd-banner-card.deposit .wd-banner-icon { background: #ECFDF5; }
+.wd-banner-card.invite  .wd-banner-icon { background: #EEF2FF; }
+.wd-banner-text { flex: 1; }
+.wd-banner-title {
+  font-size: 14px; font-weight: 700; color: #0D0E1C;
+  margin-bottom: 3px; line-height: 1.25;
+}
+.wd-banner-sub {
+  font-size: 12.5px; color: #6B7280; line-height: 1.4;
+}
+.wd-banner-arrow {
+  color: #B0B5C8; flex-shrink: 0;
+  transition: transform .16s, color .16s;
+}
+.wd-banner-card:hover .wd-banner-arrow { transform: translateX(3px); color: #2B4FD4; }
+
+/* ─── Snackbar ────────────────────────────────────────────────────── */
+.snackbar {
+  position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%);
+  z-index: 900;
+  display: flex; align-items: center; gap: 14px;
+  background: #1A1D2E; color: #fff;
+  border-radius: 12px; padding: 13px 16px 13px 20px;
+  font-size: 14px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  white-space: nowrap;
+  transition: bottom .35s cubic-bezier(.34,1.3,.64,1);
+  pointer-events: none;
+}
+.snackbar.show { bottom: 28px; pointer-events: auto; }
+.snackbar-text { flex: 1; }
+.snackbar-cta {
+  height: 30px; padding: 0 14px;
+  border-radius: 7px; border: 1.5px solid rgba(255,255,255,.25);
+  background: transparent; color: #fff;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  transition: background .14s;
+}
+.snackbar-cta:hover { background: rgba(255,255,255,.12); }
+.snackbar-close {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: none; background: transparent; color: rgba(255,255,255,.55);
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: color .14s, background .14s;
+  flex-shrink: 0;
+}
+.snackbar-close:hover { color: #fff; background: rgba(255,255,255,.10); }
+
+/* ─── Workflow Modals ────────────────────────────────────────────── */
+.wf-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.wf-overlay.open { opacity: 1; pointer-events: auto; }
+.wf-modal {
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  transform: translateY(14px) scale(.97);
+  transition: transform .22s ease, opacity .22s;
+  opacity: 0;
+}
+.wf-overlay.open .wf-modal { transform: translateY(0) scale(1); opacity: 1; }
+.wf-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 22px 0;
+}
+.wf-modal-title {
+  font-size: 17px; font-weight: 700; color: var(--color-text);
+}
+.wf-modal-close {
+  width: 28px; height: 28px; border-radius: 7px;
+  border: none; background: var(--color-level3);
+  color: var(--color-text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; line-height: 1;
+  transition: background .14s, color .14s;
+}
+.wf-modal-close:hover { background: var(--color-level4); color: var(--color-text); }
+.wf-modal-body { padding: 20px 22px 24px; }
+.wf-field { margin-bottom: 16px; }
+.wf-label {
+  display: block; font-size: 12.5px; font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+.wf-input {
+  width: 100%; height: 38px;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px; color: var(--color-text);
+  font-family: inherit; outline: none;
+  transition: border-color .15s;
+}
+.wf-input:focus { border-color: var(--brand-500); }
+.wf-select {
+  width: 100%; height: 38px;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px; color: var(--color-text);
+  font-family: inherit; outline: none; cursor: pointer;
+  appearance: none;
+}
+.wf-radio-group { display: flex; flex-direction: column; gap: 8px; }
+.wf-radio-option {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.wf-radio-option.selected { border-color: var(--brand-500); background: var(--brand-a100); }
+.wf-radio-option:hover:not(.selected) { border-color: var(--color-border-strong); }
+.wf-radio-circle {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  margin-top: 1px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s;
+}
+.wf-radio-option.selected .wf-radio-circle { border-color: var(--brand-500); }
+.wf-radio-option.selected .wf-radio-circle::after {
+  content: ''; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--brand-500);
+}
+.wf-radio-text-title { font-size: 13.5px; font-weight: 600; color: var(--color-text); }
+.wf-radio-text-sub   { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.wf-divider { height: 1px; background: var(--color-border); margin: 18px 0; }
+.wf-footer {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; padding-top: 4px;
+}
+.wf-btn-cancel {
+  height: 36px; padding: 0 16px;
+  border: 1px solid var(--color-border); border-radius: 8px;
+  background: var(--color-level2); color: var(--color-text-secondary);
+  font-size: 13.5px; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: border-color .15s, background .15s;
+}
+.wf-btn-cancel:hover { background: var(--color-level3); border-color: var(--color-border-strong); }
+.wf-btn-primary {
+  height: 36px; padding: 0 18px;
+  border: none; border-radius: 8px;
+  background: var(--brand-500); color: #fff;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: background .15s;
+}
+.wf-btn-primary:hover { background: var(--brand-700); }
+.wf-btn-primary.green { background: #16A34A; }
+.wf-btn-primary.green:hover { background: #15803D; }
+.wf-btn-primary.amber { background: #D97706; }
+.wf-btn-primary.amber:hover { background: #B45309; }
+
+/* ─── Recommended Policies Modal ─────────────────────────────────── */
+.policy-rec-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px 16px 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.policy-rec-card:hover { border-color: var(--color-border-strong); }
+.policy-rec-card.selected { border-color: var(--brand-500); background: var(--brand-a100); }
+.policy-rec-card-header {
+  display: flex; align-items: flex-start; gap: 11px;
+}
+.policy-rec-checkbox {
+  width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+  border: 2px solid var(--color-border-strong);
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, border-color .15s;
+}
+.policy-rec-card.selected .policy-rec-checkbox { background: var(--brand-500); border-color: var(--brand-500); }
+.policy-rec-checkbox svg { opacity: 0; transition: opacity .12s; }
+.policy-rec-card.selected .policy-rec-checkbox svg { opacity: 1; }
+.policy-rec-card-title-group { flex: 1; min-width: 0; }
+.policy-rec-card-title { font-size: 13.5px; font-weight: 600; color: var(--color-text); margin-bottom: 3px; }
+.policy-rec-card-desc { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.5; }
+.policy-rec-chevron { color: var(--color-text-muted); flex-shrink: 0; margin-top: 2px; }
+.policy-rec-insight {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--brand-a100); border-radius: 8px;
+  padding: 9px 12px; margin: 12px 0 10px;
+  font-size: 12px; color: var(--color-text-secondary); line-height: 1.45;
+}
+.policy-rec-edit-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--color-border); border-radius: 99px;
+  background: transparent; padding: 5px 13px;
+  font-size: 12px; font-weight: 500; font-family: inherit;
+  color: var(--color-text-secondary); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.policy-rec-edit-btn:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+.policy-create-manually {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: none; padding: 0; margin-top: 6px;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  color: var(--brand-400); cursor: pointer;
+}
+.policy-create-manually:hover { text-decoration: underline; color: var(--brand-500); }
+.wf-success {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 32px 24px 8px;
+}
+.wf-success-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; font-size: 22px;
+}
+.wf-success-icon.blue   { background: var(--brand-a200); }
+.wf-success-icon.green  { background: rgba(74,222,128,.16); }
+.wf-success-icon.amber  { background: rgba(245,158,11,.14); }
+.wf-success-title { font-size: 18px; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
+.wf-success-sub   { font-size: 13.5px; color: var(--color-text-secondary); line-height: 1.5; max-width: 300px; }
+
+/* Deposit highlight pulse */
+.right-panel.deposit-highlight {
+  border-color: var(--brand-500) !important;
+  box-shadow: 0 0 0 3px var(--brand-a200);
+  transition: border-color .3s, box-shadow .3s;
+}
+@keyframes tradePulse {
+  0%   { box-shadow: 0 0 0 0px rgba(99,102,241,.40); }
+  60%  { box-shadow: 0 0 0 8px rgba(99,102,241,.06); }
+  100% { box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+}
+.right-panel.trade-highlight {
+  border-color: var(--brand-500) !important;
+  animation: tradePulse .55s ease-out forwards;
+}
+
+/* Go Account fund-first nudge inside trade panel */
+.trade-fund-nudge {
+  display: none;
+  margin: 0 0 14px;
+  background: rgba(99,102,241,.08);
+  border: 1px solid rgba(99,102,241,.22);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.trade-fund-nudge.visible { display: block; }
+.trade-fund-nudge-title {
+  font-size: 13px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;
+}
+.trade-fund-nudge-body {
+  font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 10px;
+}
+.trade-fund-nudge-cta {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 500; color: var(--brand-500);
+  background: none; border: 1px solid var(--brand-500);
+  border-radius: 7px; padding: 5px 11px; cursor: pointer;
+  transition: background .14s; font-family: inherit;
+}
+.trade-fund-nudge-cta:hover { background: rgba(99,102,241,.08); }
+
+/* Get Started — locked / in-progress states */
+.gs-action.locked {
+  opacity: 0.5; cursor: default;
+}
+.gs-action.locked .gs-action-start { opacity: .45; pointer-events: none; }
+.gs-action-lock-note {
+  font-size: 11px; color: var(--color-text-muted);
+  margin-top: 5px; display: flex; align-items: center; gap: 4px;
+}
+/* lock badge on the pill area */
+.gs-action-lock-badge {
+  display: none; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--color-text-muted);
+}
+.gs-action.locked .gs-action-lock-badge { display: flex; }
+.gs-action.locked .gs-action-pill { display: none; }
+.gs-action.active .gs-action-pill-dot {
+  animation: gs-pulse 1.2s ease-in-out infinite;
+}
+@keyframes gs-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+.for-you-section {
+  margin-bottom: 32px;
+}
+.for-you-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.for-you-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.btn-close-foryou {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border);
+  background: var(--color-level2);
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.btn-close-foryou:hover { border-color: var(--color-border-strong); background: var(--color-level3); }
+
+.for-you-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.for-you-card {
+  position: relative;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 18px 18px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: border-color .15s;
+}
+.for-you-card:hover { border-color: var(--color-border-strong); }
+.for-you-card-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 22px; height: 22px; border-radius: 50%; border: none;
+  background: transparent; color: var(--color-text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.for-you-card-close:hover { background: var(--color-level4); color: var(--color-text); }
+.for-you-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--brand-a100);
+  border: 1px solid var(--brand-a200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.for-you-card-body { flex: 1; }
+.for-you-card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+.for-you-card-desc { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 10px; }
+.for-you-card-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--brand-400);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s;
+}
+.for-you-card-link:hover { color: var(--white); }
+
+/* ─── Balances section ───────────────────────────────────────────── */
+.balances-section {}
+.balances-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+.balances-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.balances-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.balances-empty-desc {
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+}
+.btn-deposit-cta {
+  padding: 10px 28px;
+  background: var(--brand-500);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-deposit-cta:hover { background: var(--brand-700); }
+
+/* ─── Right Panel (Trade card — sticky) ─────────────────────────── */
+.right-panel {
+  width: 296px;
+  flex-shrink: 0;
+  background: var(--color-level1);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  margin: 28px 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 28px;
+  align-self: flex-start;
+  overflow: hidden;
+}
+
+/* ─── Trade Card ─────────────────────────────────────────────────── */
+/* fallback for --color-error if not set */
+:root { --color-error: #E53E3E; }
+
+/* Top bar: pill toggle + order type pill */
+.trade-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 14px 12px;
+  flex-shrink: 0;
+}
+.trade-pill-toggle {
+  display: flex; align-items: center;
+  background: var(--color-level2);
+  border-radius: 99px;
+  padding: 3px;
+  gap: 2px;
+}
+.trade-tab {
+  padding: 6px 18px;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  font-size: 13.5px; font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.trade-tab.active {
+  background: var(--color-level4);
+  color: var(--color-text);
+}
+.trade-order-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 6px 12px;
+  font-size: 13px; font-weight: 600; color: var(--color-text);
+  cursor: pointer; transition: border-color .15s;
+}
+.trade-order-pill:hover { border-color: var(--color-border-strong); }
+
+.trade-body { padding: 0 14px 18px; flex: 1; display: flex; flex-direction: column; gap: 0; }
+
+/* Section label */
+.trade-section-label {
+  font-size: 12.5px; color: var(--color-text-muted);
+  margin-bottom: 6px; margin-top: 14px;
+}
+
+/* Asset / payment selector rows */
+.trade-selector-row {
+  display: flex; align-items: center;
+  background: var(--color-level2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background .15s;
+  gap: 10px;
+}
+.trade-selector-row:hover { background: var(--color-level3); }
+.trade-coin-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #F7931A;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.trade-selector-info { flex: 1; min-width: 0; }
+.trade-selector-name { font-size: 14px; font-weight: 700; color: var(--color-text); }
+.trade-selector-sub  { font-size: 12px; color: var(--color-text-muted); margin-top: 1px; }
+.trade-selector-right { text-align: right; flex-shrink: 0; }
+.trade-selector-price { font-size: 14px; font-weight: 700; color: var(--color-text); }
+.trade-selector-price-label { font-size: 11.5px; color: var(--color-text-muted); margin-top: 1px; }
+.trade-selector-chevron { color: var(--color-text-muted); flex-shrink: 0; }
+
+/* Payment method row (no coin icon) */
+.trade-pay-label {
+  flex: 1; font-size: 14px; color: var(--color-text-muted);
+}
+
+/* Large amount display */
+.trade-amount-area {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding: 24px 0 8px;
+  cursor: text;
+}
+.trade-amount-display {
+  display: flex; align-items: baseline; gap: 6px;
+  position: relative;
+}
+.trade-amount-number {
+  font-size: 52px; font-weight: 300;
+  color: var(--color-text-muted);
+  line-height: 1; letter-spacing: -2px;
+  min-width: 32px; text-align: right;
+}
+.trade-amount-number.has-value { color: var(--color-text); }
+.trade-amount-currency {
+  font-size: 52px; font-weight: 300; letter-spacing: -2px;
+  color: var(--color-text-muted); line-height: 1;
+}
+/* Hidden real input behind display */
+.trade-amount-input-hidden {
+  position: absolute; inset: 0; opacity: 0;
+  font-size: 52px; border: none; background: transparent;
+  outline: none; width: 100%; cursor: text;
+}
+.trade-amount-input-hidden::-webkit-outer-spin-button,
+.trade-amount-input-hidden::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* Conversion + Max row */
+.trade-conv-row {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; margin-top: 10px;
+}
+.trade-conv-text {
+  font-size: 13px; color: var(--color-text-muted);
+}
+.trade-swap-btn {
+  background: none; border: none; color: var(--color-text-muted);
+  cursor: pointer; display: flex; align-items: center; padding: 0;
+  transition: color .15s;
+}
+.trade-swap-btn:hover { color: var(--color-text); }
+.trade-max-pill {
+  background: var(--color-level2);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 4px 12px;
+  font-size: 12.5px; font-weight: 600; color: var(--color-text);
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.trade-max-pill:hover { border-color: var(--color-border-strong); background: var(--color-level3); }
+
+/* Advanced trading link */
+.trade-advanced-link {
+  display: block; text-align: right;
+  font-size: 13px; font-weight: 500; color: var(--color-primary);
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; padding: 10px 0 14px;
+  transition: opacity .15s;
+}
+.trade-advanced-link:hover { opacity: .75; }
+
+/* CTA */
+.trade-cta-btn {
+  width: 100%;
+  padding: 14px 0;
+  border: none;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  background: var(--brand-500); color: #fff;
+}
+.trade-cta-btn:hover:not(:disabled)  { opacity: .88; }
+.trade-cta-btn:active:not(:disabled) { transform: scale(.98); }
+.trade-cta-btn:disabled { background: var(--color-level3); color: var(--color-text-muted); cursor: not-allowed; opacity: 1; }
+.trade-cta-btn.sell-cta:not(:disabled) { background: var(--color-error, #E53E3E); }
+
+/* ─── First-time highlight pulse ─────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(61,101,240,.35); }
+  70%  { box-shadow: 0 0 0 8px rgba(61,101,240,0); }
+  100% { box-shadow: 0 0 0 0 rgba(61,101,240,0); }
+}
+.first-time-highlight {
+  animation: pulse-ring 2.4s ease-out 1.2s 2;
+}
+
+/* ─── Feature Walkthrough Stepper ───────────────────────────────── */
+/* ── Stepper tooltip card ─────────────────────────────────────────── */
+.stepper-card {
+  position: fixed;
+  width: 340px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 1px 4px rgba(0,0,0,.08);
+  z-index: 900;
+  animation: stepperIn .22s cubic-bezier(.16,1,.3,1);
+}
+@keyframes stepperIn {
+  from { opacity: 0; transform: translateY(6px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.stepper-card.hidden { display: none; }
+
+/* Upward-pointing caret */
+.stepper-caret {
+  position: absolute;
+  top: -10px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 11px solid #FFFFFF;
+  filter: drop-shadow(0 -2px 2px rgba(0,0,0,.06));
+}
+
+.stepper-inner { padding: 20px 20px 16px; }
+
+/* Title row */
+.stepper-title-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stepper-title {
+  font-size: 16px; font-weight: 700;
+  color: #0D0E1C; line-height: 1.3;
+}
+.stepper-dismiss-btn {
+  background: none; border: none; cursor: pointer;
+  color: #9099BB; padding: 0 0 0 12px; line-height: 1;
+  font-size: 20px; flex-shrink: 0; transition: color .15s;
+}
+.stepper-dismiss-btn:hover { color: #0D0E1C; }
+
+/* Body text */
+.stepper-step-body {
+  font-size: 14px; line-height: 1.6;
+  color: rgba(13,14,28,.55); margin-bottom: 18px;
+}
+
+/* Footer: < dots > */
+.stepper-footer {
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+.stepper-arrow {
+  background: none; border: none; cursor: pointer;
+  color: var(--brand-500); font-size: 20px;
+  padding: 4px 6px; line-height: 1;
+  transition: opacity .15s; font-family: inherit;
+}
+.stepper-arrow:disabled { opacity: .25; cursor: default; }
+.stepper-dots { display: flex; gap: 7px; align-items: center; }
+.stepper-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #D6DAF0; transition: background .2s;
+}
+.stepper-dot.active { background: var(--brand-500); }
+body.light-mode .stepper-skip-btn { color: rgba(13,14,28,.38); }
+body.light-mode .stepper-skip-btn:hover { color: rgba(13,14,28,.6); }
+
+/* ─── Tooltip ─────────────────────────────────────────────────────── */
+.tooltip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--brand-a200);
+  border: 1px solid var(--brand-a200);
+  border-radius: 20px;
+  padding: 3px 10px 3px 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brand-400);
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.tooltip-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brand-400);
+}
+</style>
+</head>
+<body class="light-mode">
+
+<div class="app">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">
+          <svg width="16" height="18" viewBox="0 0 32 36" fill="none">
+            <path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="white"/>
+          </svg>
+        </div>
+        <span class="sidebar-logo-text">BitGo</span>
+      </div>
+      <button class="sidebar-toggle" title="Toggle sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="sidebar-search" onclick="void(0)">
+      <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="sidebar-search-text">Search</span>
+      <span class="sidebar-search-kbd">
+        <span class="kbd">⌘</span>
+        <span class="kbd">K</span>
+      </span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav">
+      <div class="nav-item active">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </span>
+        <span class="nav-item-label">Home</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </span>
+        <span class="nav-item-label">Portfolio</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </span>
+        <span class="nav-item-label">Earn</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </span>
+        <span class="nav-item-label">Trade</span>
+      </div>
+
+      <div class="nav-section-label">More</div>
+
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+        <span class="nav-item-label">Prime</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </span>
+        <span class="nav-item-label">Mint</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        <span class="nav-item-label">Security</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </span>
+        <span class="nav-item-label">Reporting</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </span>
+        <span class="nav-item-label">Developers</span>
+      </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <div class="nav-item">
+        <span class="nav-item-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
+        <span class="nav-item-label">Help</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ WORKSPACE ════════════════════════════════════════════════ -->
+  <div class="workspace">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-enterprise">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Enterprise Name
+        <svg class="topbar-enterprise-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+
+      <div class="topbar-spacer"></div>
+
+      <button class="btn-move-funds">
+        <span class="btn-move-funds-label">Move Funds</span>
+        <span class="btn-move-funds-divider"></span>
+        <span class="btn-move-funds-arrow">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </button>
+
+      <button class="topbar-icon-btn" title="Messages">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </button>
+      <button class="topbar-icon-btn" title="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M4.93 4.93l1.41 1.41M21 12h-2M5 12H3M12 21v-2M12 5V3"/></svg>
+      </button>
+      <button class="topbar-icon-btn" title="Account">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+
+      <button class="theme-toggle topbar-icon-btn" style="border-radius:50%;" onclick="toggleTheme()" aria-label="Toggle light/dark mode">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </header>
+
+    <!-- Content -->
+    <div class="content-area">
+
+      <!-- Main panel -->
+      <main class="main-panel">
+
+        <!-- Get Started (Stripe-style) -->
+        <div class="gs-card" id="gsCard">
+          <div class="gs-card-header">
+            <div class="gs-card-title-row">
+              <div class="gs-card-title" id="gsCardTitle">Get Started with BitGo</div>
+              <button class="gs-card-close" id="gsCardClose" style="display:none" onclick="gsCardDismiss()" title="Dismiss">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="gs-card-sub" id="gsCardSub">Complete these steps to set up your account. Takes about 5 minutes.</div>
+          </div>
+
+          <div class="gs-actions">
+
+            <!-- Action 1: Create a Wallet -->
+            <div class="gs-action wallet" id="gsWallet">
+              <div class="gs-action-title-row">
+                <div class="gs-action-title">Create Your First Wallet</div>
+                <div class="gs-action-pill"><span class="gs-action-pill-dot"></span>2 min</div>
+                <span class="gs-action-done-check"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <button class="gs-action-start" onclick="gsLaunch('wallet')">Start <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+              </div>
+              <div class="gs-preview">
+                <svg class="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                <span class="gs-preview-img-label">Image placeholder</span>
+                <div class="gs-action-cta-row">
+                  <button class="gs-action-learn" onclick="showToast('Opening wallet documentation…')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Learn More</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action 2: Trade on Go Account -->
+            <div class="gs-action go-account" id="gsGoAccount">
+              <div class="gs-action-title-row">
+                <div class="gs-action-title">Trade on Go Account</div>
+                <div class="gs-action-pill"><span class="gs-action-pill-dot"></span>2 min</div>
+                <span class="gs-action-done-check"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <button class="gs-action-start" id="gsTradeBtn" onclick="gsLaunch('trade')">Start <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+              </div>
+              <div class="gs-preview">
+                <svg class="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                <span class="gs-preview-img-label">Image placeholder</span>
+                <div class="gs-action-cta-row">
+                  <button class="gs-action-learn" onclick="showToast('Opening Go Account documentation…')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Learn More</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action 3: Set Up First Policy -->
+            <div class="gs-action policy" id="gsPolicy">
+              <div class="gs-action-title-row">
+                <div class="gs-action-title">Configure Your First Policy</div>
+                <div class="gs-action-pill"><span class="gs-action-pill-dot"></span>3 min</div>
+                <span class="gs-action-done-check"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <button class="gs-action-start" onclick="gsLaunch('policy')">Start <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+              </div>
+              <div class="gs-preview">
+                <svg class="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                <span class="gs-preview-img-label">Image placeholder</span>
+                <div class="gs-action-cta-row">
+                  <button class="gs-action-learn" onclick="showToast('Opening policy documentation…')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Learn More</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Portfolio header -->
+        <div class="portfolio-header">
+          <div class="portfolio-value-block">
+            <div class="portfolio-label">Total Account Value</div>
+            <div class="portfolio-amount" id="portfolioTotal">$0</div>
+          </div>
+          <div class="asset-custody-toggle">
+            <button class="toggle-btn active" onclick="this.parentElement.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active')">Assets</button>
+            <button class="toggle-btn" onclick="this.parentElement.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active')">Custody</button>
+          </div>
+        </div>
+
+        <!-- Donut + value cards -->
+        <div class="portfolio-body">
+          <div class="donut-wrap">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <!-- Background ring -->
+              <circle class="donut-ring-bg" cx="100" cy="100" r="70" fill="none" stroke="#2D2F48" stroke-width="24"/>
+              <!-- Placeholder empty arc -->
+              <circle class="donut-ring-idle" cx="100" cy="100" r="70" fill="none" stroke="#383A54" stroke-width="24"
+                stroke-dasharray="9 431" stroke-dashoffset="0" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-center-text">
+              <span class="donut-center-label">Total</span>
+              <span class="donut-center-value" id="donutCenterVal">$0</span>
+            </div>
+          </div>
+
+          <div class="value-cards">
+            <div class="value-card" id="vcCashCard" onclick="openDepositFlow('cash')" title="Deposit Cash">
+              <div class="value-card-accent gold"></div>
+              <div class="value-card-body">
+                <div class="value-card-label">Cash</div>
+                <div class="value-card-amount" id="vcCashAmount">$0.00</div>
+              </div>
+              <div class="value-card-deposit-hint" id="vcCashHint">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 19 19 12"/></svg>
+                Deposit
+              </div>
+            </div>
+            <div class="value-card" id="vcCryptoCard" onclick="openDepositFlow('crypto')" title="Deposit Crypto">
+              <div class="value-card-accent blue"></div>
+              <div class="value-card-body">
+                <div class="value-card-label">Crypto</div>
+                <div class="value-card-amount" id="vcCryptoAmount">$0.00</div>
+              </div>
+              <div class="value-card-deposit-hint" id="vcCryptoHint">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 19 19 12"/></svg>
+                Deposit
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOR YOU section (hidden until Get Started complete) -->
+        <div class="for-you-section" id="for-you-section" style="display:none;">
+          <div class="for-you-header">
+            <span class="for-you-label">
+              For You
+              <span class="tooltip-badge"><span class="tooltip-dot"></span>New</span>
+            </span>
+          </div>
+          <div class="for-you-cards" id="forYouCards">
+            <!-- Warm wallet: speed + security -->
+            <div class="for-you-card first-time-highlight" id="fyCard1">
+              <button class="for-you-card-close" onclick="fyDismissCard('fyCard1')" title="Dismiss">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <div class="for-you-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
+              <div class="for-you-card-body">
+                <div class="for-you-card-title">Add a Warm Wallet</div>
+                <div class="for-you-card-desc">Want both speed and security? Warm wallets automate signing for faster settlements while keeping multi-sig protection in place.</div>
+                <a class="for-you-card-link" onclick="walletFlowOpen()">Create Warm Wallet →</a>
+              </div>
+            </div>
+            <!-- Staking -->
+            <div class="for-you-card first-time-highlight" id="fyCard2" style="animation-delay: .18s;">
+              <button class="for-you-card-close" onclick="fyDismissCard('fyCard2')" title="Dismiss">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <div class="for-you-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+              </div>
+              <div class="for-you-card-body">
+                <div class="for-you-card-title">Start Earning with Staking</div>
+                <div class="for-you-card-desc">Put idle assets to work. BitGo supports institutional staking for ETH, SOL, and more — with slashing protection and on-chain reporting.</div>
+                <a class="for-you-card-link" onclick="showToast('Staking coming soon')">Explore Staking →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Balances (hidden until funds exist) -->
+        <div class="balances-section" id="balancesSection" style="display:none">
+          <div class="balances-title">Balances</div>
+          <div class="balances-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.4" style="margin-bottom:14px;opacity:.4;">
+              <rect x="2" y="5" width="20" height="14" rx="3"/>
+              <circle cx="12" cy="12" r="3"/>
+              <line x1="6" y1="12" x2="6.01" y2="12" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <div class="balances-empty-title">No Balances Yet</div>
+            <div class="balances-empty-desc">Deposit USD to fund your account and start trading.</div>
+            <button class="btn-deposit-cta">Deposit</button>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Right panel -->
+      <aside class="right-panel" id="tradePanel">
+
+        <!-- Top: pill toggle + Market pill -->
+        <div class="trade-topbar">
+          <div class="trade-pill-toggle">
+            <button class="trade-tab active" id="tradeBuyTab" onclick="tradeTab(this,'buy')">Buy</button>
+            <button class="trade-tab"        id="tradeSellTab" onclick="tradeTab(this,'sell')">Sell</button>
+          </div>
+          <button class="trade-order-pill" onclick="showToast('Order type selector coming soon')">
+            Market
+            <svg width="10" height="7" viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5 5-5"/></svg>
+          </button>
+        </div>
+
+        <div class="trade-body">
+
+          <!-- Go Account funding nudge (always visible until funded) -->
+          <div class="trade-fund-nudge visible" id="tradeFundNudge">
+            <div class="trade-fund-nudge-title">Fund your Go Account first</div>
+            <div class="trade-fund-nudge-body">You need funds in your Go Account to place trades. Deposit cash or crypto to get started.</div>
+            <button class="trade-fund-nudge-cta" onclick="openDepositFlow('cash'); document.getElementById('tradeFundNudge').classList.remove('visible')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 19 19 12"/></svg>
+              Deposit
+            </button>
+          </div>
+
+          <!-- Buy: asset selector -->
+          <div class="trade-section-label" id="tradeSectionLabel">Buy</div>
+          <div class="trade-selector-row" onclick="tradeCyclePair()">
+            <div class="trade-coin-icon" id="tradeCoinIcon">₿</div>
+            <div class="trade-selector-info">
+              <div class="trade-selector-name" id="tradePairName">Bitcoin</div>
+              <div class="trade-selector-sub"  id="tradePairSub">BTC</div>
+            </div>
+            <div class="trade-selector-right">
+              <div class="trade-selector-price" id="tradePrice">$68,970.0</div>
+              <div class="trade-selector-price-label">Price</div>
+            </div>
+            <svg class="trade-selector-chevron" width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
+          </div>
+
+          <!-- Pay with -->
+          <div class="trade-section-label">Pay with</div>
+          <div class="trade-selector-row" id="tradePayRow" onclick="tradeSelectPayment()">
+            <span class="trade-pay-label" id="tradePayLabel">Select Payment Method</span>
+            <svg class="trade-selector-chevron" width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
+          </div>
+
+          <!-- Large amount display -->
+          <div class="trade-amount-area" onclick="document.getElementById('tradeAmountInput').focus()">
+            <div class="trade-amount-display">
+              <span class="trade-amount-number" id="tradeAmountDisplay">0</span>
+              <span class="trade-amount-currency" id="tradeCurrencyLabel">USD</span>
+              <input class="trade-amount-input-hidden" id="tradeAmountInput" type="number" min="0"
+                oninput="tradeCalc()" />
+            </div>
+          </div>
+
+          <!-- Conversion + swap + Max -->
+          <div class="trade-conv-row">
+            <span class="trade-conv-text" id="tradeConvText">= 0 BTC</span>
+            <button class="trade-swap-btn" onclick="tradeCurrencyFlip()" title="Swap currency">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+            </button>
+            <button class="trade-max-pill" onclick="tradeQuick(1)">Max</button>
+          </div>
+
+          <!-- Advanced trading -->
+          <button class="trade-advanced-link" onclick="showToast('Advanced trading coming soon')">Advanced Trading</button>
+
+          <!-- CTA -->
+          <button class="trade-cta-btn" id="tradeCtaBtn" onclick="tradeSubmit()" disabled>Review Order</button>
+
+        </div>
+      </aside>
+
+    </div><!-- /content-area -->
+  </div><!-- /workspace -->
+</div><!-- /app -->
+
+<!-- ══ FEATURE WALKTHROUGH STEPPER ════════════════════════════════ -->
+<!-- ══ WORKFLOW MODALS ══════════════════════════════════════════════ -->
+
+<!-- ══ FULL-PAGE WALLET CREATION FLOW ══════════════════════════════ -->
+<div class="wallet-flow-page" id="walletFlowPage">
+  <div style="position:relative; flex:1; display:flex; flex-direction:column; overflow:hidden;">
+    <button class="wallet-flow-close" onclick="walletFlowClose()" title="Close">✕</button>
+    <div class="wallet-flow-inner">
+
+      <!-- Left sidebar: stepper -->
+      <div class="wallet-flow-sidebar">
+        <div class="wallet-flow-logo">
+          <div class="wallet-flow-logo-mark">
+            <svg width="16" height="18" viewBox="0 0 32 36" fill="none">
+              <path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="white"/>
+            </svg>
+          </div>
+          <div class="wallet-flow-logo-text">BitGo</div>
+        </div>
+
+        <div class="wallet-flow-steps">
+          <!-- Step 1 -->
+          <div class="wallet-flow-step active" id="wfStep1">
+            <div class="wallet-flow-step-left">
+              <div class="wallet-flow-step-circle">1</div>
+              <div class="wallet-flow-step-line"></div>
+            </div>
+            <div class="wallet-flow-step-content">
+              <div class="wallet-flow-step-title">Enter Wallet Details</div>
+              <div class="wallet-flow-step-desc">Select the asset you would like your wallet to hold. Some assets have special requirements.</div>
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="wallet-flow-step inactive" id="wfStep2">
+            <div class="wallet-flow-step-left">
+              <div class="wallet-flow-step-circle">2</div>
+              <div class="wallet-flow-step-line"></div>
+            </div>
+            <div class="wallet-flow-step-content">
+              <div class="wallet-flow-step-title">Select Key Custody Options</div>
+              <div class="wallet-flow-step-desc">Select who needs to be in control of wallet keys.</div>
+            </div>
+          </div>
+          <!-- Step 3 -->
+          <div class="wallet-flow-step inactive" id="wfStep3">
+            <div class="wallet-flow-step-left">
+              <div class="wallet-flow-step-circle">3</div>
+              <div class="wallet-flow-step-line"></div>
+            </div>
+            <div class="wallet-flow-step-content">
+              <div class="wallet-flow-step-title">Review Wallet</div>
+              <div class="wallet-flow-step-desc">View a summary of all your selections and create your wallet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="wallet-flow-main">
+        <div class="wallet-flow-body">
+          <div class="wallet-flow-step-heading">Enter Wallet Name</div>
+          <input class="wallet-flow-input" id="wfWalletName" type="text"
+            placeholder="Example: BTC Wallet Cold Storage" style="max-width:680px;" />
+
+          <div class="wallet-flow-step-subheading">What asset would you like to hold?</div>
+          <label class="wallet-flow-field-label">Select asset</label>
+          <div class="wallet-flow-select-wrap" style="max-width:680px;">
+            <select class="wallet-flow-select" id="wfWalletAsset">
+              <option value="" disabled selected>Select</option>
+              <option value="BTC">Bitcoin (BTC)</option>
+              <option value="ETH">Ethereum (ETH)</option>
+              <option value="USDC">USD Coin (USDC)</option>
+              <option value="SOL">Solana (SOL)</option>
+              <option value="XRP">Ripple (XRP)</option>
+              <option value="MATIC">Polygon (MATIC)</option>
+              <option value="LTC">Litecoin (LTC)</option>
+            </select>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <!-- Footer with Back + Continue -->
+        <div class="wallet-flow-footer">
+          <button class="wallet-flow-btn-back" onclick="walletFlowClose()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button class="wallet-flow-btn-continue" onclick="walletFlowCreate()">Create Wallet</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ WALLET DETAIL PAGE ══════════════════════════════════════════ -->
+<div class="wallet-detail-page" id="walletDetailPage">
+
+  <!-- Sidebar (same structure as dashboard, Wallets highlighted) -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">
+          <svg width="16" height="18" viewBox="0 0 32 36" fill="none">
+            <path d="M16 0L0 6v12c0 9.6 6.88 18.56 16 21 9.12-2.44 16-11.4 16-21V6L16 0Z" fill="white"/>
+          </svg>
+        </div>
+        <span class="sidebar-logo-text">BitGo</span>
+      </div>
+      <button class="sidebar-toggle" title="Toggle sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sidebar-search">
+      <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="sidebar-search-text">Search</span>
+      <span class="sidebar-search-kbd"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" onclick="snackbarBackToDashboard()">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span class="nav-item-label">Home</span>
+      </div>
+      <div class="nav-item" onclick="snackbarBackToDashboard()">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+        <span class="nav-item-label">Portfolio</span>
+      </div>
+      <!-- Wallets — active -->
+      <div class="nav-item active">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>
+        <span class="nav-item-label">Wallets</span>
+      </div>
+      <div class="nav-item" onclick="navVisit('Earn', this)">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+        <span class="nav-item-label">Earn</span>
+      </div>
+      <div class="nav-item" onclick="navVisit('Trade', this)">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+        <span class="nav-item-label">Trade</span>
+      </div>
+      <div class="nav-section-label">More</div>
+      <div class="nav-item">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        <span class="nav-item-label">Prime</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        <span class="nav-item-label">Security</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <span class="nav-item-label">Reporting</span>
+        <svg class="nav-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+        <span class="nav-item-label">Developers</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item">
+        <span class="nav-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <span class="nav-item-label">Help</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Workspace -->
+  <div class="wallet-detail-workspace">
+
+    <!-- Topbar with breadcrumb -->
+    <div class="wallet-detail-topbar">
+      <div class="wallet-detail-breadcrumb">
+        <span style="cursor:pointer;color:var(--color-text-secondary);" onclick="snackbarBackToDashboard()">Wallets</span>
+        <span class="wallet-detail-breadcrumb-sep">›</span>
+        <span class="wallet-detail-breadcrumb-current" id="wdBreadcrumb">My Wallet</span>
+      </div>
+      <div style="flex:1"></div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+
+  <div class="wallet-detail-body">
+    <div class="wallet-detail-header">
+      <div class="wallet-detail-title-group">
+        <!-- Wallet icon with coin badge -->
+        <div class="wallet-detail-icon-wrap">
+          <div class="wallet-detail-icon-bg">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <div class="wallet-detail-coin-badge" id="wdCoinBadge">₿</div>
+        </div>
+        <!-- Name, ID, roles -->
+        <div>
+          <div class="wallet-detail-name" id="wdName">My Wallet</div>
+          <div class="wallet-detail-id-row">
+            Wallet ID: <span id="wdWalletId">69e18c26…d90029cb</span>
+            <button class="wallet-detail-id-copy" title="Copy ID" onclick="showToast('Wallet ID copied')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+          <div class="wallet-detail-meta">
+            <div class="wallet-detail-badge">Admin</div>
+            <div class="wallet-detail-badge">Spender</div>
+            <div class="wallet-detail-badge">Viewer</div>
+          </div>
+        </div>
+      </div>
+      <!-- Avatar + menu -->
+      <div class="wallet-detail-header-right">
+        <div class="wd-avatar" id="wdAvatarEl">GT</div>
+        <button class="wd-menu-btn" onclick="showToast('Wallet options')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+    </div>
+
+
+    <div class="wallet-detail-stats">
+      <div class="wallet-detail-stat">
+        <div class="wallet-detail-stat-val">$0.00</div>
+        <div class="wallet-detail-stat-label">Balance (USD)</div>
+      </div>
+      <div class="wallet-detail-stat">
+        <div class="wallet-detail-stat-val" id="wdAssetBalance">0.000000 BTC</div>
+        <div class="wallet-detail-stat-label">Balance (Asset)</div>
+      </div>
+      <div class="wallet-detail-stat">
+        <div class="wallet-detail-stat-val">0</div>
+        <div class="wallet-detail-stat-label">Transactions</div>
+      </div>
+      <div class="wallet-detail-stat">
+        <div class="wallet-detail-stat-val">3/5</div>
+        <div class="wallet-detail-stat-label">Approvals required</div>
+      </div>
+    </div>
+
+    <div class="wallet-detail-tabs">
+      <div class="wallet-detail-tab active" onclick="wdSwitchTab(this)">Transactions</div>
+      <div class="wallet-detail-tab" onclick="wdSwitchTab(this)">Receive</div>
+      <div class="wallet-detail-tab" onclick="wdSwitchTab(this)">Send</div>
+      <div class="wallet-detail-tab" onclick="wdSwitchTab(this)">Settings</div>
+    </div>
+
+    <div class="wallet-detail-empty">
+      <div class="wallet-detail-empty-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2B4FD4" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      </div>
+      <div class="wallet-detail-empty-title">No Transactions Yet</div>
+      <div class="wallet-detail-empty-sub">Deposit funds to start using this wallet.</div>
+      <button class="wallet-detail-action-btn primary" id="wdDepositFundsBtn" style="margin-top:14px" onclick="openDepositFlow('cash')">+ Deposit Funds</button>
+    </div>
+  </div><!-- /wallet-detail-body -->
+  </div><!-- /wallet-detail-workspace -->
+</div><!-- /wallet-detail-page -->
+
+<!-- Deposit nudge callout (fixed, anchored to + Deposit Funds button) -->
+<div class="wd-deposit-callout" id="wdDepositCallout">
+  <div class="wd-deposit-callout-caret"></div>
+  <button class="wd-deposit-callout-dismiss" onclick="dismissDepositCallout()" title="Dismiss">×</button>
+  <div class="wd-deposit-callout-title">Fund your wallet</div>
+  <div class="wd-deposit-callout-body">Deposit crypto or fiat to start sending, receiving, and trading from this wallet.</div>
+  <button class="wd-deposit-callout-cta" onclick="showToast('Opening wallet documentation…')">Learn more about wallets</button>
+</div>
+
+<!-- Invite callout (fixed, anchored to avatar in header) -->
+<div class="wd-deposit-callout" id="wdInviteCallout">
+  <div class="wd-deposit-callout-caret"></div>
+  <button class="wd-deposit-callout-dismiss" onclick="dismissInviteCallout()" title="Dismiss">×</button>
+  <div class="wd-deposit-callout-title">Invite your team</div>
+  <div class="wd-deposit-callout-body">Add colleagues to manage approvals, policies, and reporting together.</div>
+  <button class="wd-deposit-callout-cta" onclick="wdBannerInvite(); dismissInviteCallout()">Invite Members</button>
+</div>
+
+<!-- Policies callout (fixed, anchored to avatar — shown after invite callout) -->
+<div class="wd-deposit-callout" id="wdPoliciesCallout">
+  <div class="wd-deposit-callout-caret"></div>
+  <button class="wd-deposit-callout-dismiss" onclick="dismissPoliciesCallout()" title="Dismiss">×</button>
+  <div class="wd-deposit-callout-title">Secured by 2 default policies</div>
+  <div class="wd-deposit-callout-body">Your wallet is protected by BitGo's default transaction approval and spend limit policies.</div>
+  <div class="wd-callout-actions">
+    <button class="wd-callout-btn-primary" onclick="showToast('Opening policies…'); dismissPoliciesCallout()">View</button>
+    <button class="wd-callout-btn-ghost" onclick="showToast('Opening policy documentation…'); dismissPoliciesCallout()">Learn More</button>
+  </div>
+</div>
+
+<!-- ══ SNACKBAR ════════════════════════════════════════════════════ -->
+<div class="snackbar" id="walletSnackbar">
+  <span class="snackbar-text">Wallet created.</span>
+  <button class="snackbar-cta" onclick="snackbarBackToDashboard()">Back to Dashboard</button>
+  <button class="snackbar-close" onclick="snackbarDismiss()" title="Dismiss">✕</button>
+</div>
+
+<!-- Deposit redirect is handled via panel highlight — no separate modal needed -->
+
+<!-- Recommended Policies Modal -->
+<div class="wf-overlay" id="policyRecommendedOverlay" onclick="wfOverlayClose(event,'policyRecommendedOverlay')">
+  <div class="wf-modal" style="max-width:520px">
+    <div class="wf-modal-header">
+      <div class="wf-modal-title">Recommended Policies</div>
+      <button class="wf-modal-close" onclick="wfClose('policyRecommendedOverlay')">✕</button>
+    </div>
+    <div class="wf-modal-body">
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin:0 0 20px;">
+        Tailored to your enterprise profile and practices from similar organizations. Review or modify as needed, then choose which ones to publish.
+      </p>
+
+      <!-- Card 1: High-Value Transaction Approval -->
+      <div class="policy-rec-card" id="prc1" onclick="policyRecToggle('prc1')">
+        <div class="policy-rec-card-header">
+          <div class="policy-rec-checkbox">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="policy-rec-card-title-group">
+            <div class="policy-rec-card-title">High-Value Transaction Approval</div>
+            <div class="policy-rec-card-desc">Require Video ID for transactions over $100,000</div>
+          </div>
+          <svg class="policy-rec-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="policy-rec-insight">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Recommended based on your enterprise's expected transaction patterns
+        </div>
+        <button class="policy-rec-edit-btn" onclick="event.stopPropagation(); showToast('Edit policy coming soon')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+      </div>
+
+      <!-- Card 2: Multi-Signature for Cold Wallets -->
+      <div class="policy-rec-card" id="prc2" onclick="policyRecToggle('prc2')">
+        <div class="policy-rec-card-header">
+          <div class="policy-rec-checkbox">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="policy-rec-card-title-group">
+            <div class="policy-rec-card-title">Multi-Signature for Cold Wallets</div>
+            <div class="policy-rec-card-desc">Require 3 approvals from Wallet Admin for cold wallet transactions above 10% of wallet balance</div>
+          </div>
+          <svg class="policy-rec-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="policy-rec-insight">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Best practice for securing high-value cold storage assets
+        </div>
+        <button class="policy-rec-edit-btn" onclick="event.stopPropagation(); showToast('Edit policy coming soon')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+      </div>
+
+      <!-- Card 3: Weekend Transaction Freeze -->
+      <div class="policy-rec-card" id="prc3" onclick="policyRecToggle('prc3')">
+        <div class="policy-rec-card-header">
+          <div class="policy-rec-checkbox">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="policy-rec-card-title-group">
+            <div class="policy-rec-card-title">Weekend Transaction Freeze</div>
+            <div class="policy-rec-card-desc">Block all transactions during weekends</div>
+          </div>
+          <svg class="policy-rec-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="policy-rec-insight">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Reduces risk during low-supervision periods
+        </div>
+        <button class="policy-rec-edit-btn" onclick="event.stopPropagation(); showToast('Edit policy coming soon')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+      </div>
+
+      <!-- Create Manually — left aligned -->
+      <button class="policy-create-manually" onclick="event.stopPropagation(); wfClose('policyRecommendedOverlay'); setTimeout(openPolicyBuilderManual, 120)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Manually
+      </button>
+
+      <!-- Footer -->
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button class="wf-btn-cancel" onclick="wfClose('policyRecommendedOverlay')">Cancel</button>
+        <button class="wf-btn-primary" id="policyPublishBtn" onclick="submitPolicyRec()" disabled style="opacity:.45;cursor:default">Publish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Builder Modal (manual) -->
+<div class="wf-overlay" id="policyBuilderOverlay" onclick="wfOverlayClose(event,'policyBuilderOverlay')">
+  <div class="wf-modal">
+    <div class="wf-modal-header">
+      <div class="wf-modal-title">Create a Policy</div>
+      <button class="wf-modal-close" onclick="wfClose('policyBuilderOverlay')">✕</button>
+    </div>
+    <div class="wf-modal-body">
+      <p style="font-size:13.5px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:20px;">
+        Policies automatically enforce rules on wallet activity — like spending limits, required approvals, and allowed addresses.
+      </p>
+      <div class="wf-field">
+        <label class="wf-label">Policy name</label>
+        <input class="wf-input" type="text" placeholder="e.g. Daily spending limit" id="policyName" />
+      </div>
+      <div class="wf-field">
+        <label class="wf-label">Policy type</label>
+        <select class="wf-select" id="policyType" onchange="updatePolicyPreview()">
+          <option value="spending">Spending Limit — cap daily or per-transaction spend</option>
+          <option value="approval">Approval Workflow — require N-of-M co-signers</option>
+          <option value="allowlist">Address Allowlist — restrict withdrawals to known addresses</option>
+          <option value="velocity">Velocity Limit — flag unusual transaction frequency</option>
+        </select>
+      </div>
+      <div class="wf-field" id="policyPreview" style="background:var(--color-level2);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--color-text-secondary);line-height:1.5;">
+        Cap the maximum amount that can be spent in a single day or per transaction. Exceeding the limit triggers an alert or blocks the transaction.
+      </div>
+      <div class="wf-field">
+        <label class="wf-label">Apply to</label>
+        <select class="wf-select">
+          <option>This wallet only</option>
+          <option>All wallets in this organization</option>
+          <option>Enterprise-wide</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="wf-btn-cancel" onclick="wfClose('policyBuilderOverlay')">Cancel</button>
+        <button class="wf-btn-primary" onclick="submitPolicy()">Create Policy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="wf-overlay" id="depositOverlay" onclick="wfOverlayClose(event,'depositOverlay')">
+  <div class="wf-modal" style="max-width:480px">
+    <div class="wf-modal-header">
+      <div class="wf-modal-title">Deposit Funds</div>
+      <button class="wf-modal-close" onclick="wfClose('depositOverlay')">✕</button>
+    </div>
+    <div class="wf-modal-body">
+      <!-- Asset type tabs -->
+      <div class="dep-tabs">
+        <button class="dep-tab" id="depTabCash" onclick="depSwitchTab('cash')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Cash
+        </button>
+        <button class="dep-tab" id="depTabCrypto" onclick="depSwitchTab('crypto')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9h4a1.5 1.5 0 0 1 0 3H9.5m4.5 0h-4.5m0 0v6"/></svg>
+          Crypto
+        </button>
+      </div>
+
+      <!-- Cash panel -->
+      <div class="dep-panel" id="depPanelCash">
+        <div class="wf-field">
+          <label class="wf-label">Amount</label>
+          <input class="wf-input" type="number" placeholder="0.00" id="depCashAmount" />
+        </div>
+        <div class="wf-field">
+          <label class="wf-label">From bank account</label>
+          <select class="wf-select" id="depCashSource">
+            <option value="">Select an account…</option>
+            <option value="checking">Chase Checking ····4242</option>
+            <option value="savings">Chase Savings ····8819</option>
+            <option value="wire">Wire Transfer</option>
+          </select>
+        </div>
+        <div class="wf-field">
+          <label class="wf-label">Currency</label>
+          <select class="wf-select">
+            <option>USD – US Dollar</option>
+            <option>EUR – Euro</option>
+            <option>GBP – British Pound</option>
+          </select>
+        </div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px">Funds typically arrive within 1–3 business days via ACH.</p>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="wf-btn-cancel" onclick="wfClose('depositOverlay')">Cancel</button>
+          <button class="wf-btn-primary" onclick="submitDeposit('cash')">Deposit Cash</button>
+        </div>
+      </div>
+
+      <!-- Crypto panel -->
+      <div class="dep-panel" id="depPanelCrypto">
+        <div class="wf-field">
+          <label class="wf-label">Asset</label>
+          <select class="wf-select" id="depCryptoAsset" onchange="depUpdateAddress()">
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="ETH">Ethereum (ETH)</option>
+            <option value="USDC">USD Coin (USDC)</option>
+            <option value="SOL">Solana (SOL)</option>
+          </select>
+        </div>
+        <div class="wf-field">
+          <label class="wf-label">Network</label>
+          <select class="wf-select" id="depCryptoNetwork">
+            <option>Bitcoin Mainnet</option>
+          </select>
+        </div>
+        <div class="wf-field">
+          <label class="wf-label">Deposit address</label>
+          <div class="dep-address-box">
+            <span id="depCryptoAddr">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>
+            <button class="dep-copy-btn" onclick="copyDepositAddr()" title="Copy address">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px">Only send <span id="depCryptoAssetName">BTC</span> to this address. Sending other assets may result in permanent loss.</p>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="wf-btn-cancel" onclick="wfClose('depositOverlay')">Cancel</button>
+          <button class="wf-btn-primary" onclick="copyDepositAddr()">Copy Address</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Go Account Modal -->
+<div class="wf-overlay" id="wfGoAccOverlay" onclick="wfOverlayClose(event,'wfGoAccOverlay')">
+  <div class="wf-modal" id="wfGoAccModal">
+    <div class="wf-modal-header">
+      <div class="wf-modal-title">Activate Go Account</div>
+      <button class="wf-modal-close" onclick="wfClose('wfGoAccOverlay')">✕</button>
+    </div>
+    <div class="wf-modal-body" id="wfGoAccBody">
+      <p style="font-size:13.5px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:20px;">
+        Go Account gives you a unified view of your portfolio, real-time analytics, PnL reporting, and cross-asset visibility across all your BitGo wallets.
+      </p>
+      <div class="wf-field">
+        <label class="wf-label">Reporting currency</label>
+        <select class="wf-select">
+          <option>USD — US Dollar</option>
+          <option>EUR — Euro</option>
+          <option>GBP — British Pound</option>
+          <option>JPY — Japanese Yen</option>
+        </select>
+      </div>
+      <div class="wf-field">
+        <label class="wf-label">Fiscal year start</label>
+        <select class="wf-select">
+          <option>January (Calendar year)</option>
+          <option>April</option>
+          <option>July</option>
+          <option>October</option>
+        </select>
+      </div>
+      <div class="wf-field">
+        <label class="wf-label">Data access</label>
+        <div class="wf-radio-group">
+          <div class="wf-radio-option selected" onclick="wfSelectRadio(this)">
+            <div class="wf-radio-circle"></div>
+            <div><div class="wf-radio-text-title">All Wallets in This Organization</div><div class="wf-radio-text-sub">Aggregate View Across All Accounts</div></div>
+          </div>
+          <div class="wf-radio-option" onclick="wfSelectRadio(this)">
+            <div class="wf-radio-circle"></div>
+            <div><div class="wf-radio-text-title">Selected Wallets Only</div><div class="wf-radio-text-sub">Choose Specific Wallets to Include</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-divider"></div>
+      <div class="wf-footer">
+        <button class="wf-btn-cancel" onclick="wfClose('wfGoAccOverlay')">Cancel</button>
+        <button class="wf-btn-primary amber" onclick="wfCompleteGoAcc()">Activate Go Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stepper-card hidden" id="stepperCard">
+  <div class="stepper-caret" id="stepperCaret"></div>
+  <div class="stepper-inner">
+    <div class="stepper-title-row">
+      <span class="stepper-title" id="stepperTitle"></span>
+      <button class="stepper-dismiss-btn" onclick="dismissStepper()" title="Dismiss">×</button>
+    </div>
+    <div class="stepper-step-body" id="stepperBody"></div>
+    <div class="stepper-footer">
+      <button class="stepper-arrow" id="stepperPrev" onclick="stepperNav(-1)">&#8249;</button>
+      <div class="stepper-dots" id="stepperDots"></div>
+      <button class="stepper-arrow" id="stepperNext" onclick="stepperNav(1)">&#8250;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Trade Card Logic ──────────────────────────────────────────── */
+const TRADE_PAIRS = [
+  { icon: '₿', name: 'BTC / USD', sub: 'Bitcoin',  price: 103214, iconBg: '#F7931A', change: '+2.4%', pos: true },
+  { icon: 'Ξ', name: 'ETH / USD', sub: 'Ethereum', price: 3812,   iconBg: '#627EEA', change: '+1.1%', pos: true },
+  { icon: 'S', name: 'SOL / USD', sub: 'Solana',   price: 182,    iconBg: '#9945FF', change: '-0.8%', pos: false },
+];
+let _tradePairIdx = 0;
+let _tradeMode    = 'buy'; // 'buy' | 'sell'
+let _tradeCcy     = 'USD'; // 'USD' | coin
+let _tradePaymentSelected = false;
+
+function tradeTab(btn, mode) {
+  _tradeMode = mode;
+  document.querySelectorAll('.trade-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const label = document.getElementById('tradeSectionLabel');
+  if (label) label.textContent = mode === 'buy' ? 'Buy' : 'Sell';
+  tradeCalc();
+}
+
+function tradeCyclePair() {
+  _tradePairIdx = (_tradePairIdx + 1) % TRADE_PAIRS.length;
+  const p = TRADE_PAIRS[_tradePairIdx];
+  const coin = p.name.split(' / ')[0];
+  document.getElementById('tradeCoinIcon').textContent = p.icon;
+  document.getElementById('tradeCoinIcon').style.background = p.iconBg;
+  document.getElementById('tradePairName').textContent = p.name;
+  document.getElementById('tradePairSub').textContent  = p.sub;
+  document.getElementById('tradePrice').textContent = '$' + p.price.toLocaleString();
+  if (_tradeCcy !== 'USD') { _tradeCcy = coin; document.getElementById('tradeCurrencyLabel').textContent = coin; }
+  document.getElementById('tradeAmountInput').value = '';
+  tradeCalc();
+}
+
+function tradeCurrencyFlip() {
+  const pair = TRADE_PAIRS[_tradePairIdx];
+  const coin = pair.name.split(' / ')[0];
+  _tradeCcy = _tradeCcy === 'USD' ? coin : 'USD';
+  document.getElementById('tradeCurrencyLabel').textContent = _tradeCcy;
+  document.getElementById('tradeAmountInput').value = '';
+  tradeCalc();
+}
+
+function tradeQuick(pct) {
+  const pair = TRADE_PAIRS[_tradePairIdx];
+  const balance = 12500; // mock available balance USD
+  const val = _tradeCcy === 'USD' ? (balance * pct).toFixed(2) : (balance * pct / pair.price).toFixed(6);
+  document.getElementById('tradeAmountInput').value = val;
+  tradeCalc();
+}
+
+function tradeSelectPayment() {
+  _tradePaymentSelected = true;
+  const label = document.getElementById('tradePayLabel');
+  if (label) label.textContent = 'USD · Checking ····4242';
+  // Selecting a payment method implies Go Account is funded — hide nudge
+  window._goAccountFunded = true;
+  const nudge = document.getElementById('tradeFundNudge');
+  if (nudge) nudge.classList.remove('visible');
+  tradeCalc();
+}
+
+function updateTradeCta() {
+  const raw = parseFloat(document.getElementById('tradeAmountInput').value) || 0;
+  const btn = document.getElementById('tradeCtaBtn');
+  if (!btn) return;
+  btn.disabled = !(raw > 0 && _tradePaymentSelected);
+}
+
+function tradeCalc() {
+  const pair  = TRADE_PAIRS[_tradePairIdx];
+  const coin  = pair.name.split(' / ')[0];
+  const raw   = parseFloat(document.getElementById('tradeAmountInput').value) || 0;
+  // Update the large display number
+  const dispEl = document.getElementById('tradeAmountDisplay');
+  if (dispEl) {
+    dispEl.textContent = raw > 0
+      ? (_tradeCcy === 'USD'
+          ? raw.toLocaleString('en-US', {minimumFractionDigits: raw % 1 ? 2 : 0, maximumFractionDigits: 2})
+          : raw.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 6}))
+      : '0';
+  }
+  // Update conversion text
+  const convEl = document.getElementById('tradeConvText');
+  if (convEl) {
+    if (raw <= 0) {
+      convEl.textContent = _tradeCcy === 'USD' ? '= 0 ' + coin : '= $0';
+    } else if (_tradeCcy === 'USD') {
+      const btcAmt = (raw / pair.price).toFixed(6);
+      convEl.textContent = '= ' + btcAmt + ' ' + coin;
+    } else {
+      const usdAmt = (raw * pair.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      convEl.textContent = '= $' + usdAmt;
+    }
+  }
+  updateTradeCta();
+
+  // Reflect in Get Started: mark trade step active while amount is entered
+  const tradeStep = document.getElementById('gsGoAccount');
+  if (tradeStep && !tradeStep.classList.contains('done')) {
+    tradeStep.classList.toggle('active', raw > 0);
+  }
+
+  // Typing directly into trade card means user has a funding source — dismiss nudge
+  if (raw > 0) {
+    window._goAccountFunded = true;
+    const nudge = document.getElementById('tradeFundNudge');
+    if (nudge) nudge.classList.remove('visible');
+  }
+}
+
+function tradeSubmit() {
+  const input = document.getElementById('tradeAmountInput');
+  const val = parseFloat(input.value) || 0;
+  if (!val) {
+    const area = document.querySelector('.trade-amount-area');
+    if (area) { area.style.outline = '2px solid var(--color-error)'; setTimeout(() => area.style.outline = '', 1200); }
+    return;
+  }
+  const pair  = TRADE_PAIRS[_tradePairIdx];
+  const coin  = pair.name.split(' / ')[0];
+  const dir   = _tradeMode === 'buy' ? 'purchased' : 'sold';
+  const usd   = _tradeCcy === 'USD' ? val : val * pair.price;
+  snackbarShowMsg(`Order placed — ${dir} ${coin} · $${usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+  window._gsMarkDone && window._gsMarkDone('gsGoAccount');
+  input.value = '';
+  _tradePaymentSelected = false;
+  const payLabel = document.getElementById('tradePayLabel');
+  if (payLabel) payLabel.textContent = 'Select Payment Method';
+  tradeCalc();
+}
+
+/* ─── Feature Walkthrough Stepper ───────────────────────────────── */
+const WALKTHROUGHS = {
+  'secure-assets': {
+    label: 'Secure & hold digital assets',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    steps: [
+      { title: 'Create your first wallet', body: 'Set up a cold storage or custody wallet to safely hold your digital assets with institutional-grade protection.', cta: 'Create Wallet' },
+      { title: 'Deposit funds', body: 'Copy your wallet address or scan the QR code to send assets in from any exchange or external wallet.', cta: 'Go to Deposit' },
+      { title: 'Set spending policies', body: 'Configure multi-sig approvals and daily spending limits to protect your holdings from unauthorized transfers.', cta: 'Set Up Policies' },
+    ]
+  },
+  'trade-earn': {
+    label: 'Trade & earn yield',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+    steps: [
+      { title: 'Access prime brokerage', body: 'Connect to BitGo\'s liquidity network or link exchange accounts for institutional-grade trading execution.', cta: 'Explore Trading' },
+      { title: 'Start earning yield', body: 'Stake ETH, SOL, and other supported assets directly from your custody wallet to earn passive income.', cta: 'View Staking' },
+      { title: 'Create a trading wallet', body: 'Set up a hot wallet optimized for faster settlement and active trading strategies.', cta: 'Create Wallet' },
+    ]
+  },
+  'payments': {
+    label: 'Move & settle funds',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    steps: [
+      { title: 'Join Go Network', body: 'Enable instant off-exchange settlement with counterparties — no on-chain fees, no settlement risk.', cta: 'Set Up Go Network' },
+      { title: 'Add stablecoin wallets', body: 'Create wallets for USDC, USDT, or other stablecoins to power your payment and settlement flows.', cta: 'Create Wallet' },
+      { title: 'Make your first transfer', body: 'Send funds to an external address or settle instantly with a counterparty in seconds.', cta: 'Move Funds' },
+    ]
+  },
+  'tokenize': {
+    label: 'Tokenize real world assets',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    steps: [
+      { title: 'Talk to your BitGo rep', body: 'RWA tokenization starts with a dedicated onboarding call to scope your issuance structure and compliance needs.', cta: 'Contact Us' },
+      { title: 'Set up your issuer wallet', body: 'Create a dedicated wallet to manage the full lifecycle of your tokenized assets and distributions.', cta: 'Create Wallet' },
+      { title: 'Configure compliance tools', body: 'Set up KYC/AML workflows, investor allowlists, and transfer restrictions for your token holders.', cta: 'View Compliance' },
+    ]
+  },
+  'ops-compliance': {
+    label: 'Manage team & stay compliant',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-400)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    steps: [
+      { title: 'Set up approval policies', body: 'Require multi-signature sign-off on large transactions and create time-locks to reduce operational risk.', cta: 'Create Policy' },
+      { title: 'Assign team roles', body: 'Invite teammates with the right permission levels — admins, spenders, viewers, and auditors.', cta: 'Manage Team' },
+      { title: 'Enable audit logging', body: 'Track every action across your organization with tamper-proof logs for compliance and reporting.', cta: 'View Reports' },
+    ]
+  },
+};
+
+let stepperGoals = [];
+let stepperGoalIdx = 0;
+let stepperStepIdx = 0;
+
+function initStepper() {
+  // No-op on page load — stepper is shown via triggerStepper() after flow
+  // completion or first visit to a product section
+}
+
+// Map of nav sections → walkthrough key (shown on first visit)
+const NAV_WALKTHROUGHS = {
+  'Wallets': 'secure-assets',
+  'Earn':    'trade-earn',
+  'Trade':   'trade-earn',
+  'Prime':   'payments',
+};
+// Track which nav walkthroughs have been seen this session
+const _seenNavWalkthroughs = new Set();
+
+function triggerStepper(goalKey, anchorEl) {
+  if (!WALKTHROUGHS[goalKey]) return;
+  if (_seenNavWalkthroughs.has(goalKey)) return;
+  _seenNavWalkthroughs.add(goalKey);
+  stepperGoals = [goalKey];
+  stepperGoalIdx = 0;
+  stepperStepIdx = 0;
+  renderStepper();
+
+  const card = document.getElementById('stepperCard');
+  if (!card) return;
+  const cardW = 340;
+
+  if (anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - cardW / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - cardW - 12));
+    card.style.left   = left + 'px';
+    card.style.top    = (rect.bottom + 14) + 'px';
+    card.style.bottom = '';
+    card.style.right  = '';
+    // Align caret over anchor center
+    const caretEl = document.getElementById('stepperCaret');
+    if (caretEl) {
+      const cx = (rect.left + rect.width / 2) - left;
+      caretEl.style.left      = Math.max(20, Math.min(cx, cardW - 20)) + 'px';
+      caretEl.style.transform = 'translateX(-50%)';
+    }
+  } else {
+    // Flow completion — bottom-left above sidebar
+    card.style.left   = '232px';
+    card.style.bottom = '32px';
+    card.style.top    = '';
+    card.style.right  = '';
+    const caretEl = document.getElementById('stepperCaret');
+    if (caretEl) { caretEl.style.left = '50%'; caretEl.style.transform = 'translateX(-50%)'; }
+  }
+
+  card.classList.remove('hidden');
+  card.style.animation = 'none';
+  requestAnimationFrame(() => { card.style.animation = ''; });
+}
+
+function navVisit(label, anchorEl) {
+  showToast(label + ' — coming soon');
+  const goalKey = NAV_WALKTHROUGHS[label];
+  if (goalKey) triggerStepper(goalKey, anchorEl);
+}
+
+function renderStepper() {
+  const goalKey = stepperGoals[stepperGoalIdx];
+  const wt = WALKTHROUGHS[goalKey];
+  const step = wt.steps[stepperStepIdx];
+  const totalSteps = wt.steps.length;
+
+  document.getElementById('stepperTitle').textContent = step.title;
+  document.getElementById('stepperBody').textContent  = step.body;
+
+  // Dots
+  document.getElementById('stepperDots').innerHTML = wt.steps.map((_, i) =>
+    `<div class="stepper-dot${i === stepperStepIdx ? ' active' : ''}"></div>`
+  ).join('');
+
+  // Nav arrows
+  document.getElementById('stepperPrev').disabled = stepperStepIdx === 0;
+  document.getElementById('stepperNext').disabled = stepperStepIdx === totalSteps - 1;
+}
+
+function stepperNav(dir) {
+  const wt = WALKTHROUGHS[stepperGoals[stepperGoalIdx]];
+  stepperStepIdx = Math.max(0, Math.min(wt.steps.length - 1, stepperStepIdx + dir));
+  renderStepper();
+}
+
+function nextGoal() {
+  if (stepperGoalIdx < stepperGoals.length - 1) {
+    stepperGoalIdx++;
+    stepperStepIdx = 0;
+    renderStepper();
+  } else {
+    dismissStepper();
+  }
+}
+
+function dismissStepper() {
+  const card = document.getElementById('stepperCard');
+  if (!card) return;
+  card.style.transition = 'opacity .18s, transform .18s';
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(6px) scale(.97)';
+  setTimeout(() => {
+    card.classList.add('hidden');
+    card.style.opacity = '';
+    card.style.transform = '';
+    card.style.transition = '';
+  }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', initStepper);
+
+/* ─── Get Started card ────────────────────────────────────────────── */
+(function() {
+  const GS_IDS = ['gsWallet', 'gsGoAccount', 'gsPolicy'];
+  // In-memory only — always starts fresh on page load, no stale state across refreshes
+  let _gsDone = [];
+
+  function gsRender() {
+    const done  = _gsDone;
+    const count = done.length;
+
+    GS_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (done.includes(id)) { el.classList.add('done'); el.classList.remove('locked', 'active'); }
+      else el.classList.remove('done');
+    });
+
+    // Reveal or hide For You based on completion
+    const foryou = document.getElementById('for-you-section');
+    if (count >= 3) {
+      // Update header to celebration state and show close button
+      const titleEl = document.getElementById('gsCardTitle');
+      const subEl   = document.getElementById('gsCardSub');
+      const closeBtn = document.getElementById('gsCardClose');
+      if (titleEl && titleEl.textContent !== 'Setup Complete') {
+        titleEl.textContent = 'Setup Complete';
+      }
+      if (subEl && subEl.dataset.updated !== '1') {
+        subEl.textContent = 'All essentials are active — your enterprise is ready to go.';
+        subEl.dataset.updated = '1';
+      }
+      if (closeBtn) closeBtn.style.display = '';
+      // Populate account value numbers and remove deposit hints
+      const cashAmt   = document.getElementById('vcCashAmount');
+      const cryptoAmt = document.getElementById('vcCryptoAmount');
+      if (cashAmt && cashAmt.textContent === '$0.00') {
+        cashAmt.textContent = '$250,000.00';
+        const cashCard = document.getElementById('vcCashCard');
+        if (cashCard) { cashCard.removeAttribute('onclick'); cashCard.removeAttribute('title'); cashCard.style.cursor = 'default'; }
+        const cashHint = document.getElementById('vcCashHint');
+        if (cashHint) cashHint.remove();
+      }
+      if (cryptoAmt && cryptoAmt.textContent === '$0.00') {
+        cryptoAmt.textContent = '$482,150.00';
+        const cryptoCard = document.getElementById('vcCryptoCard');
+        if (cryptoCard) { cryptoCard.removeAttribute('onclick'); cryptoCard.removeAttribute('title'); cryptoCard.style.cursor = 'default'; }
+        const cryptoHint = document.getElementById('vcCryptoHint');
+        if (cryptoHint) cryptoHint.remove();
+      }
+      const totalEl = document.getElementById('portfolioTotal');
+      if (totalEl && totalEl.textContent === '$0') totalEl.textContent = '$732,150.00';
+      const donutVal = document.getElementById('donutCenterVal');
+      if (donutVal && donutVal.textContent === '$0') donutVal.textContent = '$732K';
+      // Reveal For You section
+      if (foryou && foryou.style.display === 'none') {
+        foryou.style.opacity = '0';
+        foryou.style.display = '';
+        requestAnimationFrame(() => {
+          foryou.style.transition = 'opacity .4s ease';
+          foryou.style.opacity = '1';
+        });
+      } else if (foryou) { foryou.style.display = ''; }
+    } else {
+      if (foryou) foryou.style.display = 'none';
+    }
+  }
+
+  window._gsMarkDone = function(id) {
+    if (!_gsDone.includes(id)) _gsDone.push(id);
+    gsRender();
+  };
+
+  // Track whether Go Account has been funded (in-memory per session)
+  window._goAccountFunded = false;
+
+  function gsPulseTradePanel() {
+    const panel = document.getElementById('tradePanel');
+    if (!panel) return;
+    // re-trigger animation by removing and re-adding class
+    panel.classList.remove('trade-highlight');
+    void panel.offsetWidth; // reflow
+    panel.classList.add('trade-highlight');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => panel.classList.remove('trade-highlight'), 1600);
+
+    // If already funded, focus the amount input so user can start typing immediately
+    if (window._goAccountFunded) {
+      setTimeout(() => {
+        const input = document.getElementById('tradeAmountInput');
+        if (input) input.focus();
+      }, 500);
+    }
+  }
+
+  // gsLaunch: routes clicks to the right workflow
+  window.gsLaunch = function(type) {
+    if (type === 'wallet') {
+      walletFlowOpen();
+    } else if (type === 'trade') {
+      // Pulse panel and scroll into view — nudge is always visible until funded
+      gsPulseTradePanel();
+      const tradeEl = document.getElementById('gsGoAccount');
+      if (tradeEl && !tradeEl.classList.contains('done')) tradeEl.classList.add('active');
+    } else if (type === 'policy') {
+      openPolicyBuilder();
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Clear any stale GS state left from previous sessions
+    try { sessionStorage.removeItem('bitgo_gs_done_v1'); } catch(e) {}
+    gsRender();
+  });
+})();
+
+function fyDismissCard(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.style.transition = 'opacity .2s';
+  card.style.opacity = '0';
+  setTimeout(() => {
+    card.style.display = 'none';
+    // Hide the whole section if no cards remain visible
+    const remaining = document.querySelectorAll('#forYouCards .for-you-card:not([style*="display: none"])');
+    if (!remaining.length) document.getElementById('for-you-section').style.display = 'none';
+  }, 220);
+}
+
+function gsCardDismiss() {
+  const card = document.getElementById('gsCard');
+  if (!card) return;
+  card.style.transition = 'opacity .35s, transform .35s';
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(-8px)';
+  setTimeout(() => { card.style.display = 'none'; }, 360);
+}
+
+/* ─── Workflow modal helpers ──────────────────────────────────────── */
+function wfOpen(overlayId) {
+  const ov = document.getElementById(overlayId);
+  if (!ov) return;
+  ov.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function wfClose(overlayId) {
+  const ov = document.getElementById(overlayId);
+  if (!ov) return;
+  ov.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function wfOverlayClose(e, overlayId) {
+  if (e.target === e.currentTarget) wfClose(overlayId);
+}
+function wfSelectRadio(el) {
+  el.closest('.wf-radio-group').querySelectorAll('.wf-radio-option')
+    .forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ─── Wallet Full-page Flow ───────────────────────────────────────── */
+function walletFlowOpen() {
+  // reset form
+  const nameEl = document.getElementById('wfWalletName');
+  const assetEl = document.getElementById('wfWalletAsset');
+  if (nameEl) nameEl.value = '';
+  if (assetEl) assetEl.selectedIndex = 0;
+  document.getElementById('walletFlowPage').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function walletFlowClose() {
+  document.getElementById('walletFlowPage').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function walletFlowCreate() {
+  const name = (document.getElementById('wfWalletName').value.trim()) || 'My Wallet';
+  const assetEl = document.getElementById('wfWalletAsset');
+  const asset = assetEl && assetEl.value ? assetEl.value : 'BTC';
+  const assetLabel = assetEl && assetEl.options[assetEl.selectedIndex].text || 'Bitcoin (BTC)';
+
+  // Populate wallet detail page
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setTxt('wdName', name);
+  setTxt('wdBreadcrumb', name);
+  const coinBadge = document.getElementById('wdCoinBadge');
+  if (coinBadge) coinBadge.textContent = asset === 'BTC' ? '₿' : asset === 'ETH' ? 'Ξ' : asset[0];
+  setTxt('wdAssetBalance', '0.000000 ' + asset);
+
+  // Transition: hide creation flow, show detail page
+  walletFlowClose();
+  document.getElementById('walletDetailPage').classList.add('open');
+
+  // Mark GS done
+  window._gsMarkDone('gsWallet');
+
+  // Show snackbar; after it disappears → Fund your wallet callout (300ms gap)
+  setTimeout(() => {
+    _snackbarHideCallback = showDepositCallout;
+    snackbarShow();
+  }, 300);
+}
+
+/* Tab switch on wallet detail page */
+function wdSwitchTab(tab) {
+  tab.closest('.wallet-detail-tabs').querySelectorAll('.wallet-detail-tab')
+    .forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+}
+
+/* Wallet banner actions */
+function wdBannerDeposit() {
+  // Switch to Receive tab to show deposit address
+  const tabs = document.querySelectorAll('#walletDetailPage .wallet-detail-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  if (tabs[1]) tabs[1].classList.add('active');
+  // Update empty state messaging
+  const emptyTitle = document.querySelector('.wallet-detail-empty-title');
+  const emptySub   = document.querySelector('.wallet-detail-empty-sub');
+  if (emptyTitle) emptyTitle.textContent = 'Generate a deposit address';
+  if (emptySub)   emptySub.textContent   = 'Copy or scan your wallet address to receive funds.';
+}
+function wdBannerInvite() {
+  // Navigate back to dashboard and open KYC invite step context
+  snackbarDismiss();
+  document.getElementById('walletDetailPage').classList.remove('open');
+  document.body.style.overflow = '';
+  // Show a brief toast on dashboard
+  const t = document.getElementById('toast') || document.createElement('div');
+  t.id = 'toast';
+  t.className = 'toast show';
+  t.textContent = 'Invite Members from Settings → Members';
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ─── Snackbar ────────────────────────────────────────────────────── */
+var _snackbarTimer = null;
+// Callback fired 300ms after snackbar hides (set before calling snackbarShow)
+var _snackbarHideCallback = null;
+function snackbarShow() {
+  const sb = document.getElementById('walletSnackbar');
+  if (!sb) return;
+  // restore wallet snackbar default text/cta
+  sb.querySelector('.snackbar-text').textContent = 'Wallet created.';
+  const cta = sb.querySelector('.snackbar-cta');
+  if (cta) { cta.style.display = ''; }
+  sb.classList.add('show');
+  clearTimeout(_snackbarTimer);
+  _snackbarTimer = setTimeout(snackbarDismiss, 3000);
+}
+function snackbarShowMsg(msg) {
+  const sb = document.getElementById('walletSnackbar');
+  if (!sb) return;
+  sb.querySelector('.snackbar-text').textContent = msg;
+  const cta = sb.querySelector('.snackbar-cta');
+  if (cta) { cta.style.display = 'none'; }
+  sb.classList.add('show');
+  clearTimeout(_snackbarTimer);
+  _snackbarTimer = setTimeout(snackbarDismiss, 4000);
+}
+function snackbarDismiss() {
+  const sb = document.getElementById('walletSnackbar');
+  if (sb) sb.classList.remove('show');
+  // Fire post-snackbar callback (e.g. show deposit callout) after 300ms gap
+  if (_snackbarHideCallback) {
+    const cb = _snackbarHideCallback;
+    _snackbarHideCallback = null;
+    setTimeout(cb, 300);
+  }
+}
+function snackbarBackToDashboard() {
+  _snackbarHideCallback = null; // cancel any pending post-snackbar action
+  snackbarDismiss();
+  // Hide wallet detail page, return to dashboard
+  document.getElementById('walletDetailPage').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function wfCompleteGoAcc() {
+  document.getElementById('wfGoAccBody').innerHTML = `
+    <div class="wf-success">
+      <div class="wf-success-icon amber">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="wf-success-title">Go Account Activated</div>
+      <div class="wf-success-sub">
+        Your portfolio analytics and reporting are now live. Explore your Go Account from the sidebar to see real-time PnL and cross-asset visibility.
+      </div>
+      <button class="wf-btn-primary amber" style="margin-top:24px" onclick="wfClose('wfGoAccOverlay')">Explore Go Account</button>
+    </div>`;
+  window._gsMarkDone('gsGoAccount');
+  setTimeout(() => triggerStepper('payments'), 800);
+}
+
+function showDepositCallout() {
+  const btn     = document.getElementById('wdDepositFundsBtn');
+  const callout = document.getElementById('wdDepositCallout');
+  if (!btn || !callout) return;
+  const r = btn.getBoundingClientRect();
+  callout.style.top  = (r.top + r.height / 2 - 52) + 'px';
+  callout.style.left = (r.right + 12) + 'px';
+  callout.classList.add('show');
+}
+
+function dismissDepositCallout() {
+  const callout = document.getElementById('wdDepositCallout');
+  if (!callout) return;
+  callout.style.transition = 'opacity .18s';
+  callout.style.opacity = '0';
+  setTimeout(() => {
+    callout.classList.remove('show'); callout.style.opacity = ''; callout.style.transition = '';
+    // Show invite callout 300ms after deposit callout fades out
+    setTimeout(showInviteCallout, 300);
+  }, 200);
+}
+
+function showPolicyCallout() {
+  const depositCard = document.getElementById('wdDepositCard');
+  const callout     = document.getElementById('wdPolicyCallout');
+  if (!depositCard || !callout) return;
+  const cardRect   = depositCard.getBoundingClientRect();
+  const parentRect = depositCard.parentElement.getBoundingClientRect();
+  callout.style.top    = (cardRect.top - parentRect.top + cardRect.height / 2 - 60) + 'px';
+  callout.style.left   = (cardRect.width + 16) + 'px';
+  callout.style.display = 'block';
+  callout.style.opacity = '0';
+  callout.style.animation = 'stepperIn .22s cubic-bezier(.16,1,.3,1) forwards';
+  requestAnimationFrame(() => { callout.style.opacity = '1'; });
+}
+
+function dismissPolicyCallout() {
+  const callout = document.getElementById('wdPolicyCallout');
+  if (!callout) return;
+  callout.style.transition = 'opacity .18s';
+  callout.style.opacity = '0';
+  setTimeout(() => { callout.style.display = 'none'; callout.style.opacity = ''; callout.style.transition = ''; }, 200);
+}
+
+function showInviteCallout() {
+  const avatar  = document.getElementById('wdAvatarEl');
+  const callout = document.getElementById('wdInviteCallout');
+  if (!avatar || !callout) return;
+  const r = avatar.getBoundingClientRect();
+  // Position callout below+left of avatar, caret points up
+  callout.style.top  = (r.bottom + 10) + 'px';
+  callout.style.left = (r.left - 220) + 'px';
+  // Flip caret to point upward
+  const caret = callout.querySelector('.wd-deposit-callout-caret');
+  if (caret) {
+    caret.style.left = 'auto'; caret.style.right = '22px';
+    caret.style.top = '-10px'; caret.style.transform = 'none';
+    caret.style.borderRight = 'none'; caret.style.borderLeft = 'none';
+    caret.style.borderBottom = '10px solid #fff'; caret.style.borderTop = 'none';
+    caret.style.borderLeftWidth = '10px'; caret.style.borderRightWidth = '10px';
+    caret.style.borderLeftColor = 'transparent'; caret.style.borderRightColor = 'transparent';
+  }
+  callout.classList.add('show');
+  callout.style.opacity = '0';
+  callout.style.animation = 'stepperIn .22s cubic-bezier(.16,1,.3,1) forwards';
+  requestAnimationFrame(() => { callout.style.opacity = '1'; });
+}
+
+function dismissInviteCallout() {
+  const callout = document.getElementById('wdInviteCallout');
+  if (!callout) return;
+  callout.style.transition = 'opacity .18s';
+  callout.style.opacity = '0';
+  setTimeout(() => {
+    callout.classList.remove('show');
+    callout.style.opacity = '';
+    callout.style.transition = '';
+    // Chain to policies callout
+    setTimeout(showPoliciesCallout, 300);
+  }, 200);
+}
+
+function showPoliciesCallout() {
+  const anchor  = document.getElementById('wdName');
+  const callout = document.getElementById('wdPoliciesCallout');
+  if (!anchor || !callout) return;
+  const r = anchor.getBoundingClientRect();
+  callout.style.top  = (r.bottom + 12) + 'px';
+  callout.style.left = r.left + 'px';
+  const caret = callout.querySelector('.wd-deposit-callout-caret');
+  if (caret) {
+    /* caret points up from top-left of callout toward the wallet name */
+    caret.style.left = '20px'; caret.style.right = 'auto';
+    caret.style.top = '-10px'; caret.style.transform = 'none';
+    caret.style.borderRight = '10px solid transparent';
+    caret.style.borderLeft = '10px solid transparent';
+    caret.style.borderBottom = '10px solid #fff';
+    caret.style.borderTop = 'none';
+  }
+  callout.classList.add('show');
+  callout.style.opacity = '0';
+  callout.style.animation = 'stepperIn .22s cubic-bezier(.16,1,.3,1) forwards';
+  requestAnimationFrame(() => { callout.style.opacity = '1'; });
+}
+
+function dismissPoliciesCallout() {
+  const callout = document.getElementById('wdPoliciesCallout');
+  if (!callout) return;
+  callout.style.transition = 'opacity .18s';
+  callout.style.opacity = '0';
+  setTimeout(() => {
+    callout.classList.remove('show');
+    callout.style.opacity = '';
+    callout.style.transition = '';
+  }, 200);
+}
+
+function openPolicyBuilder() {
+  // Reset card selections each time modal opens
+  ['prc1','prc2','prc3'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.classList.remove('selected');
+  });
+  const btn = document.getElementById('policyPublishBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.45'; btn.style.cursor = 'default'; }
+  const overlay = document.getElementById('policyRecommendedOverlay');
+  if (overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+}
+function openPolicyBuilderManual() {
+  const overlay = document.getElementById('policyBuilderOverlay');
+  if (overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+}
+function policyRecToggle(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.classList.toggle('selected');
+  const anySelected = ['prc1','prc2','prc3'].some(i => {
+    const el = document.getElementById(i);
+    return el && el.classList.contains('selected');
+  });
+  const btn = document.getElementById('policyPublishBtn');
+  if (btn) {
+    btn.disabled = !anySelected;
+    btn.style.opacity = anySelected ? '1' : '.45';
+    btn.style.cursor  = anySelected ? 'pointer' : 'default';
+  }
+}
+function submitPolicyRec() {
+  wfClose('policyRecommendedOverlay');
+  window._gsMarkDone('gsPolicy');
+  snackbarShowMsg('Policies published.');
+}
+
+/* ─── Deposit flow ────────────────────────────────────────────────── */
+const _DEP_ADDRESSES = {
+  BTC:  'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  ETH:  '0x742d35Cc6634C0532925a3b8D4C9b9F5b7c8E2A1',
+  USDC: '0x742d35Cc6634C0532925a3b8D4C9b9F5b7c8E2A1',
+  SOL:  'DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKD',
+};
+const _DEP_NETWORKS = {
+  BTC:  ['Bitcoin Mainnet'],
+  ETH:  ['Ethereum Mainnet', 'Arbitrum', 'Optimism'],
+  USDC: ['Ethereum Mainnet', 'Solana', 'Polygon'],
+  SOL:  ['Solana Mainnet'],
+};
+
+function openDepositFlow(type) {
+  const overlay = document.getElementById('depositOverlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  depSwitchTab(type || 'cash');
+}
+
+function depSwitchTab(type) {
+  ['cash','crypto'].forEach(t => {
+    document.getElementById('depTab' + t.charAt(0).toUpperCase() + t.slice(1))
+      .classList.toggle('active', t === type);
+    document.getElementById('depPanel' + t.charAt(0).toUpperCase() + t.slice(1))
+      .classList.toggle('active', t === type);
+  });
+}
+
+function depUpdateAddress() {
+  const asset = document.getElementById('depCryptoAsset').value;
+  document.getElementById('depCryptoAddr').textContent = _DEP_ADDRESSES[asset] || '';
+  document.getElementById('depCryptoAssetName').textContent = asset;
+  // update networks
+  const netSel = document.getElementById('depCryptoNetwork');
+  netSel.innerHTML = (_DEP_NETWORKS[asset] || []).map(n => `<option>${n}</option>`).join('');
+}
+
+function copyDepositAddr() {
+  const addr = document.getElementById('depCryptoAddr').textContent;
+  navigator.clipboard.writeText(addr).catch(() => {});
+  showToast('Deposit address copied');
+}
+
+function submitDeposit(type) {
+  if (type === 'cash') {
+    const amt = document.getElementById('depCashAmount').value;
+    const src = document.getElementById('depCashSource').value;
+    if (!amt || parseFloat(amt) <= 0) { showToast('Enter a deposit amount'); return; }
+    if (!src) { showToast('Select a bank account'); return; }
+    wfClose('depositOverlay');
+    showToast(`Cash deposit of $${parseFloat(amt).toLocaleString('en-US',{minimumFractionDigits:2})} initiated`);
+    // Mark Go Account as funded and hide fund nudge
+    window._goAccountFunded = true;
+    const nudge = document.getElementById('tradeFundNudge');
+    if (nudge) nudge.classList.remove('visible');
+    // Mark deposit GS step done
+    window._gsMarkDone && window._gsMarkDone('gsDeposit');
+  }
+}
+
+/* ─── Theme toggle ────────────────────────────────────────────────── */
+(function() {
+  // Default is light-mode (set on body). Only switch to dark if user explicitly saved dark.
+  try {
+    if (localStorage.getItem('bitgo-theme') === 'dark') document.body.classList.remove('light-mode');
+  } catch(e) {}
+})();
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  try { localStorage.setItem('bitgo-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); } catch(e) {}
+}
+</script>
+</body>
+</html>
