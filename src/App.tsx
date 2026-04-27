@@ -15,19 +15,25 @@ import { useTheme }           from './hooks/useTheme';
 import type { GsTask, WalletInfo } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
-type TopPage = 'dashboard' | 'kyb' | 'kyc';
+type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations';
 type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 
 function getTopPage(): TopPage {
   const h = window.location.hash;
   if (h === '#kyb') return 'kyb';
   if (h === '#kyc') return 'kyc';
+  if (h === '#destinations') return 'destinations';
   return 'dashboard';
 }
 
 export default function App() {
   const { isLight, toggle } = useTheme();
   const [topPage, setTopPage] = useState<TopPage>(getTopPage);
+
+  const navigateTo = (page: TopPage) => {
+    window.location.hash = page === 'dashboard' ? '' : page;
+    setTopPage(page);
+  };
 
   useEffect(() => {
     function onHash() { setTopPage(getTopPage()); }
@@ -89,6 +95,19 @@ export default function App() {
 
   if (topPage === 'kyb') return <KYBFlow />;
   if (topPage === 'kyc') return <KYCFlow />;
+  if (topPage === 'destinations') return (
+    <div className="app">
+      <Sidebar
+        activeItem="security"
+        activeSecurity="destinations"
+        onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); }}
+        onNavigateSecurity={(sub) => { if (sub !== 'destinations') { navigateTo('dashboard'); } }}
+      />
+      <div className="workspace">
+        <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -97,14 +116,16 @@ export default function App() {
           activeItem={securityPage ? 'security' : 'home'}
           activeSecurity={securityPage ?? undefined}
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); }}
-          onNavigateSecurity={(sub) => setSecurityPage(sub)}
+          onNavigateSecurity={(sub) => {
+            if (sub === 'destinations') { navigateTo('destinations'); }
+            else setSecurityPage(sub);
+          }}
         />
         <div className="workspace">
           {securityPage === 'destinations' ? (
             <DestinationsPage
               isLight={isLight}
               onThemeToggle={toggle}
-              onBack={() => setSecurityPage(null)}
             />
           ) : <Dashboard
             isLight={isLight}
