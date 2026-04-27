@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Topbar } from '../components/Topbar';
+import { Snackbar } from '../components/Snackbar';
+import type { SnackbarHandle } from '../components/Snackbar';
 
 type DestTab = 'addresses' | 'wallets' | 'enterprise';
 
@@ -247,6 +249,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
   const lastActiveRowRef = useRef<HTMLTableRowElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const snackbarRef = useRef<SnackbarHandle>(null);
 
   // On group change: scroll just enough so last active row + modal fit,
   // then store viewport-relative coords for the fixed-position modal.
@@ -436,6 +439,10 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
                   setGroupIdx(0);
                   setCustomLabel('');
                   setSelectedChip('');
+                  snackbarRef.current?.show(
+                    'Addresses with multiple labels are all consolidated.',
+                    false
+                  );
                 }
                 return next;
               });
@@ -634,6 +641,8 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
           </table>
         </div>
       </div>
+
+      <Snackbar ref={snackbarRef} />
 
       {/* Consolidate modal — fixed in viewport, stays put while user scrolls the table */}
       {consolidating && consolPhase === 'idle' && currentGroup && ReactDOM.createPortal(

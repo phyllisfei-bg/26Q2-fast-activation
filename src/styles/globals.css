@@ -351,19 +351,22 @@ body {
 .for-you-card-dismiss {
   position: absolute; top: 10px; right: 10px;
   width: 22px; height: 22px; border-radius: 50%; border: none;
-  background: var(--color-level3); color: var(--color-text-muted);
+  background: transparent; color: var(--color-text-muted);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: background .14s; padding: 0;
+  cursor: pointer; transition: color .14s; padding: 0;
 }
-.for-you-card-dismiss:hover { background: var(--color-level4); color: var(--color-text); }
-.for-you-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.for-you-card-dismiss:hover { background: transparent; color: var(--color-text); }
+.for-you-cards { display: flex; flex-direction: row; gap: 12px; overflow-x: auto; padding-bottom: 4px; padding-right: 24px; }
+.for-you-cards { scrollbar-width: none; }
+.for-you-cards::-webkit-scrollbar { display: none; }
 .for-you-card {
-  position: relative;
-  background: var(--color-level2); border: 1px solid var(--color-border);
+  position: relative; flex: 0 0 calc((100% - 24px) / 2.3);
+  background: #ffffff; border: 1px solid var(--color-border);
   border-radius: 12px; padding: 18px; display: flex; align-items: flex-start; gap: 14px;
   transition: border-color .15s;
 }
 .for-you-card:hover { border-color: var(--color-border-strong); }
+@media (min-width: 768px) { .for-you-card { flex: 0 0 calc((100% - 36px) / 3.3); } }
 .for-you-card-icon {
   width: 40px; height: 40px; border-radius: 10px; background: var(--brand-a100);
   border: 1px solid var(--brand-a200); display: flex; align-items: center; justify-content: center;
