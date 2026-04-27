@@ -18,7 +18,18 @@ Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new
 
 ---
 
-## How to run
+## Live demo
+
+| Page | URL |
+|---|---|
+| Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
+| KYB Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyb](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyb) |
+| KYC Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyc](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyc) |
+| Destinations | [phyllisfei-bg.github.io/26Q2-fast-activation/#destinations](https://phyllisfei-bg.github.io/26Q2-fast-activation/#destinations) |
+
+---
+
+## How to run locally
 
 ```bash
 npm install
