@@ -1,8 +1,6 @@
 # BitGo Fast Activation — 26Q2 Prototype
 
-A design prototype exploring a streamlined onboarding and activation experience for new BitGo customers. Built as self-contained HTML files — no build step, no dependencies.
-
-**Live prototype:** https://phyllisfei-bg.github.io/26Q2-fast-activation/flow.html
+A React prototype exploring a streamlined onboarding and activation experience for new BitGo customers.
 
 ---
 
@@ -10,35 +8,69 @@ A design prototype exploring a streamlined onboarding and activation experience 
 
 Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new BitGo customers. The goal is to get businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible — reducing drop-off, shortening onboarding time, and delivering a role-appropriate experience from day one.
 
-The prototype covers three sequential stages: entity-level compliance (KYB), individual user verification (KYC), and a role-based getting-started dashboard that surfaces the right priorities for each user type immediately after first login.
+---
+
+## Stack
+
+- React 19, TypeScript, Vite
+- Tailwind CSS v3 (inline PostCSS config)
+- CSS design tokens (`src/styles/tokens.css`) with dark/light mode support
 
 ---
 
-## Flows
+## How to run
 
-### 1. KYB — Business Verification (`bitgo-KYB.html`)
-Targets the legal person or entity initiating the BitGo account. Covers entity identity collection, ownership structure disclosure, and compliance checks. This is typically completed by a company representative before any individual users are invited.
+```bash
+npm install
+npm run dev
+```
 
-### 2. KYC — User Verification (`bitgo-kyc.html`)
-Targets invited platform admins and users assigned default roles. Covers individual identity verification and initial goal-setting to personalize the experience downstream.
+Open [http://localhost:5173](http://localhost:5173).
 
-### 3. Getting Started Dashboard (`bitgo-dashboard.html`)
-The post-verification landing experience. Surfaces role-based priority actions, business product recommendations, and a personalized "For You" section based on the user's stated goals from KYC.
+---
+
+## Pages & Flows
+
+### Pages
+
+| Route | Page | Description |
+|---|---|---|
+| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
+| `/#kyb` | KYB Flow | Business / entity verification (multi-step) |
+| `/#kyc` | KYC Flow | Individual user verification |
+| `/#destinations` | Whitelist Destinations | Address allowlist with label consolidation flow |
+
+### Flows (launched from Dashboard)
+
+| Flow | Trigger | Description |
+|---|---|---|
+| Wallet Creation | Get Started → Create Wallet | Multi-step wallet setup |
+| Deposit | Deposit button | Cash or crypto deposit |
+| Policy Builder | Get Started → Configure Policy | Policy creation flow |
+| Walkthrough Stepper | In-context | Guided walkthrough overlay |
 
 ---
 
 ## File Map
 
-| File | Description |
+| Path | Description |
 |---|---|
-| `flow.html` | Entry point — visual map linking all three flows |
-| `bitgo-KYB.html` | KYB flow (business / entity verification) |
-| `bitgo-kyc.html` | KYC flow (platform admins and default-role users) |
-| `bitgo-dashboard.html` | Getting Started dashboard (role-based + For You) |
-| `card-hover-exploration.html` | Card hover interaction sandbox |
+| `src/pages/Dashboard.tsx` | Main dashboard |
+| `src/pages/WalletDetailPage.tsx` | Wallet detail view |
+| `src/pages/DestinationsPage.tsx` | Whitelist destinations with consolidation flow |
+| `src/flows/KYBFlow.tsx` | Business verification flow |
+| `src/flows/KYCFlow.tsx` | Individual user verification flow |
+| `src/flows/WalletCreationFlow.tsx` | Create wallet modal |
+| `src/flows/DepositModal.tsx` | Deposit flow modal |
+| `src/flows/PolicyModal.tsx` | Policy builder modal |
+| `src/flows/WalkthroughStepper.tsx` | In-context walkthrough stepper |
+| `src/components/` | Sidebar, Topbar, GetStarted, ForYou, Balances, Portfolio, TradeCard, Snackbar |
+| `src/styles/tokens.css` | CSS custom properties (design tokens) |
+| `src/styles/globals.css` | Global styles and animations |
+| `archive/` | Original HTML prototypes — reference only |
 
 ---
 
 ## Design
 
-Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the top-right corner of each flow screen.
+Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the topbar.
