@@ -53,18 +53,6 @@ const NODES: Node[] = [
     desc: 'Role-based priority actions, product recommendations, and a personalised For You section.',
     hash: '#',
   },
-  {
-    step: 4,
-    badge: 'Security',
-    badgeIcon: (
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z"/>
-      </svg>
-    ),
-    title: 'Whitelist Destinations',
-    desc: 'Manage whitelisted addresses with label consolidation, scope management, and approval flows.',
-    hash: '#destinations',
-  },
 ];
 
 export const FlowPage: React.FC = () => {
