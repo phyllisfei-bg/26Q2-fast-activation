@@ -1,6 +1,56 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/kyc.css';
 import { useTheme } from '../hooks/useTheme';
+
+/* ── Goal popover data ── */
+const GOAL_DATA: Record<string, { desc: string; features: string[]; tags: string[] }> = {
+  'trade-earn': {
+    desc: 'Institutional liquidity, prime brokerage, DeFi staking, and liquid restaking — all from one platform.',
+    features: [
+      'Off-exchange settlement with no counterparty risk',
+      'Aggregated liquidity across 30+ trading venues',
+      'Native staking and liquid restaking for ETH, SOL, and more',
+    ],
+    tags: ['Prime Brokerage', 'Staking', 'Liquid Restaking', 'OTC'],
+  },
+  'payments': {
+    desc: 'Instant off-exchange settlement, stablecoin payments, and Go Network transfers that clear in seconds.',
+    features: [
+      'Bilateral off-exchange settlement in under 1 second',
+      'Programmable stablecoin payments with USDC and USDT',
+      'Go Network for real-time interbank-style transfers',
+    ],
+    tags: ['Off-Exchange', 'Stablecoins', 'Payments', 'Go Network'],
+  },
+  'ops-compliance': {
+    desc: 'Granular member roles, approval workflows, immutable audit logs, and automated regulatory reporting.',
+    features: [
+      'Role-based access with custom permission scopes',
+      'Multi-step approval workflows with time locks',
+      'Automated reporting for FinCEN, MiCA, and SOC 2',
+    ],
+    tags: ['Roles', 'Approvals', 'Audit Logs', 'Compliance'],
+  },
+  'secure-assets': {
+    desc: 'Enterprise-grade custody with multi-sig authorization, cold storage vaults, and Go Accounts for treasury management.',
+    features: [
+      'Multi-sig wallet policies with configurable quorum',
+      'HSM-backed cold storage with insurance coverage',
+      'Go Accounts for programmable treasury operations',
+    ],
+    tags: ['Custody Wallets', 'Cold Storage', 'Treasury', 'Go Accounts'],
+  },
+  'tokenize': {
+    desc: 'End-to-end RWA tokenization — from issuance and transfer agent services to capital formation.',
+    features: [
+      'Compliant issuance for funds, bonds, and real estate',
+      'Whitelisted transfer restrictions and investor KYC/AML',
+      'Secondary market facilitation and cap table management',
+    ],
+    tags: ['RWA', 'Tokenization', 'Transfer Agent', 'Capital Formation'],
+  },
+};
 
 /* ── Types ── */
 type KYCScreen = 1 | 3 | '3b' | 6 | 7 | 9 | 5;
@@ -142,6 +192,51 @@ export function KYCFlow() {
     setScreen(s);
     window.scrollTo(0, 0);
   }
+
+  /* Goal card overlay */
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [ov, setOv] = useState<{
+    val: string; left: number; top: number; width: number; visible: boolean; slide: number;
+  } | null>(null);
+
+  const clearHideTimers = useCallback(() => {
+    if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
+    if (clearTimer.current) { clearTimeout(clearTimer.current); clearTimer.current = null; }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    clearHideTimers();
+    hideTimer.current = setTimeout(() => {
+      setOv(prev => prev ? { ...prev, visible: false } : null);
+      clearTimer.current = setTimeout(() => setOv(null), 200);
+    }, 120);
+  }, [clearHideTimers]);
+
+  const showOverlay = useCallback((val: string) => {
+    clearHideTimers();
+    const card = cardRefs.current[val];
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    setOv(prev => ({
+      val,
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      visible: true,
+      slide: prev?.val === val ? prev.slide : 0,
+    }));
+  }, [clearHideTimers]);
+
+  const goToSlide = useCallback((n: number) => {
+    setOv(prev => {
+      if (!prev) return null;
+      const next = ((n % 3) + 3) % 3;
+      return { ...prev, slide: next };
+    });
+  }, []);
 
   /* Screen 1 */
   const [password, setPassword] = useState('');
@@ -522,18 +617,30 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '17%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Your Goals</p>
             <h2 className="kyc-step-title">What do you hope to achieve with BitGo?</h2>
             <p className="kyc-step-sub">Select all that apply. This helps us tailor your experience.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             <div className="kyc-sel-grid kyc-sel-grid-2">
               {goalCards.map(c => (
-                <div key={c.val}>
+                <div
+                  key={c.val}
+                  className={`kyc-goal-wrap${ov?.val === c.val && ov.visible ? ' kgw-active kgw-unified' : ''}`}
+                >
                   <div
+                    ref={el => { cardRefs.current[c.val] = el; }}
                     className={`kyc-sel-card${selectedGoals.has(c.val) ? ' selected' : ''}`}
                     onClick={() => toggleGoal(c.val)}
+                    onMouseEnter={() => showOverlay(c.val)}
+                    onMouseLeave={e => {
+                      if (overlayRef.current?.contains(e.relatedTarget as Node)) return;
+                      scheduleHide();
+                    }}
                   >
                     <div className="kyc-sel-card-icon">{c.icon}</div>
                     <div className="kyc-sel-card-text">
@@ -595,12 +702,15 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '25%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Your Priorities</p>
             <h2 className="kyc-step-title">What do you value most?</h2>
             <p className="kyc-step-sub">Select one — we'll use this to shape your experience.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             <div style={{ marginTop: 4 }}>
               {priorityCards.map(c => (
                 <div
@@ -635,12 +745,15 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '50%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Verify Identity · 1 of 2</p>
             <h2 className="kyc-step-title">Personal Information</h2>
             <p className="kyc-step-sub">Enter your legal name exactly as it appears on your government-issued ID.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             <div className="kyc-form-row">
               <div className="kyc-form-group" style={{ marginBottom: 0 }}>
                 <label className="kyc-form-label">First Name <span style={{ color: 'var(--color-danger)' }}>*</span></label>
@@ -744,12 +857,15 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '67%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Verify Identity · 2 of 2</p>
             <h2 className="kyc-step-title">Upload Photo ID</h2>
             <p className="kyc-step-sub">We accept the following government-issued documents. Ensure all corners are visible and the image is clear.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             <div className="kyc-doc-checklist">
               <p className="kyc-doc-checklist-title">Accepted Documents</p>
               <div className="kyc-doc-list">
@@ -838,12 +954,15 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '100%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Almost Done</p>
             <h2 className="kyc-step-title">Invite Your Team</h2>
             <p className="kyc-step-sub">Add teammates to your organization. They'll receive an email invitation with setup instructions.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             {/* Scenario 1 */}
             {scenario === 1 && (
               <div>
@@ -926,12 +1045,15 @@ export function KYCFlow() {
         <div className="kyc-flow-progress">
           <div className="kyc-progress-track"><div className="kyc-progress-fill" style={{ width: '100%' }} /></div>
         </div>
-        <div className="kyc-flow-body">
-          <div className="kyc-flow-inner">
+        <div className="kyc-flow-intro">
+          <div className="kyc-flow-intro-inner">
             <p className="kyc-step-eyebrow">Optional</p>
             <h2 className="kyc-step-title">Get the BitGo Mobile App</h2>
             <p className="kyc-step-sub">Approve transactions, manage your wallet, and get real-time alerts on the go. You can always do this later.</p>
-
+          </div>
+        </div>
+        <div className="kyc-flow-body">
+          <div className="kyc-flow-inner">
             <div className="kyc-app-download-card">
               <div className="kyc-app-phone-mock">
                 <div className="kyc-app-phone-screen">
@@ -982,6 +1104,104 @@ export function KYCFlow() {
 
       {/* Toast */}
       <div className={`kyc-toast${toastShow ? ' show' : ''}`}>{toastMsg}</div>
+
+      {/* Goal card overlay portal */}
+      {ov && createPortal(
+        <div
+          ref={overlayRef}
+          className={[
+            'kyc-goal-overlay',
+            ov.visible ? 'kgo-visible' : '',
+            ov.val && selectedGoals.has(ov.val) ? 'kgo-selected' : '',
+          ].filter(Boolean).join(' ')}
+          style={{ left: ov.left, top: ov.top, width: ov.width }}
+          onMouseEnter={clearHideTimers}
+          onMouseLeave={scheduleHide}
+          onClick={e => {
+            e.stopPropagation();
+            if (ov.val) toggleGoal(ov.val);
+          }}
+        >
+          {/* Card header — mirrors the card beneath */}
+          <div className={`kgo-card-header${selectedGoals.has(ov.val) ? ' card-selected' : ''}`}>
+            <div className="kgo-card-icon">
+              {goalCards.find(c => c.val === ov.val)?.icon}
+            </div>
+            <div className="kgo-card-label">
+              {goalCards.find(c => c.val === ov.val)?.label}
+            </div>
+            <div
+              className={`kgo-card-badge${selectedGoals.has(ov.val) ? ' selected' : ''}`}
+              onClick={e => { e.stopPropagation(); if (ov.val) toggleGoal(ov.val); }}
+            >
+              <CheckSvg9 />
+            </div>
+          </div>
+
+          <div className="kgo-divider" />
+
+          {/* 3 content slides */}
+          <div className="kyc-goal-steps">
+            {[0, 1, 2].map(i => {
+              const data = GOAL_DATA[ov.val];
+              return (
+                <div key={i} className={`kyc-goal-step${ov.slide === i ? ' active' : ''}`}>
+                  <div className="kyc-goal-step-img">
+                    {/* Decorative placeholder illustration per slide */}
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.18">
+                      {i === 0 && <><circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2"/><path d="M16 24h16M24 16v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></>}
+                      {i === 1 && <><rect x="8" y="10" width="32" height="4" rx="2" fill="currentColor"/><rect x="8" y="20" width="24" height="4" rx="2" fill="currentColor"/><rect x="8" y="30" width="28" height="4" rx="2" fill="currentColor"/></>}
+                      {i === 2 && <><circle cx="16" cy="24" r="8" stroke="currentColor" strokeWidth="2"/><circle cx="32" cy="24" r="8" stroke="currentColor" strokeWidth="2"/></>}
+                    </svg>
+                  </div>
+                  <div className="kyc-goal-step-text">
+                    {i === 0 && (
+                      <p className="kyc-goal-step-desc">{data?.desc}</p>
+                    )}
+                    {i === 1 && (
+                      <ul>
+                        {data?.features.map(f => <li key={f}>{f}</li>)}
+                      </ul>
+                    )}
+                    {i === 2 && (
+                      <div className="kyc-goal-chips">
+                        {data?.tags.map(t => (
+                          <span key={t} className="kyc-goal-chip">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Dot nav + prev/next */}
+          <div className="kyc-goal-nav" onClick={e => e.stopPropagation()}>
+            <div className="kyc-goal-dots">
+              {[0, 1, 2].map(i => (
+                <button
+                  key={i}
+                  className={`kyc-goal-dot${ov.slide === i ? ' active' : ''}`}
+                  onClick={e => { e.stopPropagation(); goToSlide(i); }}
+                />
+              ))}
+            </div>
+            <div className="kyc-goal-arrows">
+              <button
+                className="kyc-goal-arrow"
+                onClick={e => { e.stopPropagation(); goToSlide(ov.slide - 1); }}
+              >Back</button>
+              <span className="kyc-goal-sep">·</span>
+              <button
+                className="kyc-goal-arrow"
+                onClick={e => { e.stopPropagation(); goToSlide(ov.slide + 1); }}
+              >Next</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

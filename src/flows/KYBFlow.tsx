@@ -210,27 +210,58 @@ export function KYBFlow() {
           })}
         </aside>
 
-        {/* Main */}
-        <main className="kyb-main" ref={mainScrollRef as React.RefObject<HTMLElement>}>
-          <div className="kyb-progress-wrap">
-            <div className="kyb-progress-track">
-              <div className="kyb-progress-fill" style={{ width: PROGRESS_MAP[currentStep] ?? '62%' }} />
+        {/* Main column */}
+        <div className="kyb-main-col">
+          {/* Sticky top: progress + page header/desc */}
+          <div className="kyb-sticky-top">
+            <div className="kyb-progress-wrap">
+              <div className="kyb-progress-track">
+                <div className="kyb-progress-fill" style={{ width: PROGRESS_MAP[currentStep] ?? '62%' }} />
+              </div>
+            </div>
+            <div className="kyb-page-intro">
+              {currentStep === 5 && (
+                <div className="kyb-page-header" style={{ marginBottom: 0 }}>
+                  <h2 className="kyb-page-title">Associated People</h2>
+                  <button className="kyb-btn-help" onClick={() => showToast('Help center coming soon.')}>
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                    </svg>
+                    Need Help?
+                  </button>
+                </div>
+              )}
+              {currentStep === 6 && (
+                <>
+                  <div className="kyb-page-header" style={{ marginBottom: 8, alignItems: 'flex-start' }}>
+                    <h2 className="kyb-pa-page-title">Platform Administrator</h2>
+                    <button className="kyb-btn-help" style={{ marginTop: 8 }} onClick={() => showToast('Help center coming soon.')}>
+                      <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                      </svg>
+                      Need Help?
+                    </button>
+                  </div>
+                  <p className="kyb-pa-page-desc" style={{ marginBottom: 0 }}>
+                    Designate individuals to oversee administrative functions on the BitGo platform:
+                    adding users, creating wallet policies, and initiating deposits/withdrawals.
+                    A minimum of 3 and a maximum of 5 administrators are required.
+                  </p>
+                </>
+              )}
+              {currentStep === 7 && (
+                <div className="kyb-page-header" style={{ marginBottom: 0 }}>
+                  <h2 className="kyb-page-title">Agreements</h2>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Scrollable content */}
+          <main className="kyb-main" ref={mainScrollRef as React.RefObject<HTMLElement>}>
           <div className="kyb-content">
             {/* ── Page 5: Associated People ── */}
             <div className={`kyb-page ${currentStep === 5 ? 'active' : ''}`}>
-              <div className="kyb-page-header">
-                <h2 className="kyb-page-title">Associated People</h2>
-                <button className="kyb-btn-help" onClick={() => showToast('Help center coming soon.')}>
-                  <svg fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                  </svg>
-                  Need Help?
-                </button>
-              </div>
-
               {/* Beneficial Owner */}
               <div className="kyb-section-card">
                 <div className="kyb-card-head">
@@ -288,22 +319,6 @@ export function KYBFlow() {
 
             {/* ── Page 6: Platform Administrator ── */}
             <div className={`kyb-page ${currentStep === 6 ? 'active' : ''}`}>
-              <div className="kyb-page-header" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
-                <h2 className="kyb-pa-page-title">Platform Administrator</h2>
-                <button className="kyb-btn-help" style={{ marginTop: 8 }} onClick={() => showToast('Help center coming soon.')}>
-                  <svg fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                  </svg>
-                  Need Help?
-                </button>
-              </div>
-
-              <p className="kyb-pa-page-desc">
-                Designate individuals to oversee administrative functions on the BitGo platform:
-                adding users, creating wallet policies, and initiating deposits/withdrawals.
-                A minimum of 3 and a maximum of 5 administrators are required.
-              </p>
-
               <div className="kyb-pa-inline-list">
                 {paAdmins.map((admin, idx) => (
                   <PAInlineRow
@@ -333,9 +348,6 @@ export function KYBFlow() {
 
             {/* ── Page 7: Agreements ── */}
             <div className={`kyb-page ${currentStep === 7 ? 'active' : ''}`}>
-              <div className="kyb-page-header">
-                <h2 className="kyb-page-title">Agreements</h2>
-              </div>
               <div className="kyb-section-card kyb-placeholder-card">
                 <div style={{ fontSize: 40, marginBottom: 14 }}>📄</div>
                 <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Review &amp; Sign Agreements</div>
@@ -349,7 +361,8 @@ export function KYBFlow() {
               </div>
             </div>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
 
       {/* Generic Add Person Modal */}

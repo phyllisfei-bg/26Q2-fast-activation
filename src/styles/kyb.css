@@ -39,6 +39,9 @@
 
 /* ── Layout ── */
 .kyb-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.kyb-main-col { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.kyb-sticky-top { flex-shrink: 0; background: var(--color-bg); }
+.kyb-page-intro { padding: 18px 40px 12px; max-width: 700px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 
 /* ── Sidebar ── */
 .kyb-sidebar {
@@ -83,7 +86,7 @@
 .kyb-step.active .kyb-step-sub { color: var(--color-text-secondary); }
 
 /* ── Main scroll area ── */
-.kyb-main { flex: 1; overflow-y: auto; }
+.kyb-main { flex: 1; min-height: 0; overflow-y: auto; }
 
 /* ── Progress bar ── */
 .kyb-progress-wrap { padding: 20px 40px 6px; }
@@ -99,7 +102,7 @@
 
 /* ── Content ── */
 .kyb-content {
-  padding: 22px 40px 60px;
+  padding: 4px 40px 60px;
   max-width: 700px;
   margin: 0 auto;
 }
