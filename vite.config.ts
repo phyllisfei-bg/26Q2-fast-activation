@@ -5,6 +5,7 @@ import autoprefixer from 'autoprefixer'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/26Q2-fast-activation/',
   plugins: [react()],
   css: {
     postcss: {
