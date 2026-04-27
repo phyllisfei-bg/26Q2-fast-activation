@@ -22,6 +22,7 @@ Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new
 
 | Page | URL |
 |---|---|
+| Flow Overview | [phyllisfei-bg.github.io/26Q2-fast-activation/#flow](https://phyllisfei-bg.github.io/26Q2-fast-activation/#flow) |
 | Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
 | KYB Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyb](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyb) |
 | KYC Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyc](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyc) |
@@ -46,6 +47,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 | Route | Page | Description |
 |---|---|---|
+| `/#flow` | Flow Overview | Flowchart linking all stages of the activation journey |
 | `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
 | `/#kyb` | KYB Flow | Business / entity verification (multi-step) |
 | `/#kyc` | KYC Flow | Individual user verification |

@@ -5,6 +5,7 @@ import type { SnackbarHandle } from './components/Snackbar';
 import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { DestinationsPage }   from './pages/DestinationsPage';
+import { FlowPage }           from './pages/FlowPage';
 import { WalletCreationFlow } from './flows/WalletCreationFlow';
 import { DepositModal }       from './flows/DepositModal';
 import { PolicyModal }        from './flows/PolicyModal';
@@ -15,7 +16,7 @@ import { useTheme }           from './hooks/useTheme';
 import type { GsTask, WalletInfo } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
-type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations';
+type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'flow';
 type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 
 function getTopPage(): TopPage {
@@ -23,6 +24,7 @@ function getTopPage(): TopPage {
   if (h === '#kyb') return 'kyb';
   if (h === '#kyc') return 'kyc';
   if (h === '#destinations') return 'destinations';
+  if (h === '#flow') return 'flow';
   return 'dashboard';
 }
 
@@ -93,6 +95,7 @@ export default function App() {
     snackRef.current?.dismiss();
   };
 
+  if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
   if (topPage === 'kyc') return <KYCFlow />;
   if (topPage === 'destinations') return (
