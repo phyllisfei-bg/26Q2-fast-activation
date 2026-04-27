@@ -1,7 +1,7 @@
-import { useImperativeHandle, useRef, useState, forwardRef } from 'react';
+import { useImperativeHandle, useRef, useState, forwardRef, useCallback } from 'react';
 
 export interface SnackbarHandle {
-  show: (msg?: string, showCta?: boolean) => void;
+  show: (msg?: string, showCta?: boolean, onDismiss?: () => void) => void;
   dismiss: () => void;
 }
 
@@ -14,16 +14,27 @@ export const Snackbar = forwardRef<SnackbarHandle, Props>(({ onBackToDashboard }
   const [message, setMessage] = useState('Wallet created.');
   const [showCta, setShowCta] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onDismissRef = useRef<(() => void) | undefined>(undefined);
+
+  const hide = useCallback(() => {
+    setVisible(false);
+    if (onDismissRef.current) {
+      const cb = onDismissRef.current;
+      onDismissRef.current = undefined;
+      setTimeout(cb, 300);
+    }
+  }, []);
 
   useImperativeHandle(ref, () => ({
-    show(msg = 'Wallet created.', cta = true) {
+    show(msg = 'Wallet created.', cta = true, onDismiss?: () => void) {
       setMessage(msg);
       setShowCta(cta);
       setVisible(true);
+      onDismissRef.current = onDismiss;
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setVisible(false), cta ? 8000 : 4000);
+      timer.current = setTimeout(hide, cta ? 8000 : 4000);
     },
-    dismiss() { setVisible(false); },
+    dismiss() { hide(); },
   }));
 
   return (
@@ -34,7 +45,7 @@ export const Snackbar = forwardRef<SnackbarHandle, Props>(({ onBackToDashboard }
           Back to dashboard
         </button>
       )}
-      <button className="snackbar-close" onClick={() => setVisible(false)}>✕</button>
+      <button className="snackbar-close" onClick={hide}>✕</button>
     </div>
   );
 });

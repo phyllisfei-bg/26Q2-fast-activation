@@ -24,7 +24,7 @@ export const TRADE_PAIRS: TradePair[] = [
   { icon: 'S', name: 'SOL / USD', sub: 'Solana',   price: 182,    iconBg: '#9945FF', change: '-0.8%', pos: false },
 ];
 
-export const GS_TASKS = ['gsWallet', 'gsDeposit', 'gsGoAccount'] as const;
+export const GS_TASKS = ['gsWallet', 'gsGoAccount', 'gsPolicy'] as const;
 export type GsTask = typeof GS_TASKS[number];
 
 export const WALKTHROUGHS = {
