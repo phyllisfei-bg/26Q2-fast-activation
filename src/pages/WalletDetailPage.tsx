@@ -1,102 +1,123 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sidebar } from '../components/Sidebar';
-import type { WalletInfo } from '../types';
+import type { WalletInfo, UserRole } from '../types';
+import { CALLOUT_CONFIGS, ROLE_CALLOUT_SEQUENCE } from '../types';
 
 interface Props {
   open: boolean;
   wallet: WalletInfo | null;
   calloutReady?: boolean;
   onBack: () => void;
+  role: UserRole;
+  onCalloutDeposit?: () => void;
+  onCalloutInvite?: () => void;
+  onCalloutPolicies?: () => void;
 }
-
-type CalloutStep = 'none' | 'deposit' | 'invite' | 'policies';
 
 interface CalloutPos { top: number; left: number }
 
 const TABS = ['Transactions', 'Receive', 'Send', 'Settings'] as const;
-
-// Generates a fake wallet ID for display
 const FAKE_ID = '69e18c26…d90029cb';
 
-export const WalletDetailPage: React.FC<Props> = ({ open, wallet, calloutReady = false, onBack }) => {
+export const WalletDetailPage: React.FC<Props> = ({
+  open, wallet, calloutReady = false, onBack,
+  role,
+  onCalloutDeposit, onCalloutInvite, onCalloutPolicies,
+}) => {
   const [activeTab, setActiveTab] = useState<string>('Transactions');
-  const [callout, setCallout] = useState<CalloutStep>('none');
-  const [depositPos, setDepositPos] = useState<CalloutPos | null>(null);
-  const [invitePos,  setInvitePos]  = useState<CalloutPos | null>(null);
-  const [policiesPos, setPoliciesPos] = useState<CalloutPos | null>(null);
+  const [calloutIdx, setCalloutIdx] = useState<number>(-1);
+  const [positions, setPositions] = useState<Record<string, CalloutPos>>({});
 
-  const depositBtnRef  = useRef<HTMLButtonElement>(null);
-  const avatarRef      = useRef<HTMLDivElement>(null);
-  const walletNameRef  = useRef<HTMLDivElement>(null);
+  const depositBtnRef = useRef<HTMLButtonElement>(null);
+  const avatarRef     = useRef<HTMLDivElement>(null);
+  const walletNameRef = useRef<HTMLDivElement>(null);
 
-  // Reset tabs when wallet opens/closes
+  const sequence = ROLE_CALLOUT_SEQUENCE[role];
+  const activeCalloutId = calloutIdx >= 0 && calloutIdx < sequence.length
+    ? sequence[calloutIdx]
+    : null;
+  const activeCallout = activeCalloutId ? CALLOUT_CONFIGS[activeCalloutId] : null;
+
   useEffect(() => {
-    if (!open) { setCallout('none'); return; }
-    setCallout('none');
+    if (!open) { setCalloutIdx(-1); return; }
+    setCalloutIdx(-1);
     setActiveTab('Transactions');
   }, [open]);
 
-  // Start callout sequence only after snackbar dismisses
   useEffect(() => {
     if (!calloutReady || !open) return;
-    const t = setTimeout(() => setCallout('deposit'), 300);
+    const t = setTimeout(() => setCalloutIdx(0), 300);
     return () => clearTimeout(t);
   }, [calloutReady, open]);
 
-  // Position callout when step changes
+  // Position the active callout against its anchor ref
   useLayoutEffect(() => {
-    if (callout === 'deposit' && depositBtnRef.current) {
-      const r = depositBtnRef.current.getBoundingClientRect();
-      setDepositPos({ top: r.top + r.height / 2 - 52, left: r.right + 12 });
-    }
-    if (callout === 'invite' && avatarRef.current) {
-      const r = avatarRef.current.getBoundingClientRect();
-      setInvitePos({ top: r.bottom + 10, left: r.left - 228 });
-    }
-    if (callout === 'policies' && walletNameRef.current) {
-      const r = walletNameRef.current.getBoundingClientRect();
-      setPoliciesPos({ top: r.bottom + 12, left: r.left });
-    }
-  }, [callout]);
+    if (!activeCallout) return;
+    const refs: Record<string, React.RefObject<HTMLElement | null>> = {
+      deposit:    depositBtnRef,
+      avatar:     avatarRef,
+      walletName: walletNameRef,
+    };
+    const ref = refs[activeCallout.anchor];
+    if (!ref?.current) return;
+    const r = ref.current.getBoundingClientRect();
 
-  const dismissDeposit = () => {
-    setCallout('none');
-    setTimeout(() => setCallout('invite'), 300);
+    let pos: CalloutPos;
+    if (activeCallout.caretDir === 'left') {
+      pos = { top: r.top + r.height / 2 - 52, left: r.right + 12 };
+    } else if (activeCallout.caretDir === 'up-right') {
+      pos = { top: r.bottom + 10, left: r.left - 228 };
+    } else {
+      pos = { top: r.bottom + 12, left: r.left };
+    }
+    setPositions(prev => ({ ...prev, [activeCallout.id]: pos }));
+  }, [activeCallout]);
+
+  const advance = () => {
+    const next = calloutIdx + 1;
+    setCalloutIdx(-1);
+    setTimeout(() => setCalloutIdx(next < sequence.length ? next : -1), 300);
   };
-  const dismissInvite = () => {
-    setCallout('none');
-    setTimeout(() => setCallout('policies'), 300);
+
+  const handlePrimary = () => {
+    if (!activeCallout) return;
+    if (activeCallout.type === 'workflow') {
+      if (activeCallout.id === 'deposit')  onCalloutDeposit?.();
+      if (activeCallout.id === 'invite')   onCalloutInvite?.();
+      if (activeCallout.id === 'policies') onCalloutPolicies?.();
+    }
+    advance();
   };
-  const dismissPolicies = () => setCallout('none');
 
   if (!open || !wallet) return null;
 
   const coinSymbol = wallet.asset === 'BTC' ? '₿' : wallet.asset === 'ETH' ? 'Ξ' : wallet.asset[0];
   const coinBg     = wallet.asset === 'BTC' ? '#F7931A' : wallet.asset === 'ETH' ? '#627EEA' : '#9945FF';
 
+  const calloutPos = activeCallout ? positions[activeCallout.id] : null;
+
   return (
     <div className="wallet-detail-page open">
-      <Sidebar activeItem="home" onNavigate={onBack} />
+      <Sidebar activeItem="portfolio" onNavigate={(item) => { if (item === 'trade') { window.location.hash = '#trade'; } else { onBack(); } }} />
 
       <div className="wallet-detail-workspace">
-        {/* ── Topbar ── */}
+        {/* Topbar */}
         <div className="wallet-detail-topbar">
           <div className="wallet-detail-breadcrumb">
-            <span style={{ cursor: 'pointer' }} onClick={onBack}>Wallets</span>
+            <span style={{ cursor: 'pointer' }} onClick={onBack}>Portfolio</span>
             <span className="wallet-detail-breadcrumb-sep">›</span>
             <span className="wallet-detail-breadcrumb-current">{wallet.name}</span>
           </div>
           <div style={{ flex: 1 }} />
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div className="wallet-detail-body">
 
           {/* Header */}
           <div className="wallet-detail-header">
             <div className="wallet-detail-title-group">
-              {/* Wallet icon + coin badge */}
               <div className="wallet-detail-icon-wrap">
                 <div className="wallet-detail-icon-bg">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -106,8 +127,6 @@ export const WalletDetailPage: React.FC<Props> = ({ open, wallet, calloutReady =
                 </div>
                 <div className="wallet-detail-coin-badge" style={{ background: coinBg }}>{coinSymbol}</div>
               </div>
-
-              {/* Name, ID, role badges */}
               <div>
                 <div className="wallet-detail-name" ref={walletNameRef}>{wallet.name}</div>
                 <div className="wallet-detail-id-row">
@@ -126,7 +145,6 @@ export const WalletDetailPage: React.FC<Props> = ({ open, wallet, calloutReady =
               </div>
             </div>
 
-            {/* Avatar + menu */}
             <div className="wallet-detail-header-right">
               <div className="wd-avatar" ref={avatarRef}>GT</div>
               <button className="wd-menu-btn">
@@ -187,39 +205,36 @@ export const WalletDetailPage: React.FC<Props> = ({ open, wallet, calloutReady =
         </div>
       </div>
 
-      {/* ── Callouts (portal) ── */}
-      {callout === 'deposit' && depositPos && createPortal(
-        <div className="wd-callout" style={{ top: depositPos.top, left: depositPos.left }}>
-          <div className="wd-callout-caret-left" />
-          <button className="wd-callout-dismiss" onClick={dismissDeposit}>×</button>
-          <div className="wd-callout-title">Fund your wallet</div>
-          <div className="wd-callout-body">Deposit crypto or fiat to start sending, receiving, and trading from this wallet.</div>
-          <button className="wd-callout-cta" onClick={dismissDeposit}>Learn more about wallets</button>
-        </div>,
-        document.body
-      )}
+      {/* Callout (portal) */}
+      {activeCallout && calloutPos && createPortal(
+        <div className="wd-callout" style={{ top: calloutPos.top, left: calloutPos.left }}>
+          {activeCallout.caretDir === 'left'     && <div className="wd-callout-caret-left" />}
+          {activeCallout.caretDir === 'up-right' && <div className="wd-callout-caret-up" style={{ right: 22, left: 'auto' }} />}
+          {activeCallout.caretDir === 'up-left'  && <div className="wd-callout-caret-up" style={{ left: 20 }} />}
 
-      {callout === 'invite' && invitePos && createPortal(
-        <div className="wd-callout" style={{ top: invitePos.top, left: invitePos.left }}>
-          <div className="wd-callout-caret-up" style={{ right: 22, left: 'auto' }} />
-          <button className="wd-callout-dismiss" onClick={dismissInvite}>×</button>
-          <div className="wd-callout-title">Invite your team</div>
-          <div className="wd-callout-body">Add colleagues to manage approvals, policies, and reporting together.</div>
-          <button className="wd-callout-cta" onClick={dismissInvite}>Invite Members</button>
-        </div>,
-        document.body
-      )}
+          <button className="wd-callout-dismiss" onClick={advance}>×</button>
 
-      {callout === 'policies' && policiesPos && createPortal(
-        <div className="wd-callout" style={{ top: policiesPos.top, left: policiesPos.left }}>
-          <div className="wd-callout-caret-up" style={{ left: 20 }} />
-          <button className="wd-callout-dismiss" onClick={dismissPolicies}>×</button>
-          <div className="wd-callout-title">Secured by 2 default policies</div>
-          <div className="wd-callout-body">Your wallet is protected by BitGo's default transaction approval and spend limit policies.</div>
-          <div className="wd-callout-actions">
-            <button className="wd-callout-btn-primary" onClick={dismissPolicies}>View</button>
-            <button className="wd-callout-btn-ghost" onClick={dismissPolicies}>Learn More</button>
-          </div>
+          <div className="wd-callout-title">{activeCallout.title}</div>
+          <div className="wd-callout-body">{activeCallout.body}</div>
+
+          {activeCallout.type === 'workflow' ? (
+            <div className="wd-callout-actions">
+              <button className="wd-callout-btn-primary" onClick={handlePrimary}>
+                {activeCallout.primaryCta}
+              </button>
+              {activeCallout.secondaryCta && (
+                <button className="wd-callout-btn-ghost" onClick={advance}>
+                  {activeCallout.secondaryCta}
+                </button>
+              )}
+            </div>
+          ) : (
+            <button className="wd-callout-cta" onClick={advance}>
+              {activeCallout.primaryCta}
+            </button>
+          )}
+
+
         </div>,
         document.body
       )}

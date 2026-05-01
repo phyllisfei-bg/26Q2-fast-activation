@@ -6,7 +6,7 @@ type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 interface SidebarProps {
   activeItem?: 'home' | 'portfolio' | 'earn' | 'trade' | 'security';
   activeSecurity?: SecuritySubPage;
-  onNavigate?: (item: 'home') => void;
+  onNavigate?: (item: 'home' | 'trade') => void;
   onNavigateSecurity?: (sub: SecuritySubPage) => void;
 }
 
@@ -151,6 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <NavItem
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>}
           label="Trade" active={activeItem === 'trade'}
+          onClick={() => onNavigate?.('trade')}
         />
 
         <div className="nav-section-label">More</div>

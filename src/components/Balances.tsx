@@ -8,10 +8,6 @@ export const Balances: React.FC<BalancesProps> = ({ onDeposit }) => (
   <div className="balances-section">
     <div className="balances-title">
       Balances
-      <span className="tooltip-badge">
-        <span className="tooltip-dot" />
-        New
-      </span>
     </div>
     <div className="balances-empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.4">
