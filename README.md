@@ -1,5 +1,7 @@
 # BitGo Fast Activation — 26Q2 Prototype
 
+> ⚠️ **Prototype only.** Not built with Storybook components. May not reflect the latest product or design system. Refer to the design files and BitGo app for current state.
+
 A React prototype for the Q2 2026 Fast Activation initiative.
 
 ---
