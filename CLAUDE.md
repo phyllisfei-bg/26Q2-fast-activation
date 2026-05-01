@@ -1,6 +1,6 @@
 # 26Q2-fast-activation
 
-BitGo Fast Activation prototype — React + Vite app for the Q2 2026 initiative to accelerate time-to-value for new BitGo customers. Covers compliance verification (KYB/KYC), onboarding dashboard, and security management (whitelist destinations).
+BitGo Fast Activation prototype — React + Vite app for the Q2 2026 initiative to accelerate time-to-value for new BitGo customers.
 
 ## Project context
 
@@ -9,13 +9,11 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 2. **KYC** — individual user verification + goal setting
 3. **Dashboard** — role-based getting-started experience with priority actions
 
-The **Destinations** page is a standalone security feature for managing whitelisted addresses.
-
 ## Design goals
 
 - **Reduce time-to-value** — get users to their first meaningful action (wallet creation, trading, staking) as fast as possible after signup
 - **Role-appropriate experience** — surface the right priorities per user type from day one; avoid overwhelming new users with everything at once
-- **Progressive disclosure** — show complexity only when needed (e.g. scope chips expand on consolidation, walkthrough stepper reveals steps in-context)
+- **Progressive disclosure** — show complexity only when needed (e.g. walkthrough stepper reveals steps in-context)
 - **Trust through clarity** — compliance flows (KYB/KYC) should feel structured and credible, not bureaucratic; every step has clear purpose
 - **Consistency with BitGo platform** — uses Kintsugi design system tokens; dark/light mode parity throughout
 
@@ -23,7 +21,7 @@ The **Destinations** page is a standalone security feature for managing whitelis
 
 ### General
 - All flows support light and dark mode via CSS tokens — never hardcode colors, always use `var(--token)`
-- Destructive or irreversible actions (delete, consolidate) use confirmation patterns or animations that signal finality
+- Destructive or irreversible actions use confirmation patterns or animations that signal finality
 - Empty states, loading states, and error states should always be handled — no raw spinners or blank panels
 
 ### Dashboard
@@ -35,13 +33,6 @@ The **Destinations** page is a standalone security feature for managing whitelis
 - Multi-step flows show progress and allow back-navigation; users should never feel stuck
 - Form fields validate inline where possible; submission errors appear inline, not as page-level alerts
 - Verification steps that require async processing show optimistic UI first
-
-### Destinations page
-- Consolidation flow is in-context (modal anchored to the active row group) — no full-page takeover
-- Label animation (delete → type) communicates the transformation happening, not just the result
-- Scope badges appear after rows collapse — causality is clear: merge first, then result appears
-- Copy icon appears on row hover only — reduces visual noise in the default state
-- Trash/delete action is always visible (not hover-only) as it is a primary row action
 
 ### Routing
 - Hash-based routing keeps the app self-contained without a server; all routes are deep-linkable and bookmarkable
@@ -62,7 +53,6 @@ The **Destinations** page is a standalone security feature for managing whitelis
 | *(none)* | Dashboard |
 | `#kyb` | KYB — business verification flow |
 | `#kyc` | KYC — individual user verification flow |
-| `#destinations` | Whitelist Destinations |
 
 ## File map
 
@@ -72,7 +62,6 @@ The **Destinations** page is a standalone security feature for managing whitelis
 | `src/pages/FlowPage.tsx` | Flowchart overview linking all stages |
 | `src/pages/Dashboard.tsx` | Main dashboard (Get Started, ForYou, Balances, Portfolio) |
 | `src/pages/WalletDetailPage.tsx` | Wallet detail view (slide-in panel) |
-| `src/pages/DestinationsPage.tsx` | Whitelist destinations with consolidation flow |
 | `src/flows/KYBFlow.tsx` | Business / entity verification (multi-step) |
 | `src/flows/KYCFlow.tsx` | Individual user verification |
 | `src/flows/WalletCreationFlow.tsx` | Create wallet modal |
@@ -90,7 +79,7 @@ The **Destinations** page is a standalone security feature for managing whitelis
 | `src/hooks/useGetStarted.ts` | Get Started task state |
 | `src/hooks/useTheme.ts` | Light/dark theme toggle |
 | `src/types/index.ts` | Shared types, constants, trade pairs, walkthrough definitions |
-| `src/styles/globals.css` | Global styles + dest-row animations |
+| `src/styles/globals.css` | Global styles + animations |
 | `src/styles/tokens.css` | CSS custom properties (design tokens) |
 | `archive/` | Original HTML prototypes — reference only, do not edit |
 
@@ -123,3 +112,21 @@ CSS custom properties in `src/styles/tokens.css`:
 - `--color-primary` `--color-level1/2/3/4` `--color-text` `--color-text-secondary` `--color-text-muted` `--color-border` `--color-border-strong`
 - `--brand-500` `--brand-700` `--brand-a100` `--brand-a200`
 - Theme toggle wired via `useTheme` hook, toggled from `Topbar`
+
+---
+
+## Out of scope — Whitelist Destinations
+
+> This section documents a separate prototype built in the same repo but outside the FA project scope.
+
+**What it is:** A security management feature for whitelisting withdrawal addresses. Includes address allowlist, scope management (per-wallet permissions), approval workflows, and a label consolidation flow.
+
+**Route:** `#destinations` → `src/pages/DestinationsPage.tsx`
+
+### UX notes
+- Consolidation flow is in-context (modal anchored to the active row group) — no full-page takeover
+- Label animation (delete → type) communicates the transformation, not just the result
+- Scope badges appear after duplicate rows collapse — causality is clear: merge first, result appears after
+- Copy icon appears on row hover only — reduces visual noise in the default state
+- Trash/delete action uses secondary ghost style in the action column
+- Snackbar confirms when all groups are fully consolidated
