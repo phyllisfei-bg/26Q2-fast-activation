@@ -46,10 +46,9 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 | Page | URL |
 |---|---|
 | Flow Overview | [phyllisfei-bg.github.io/26Q2-fast-activation/#flow](https://phyllisfei-bg.github.io/26Q2-fast-activation/#flow) |
-| Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
 | KYB Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyb](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyb) |
 | KYC Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyc](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyc) |
-| Destinations | [phyllisfei-bg.github.io/26Q2-fast-activation/#destinations](https://phyllisfei-bg.github.io/26Q2-fast-activation/#destinations) |
+| Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
 
 ---
 
@@ -71,10 +70,9 @@ Open [http://localhost:5173](http://localhost:5173).
 | Route | Page | Description |
 |---|---|---|
 | `/#flow` | Flow Overview | Flowchart linking all stages of the activation journey |
-| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
 | `/#kyb` | KYB Flow | Business / entity verification (multi-step) |
 | `/#kyc` | KYC Flow | Individual user verification |
-| `/#destinations` | Whitelist Destinations | Address allowlist with label consolidation flow |
+| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
 
 ### Flows (launched from Dashboard)
 
@@ -93,7 +91,6 @@ Open [http://localhost:5173](http://localhost:5173).
 |---|---|
 | `src/pages/Dashboard.tsx` | Main dashboard |
 | `src/pages/WalletDetailPage.tsx` | Wallet detail view |
-| `src/pages/DestinationsPage.tsx` | Whitelist destinations with consolidation flow |
 | `src/flows/KYBFlow.tsx` | Business verification flow |
 | `src/flows/KYCFlow.tsx` | Individual user verification flow |
 | `src/flows/WalletCreationFlow.tsx` | Create wallet modal |
@@ -110,3 +107,17 @@ Open [http://localhost:5173](http://localhost:5173).
 ## Design
 
 Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the topbar.
+
+---
+
+## Out of scope — Whitelist Destinations
+
+> This prototype is included in the same repo but is outside the Fast Activation project scope.
+
+**What it is:** A security management feature for whitelisting withdrawal addresses — includes address allowlist, scope management, label consolidation flow, and approval workflows.
+
+| Route | URL |
+|---|---|
+| `/#destinations` | [phyllisfei-bg.github.io/26Q2-fast-activation/#destinations](https://phyllisfei-bg.github.io/26Q2-fast-activation/#destinations) |
+
+Source: `src/pages/DestinationsPage.tsx`
