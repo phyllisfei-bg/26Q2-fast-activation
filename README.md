@@ -109,6 +109,8 @@ Open [http://localhost:5173](http://localhost:5173).
 Built with Kintsugi-inspired design tokens (colors, spacing, typography) with full dark/light mode support. Theme toggle is available in the topbar.
 
 > **Note:** This prototype does not use Storybook components and does not directly reflect the Kintsugi design system. UI components are custom-built for prototyping speed and may deviate from production component specs.
+>
+> Since this is a prototype, it may not be in sync with all the updates in the product. Refer to the up-to-date design files and the BitGo app for the latest.
 
 ---
 
