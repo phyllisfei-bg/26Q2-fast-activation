@@ -11,6 +11,42 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 
 The **Destinations** page is a standalone security feature for managing whitelisted addresses.
 
+## Design goals
+
+- **Reduce time-to-value** — get users to their first meaningful action (wallet creation, trading, staking) as fast as possible after signup
+- **Role-appropriate experience** — surface the right priorities per user type from day one; avoid overwhelming new users with everything at once
+- **Progressive disclosure** — show complexity only when needed (e.g. scope chips expand on consolidation, walkthrough stepper reveals steps in-context)
+- **Trust through clarity** — compliance flows (KYB/KYC) should feel structured and credible, not bureaucratic; every step has clear purpose
+- **Consistency with BitGo platform** — uses Kintsugi design system tokens; dark/light mode parity throughout
+
+## UX considerations
+
+### General
+- All flows support light and dark mode via CSS tokens — never hardcode colors, always use `var(--token)`
+- Destructive or irreversible actions (delete, consolidate) use confirmation patterns or animations that signal finality
+- Empty states, loading states, and error states should always be handled — no raw spinners or blank panels
+
+### Dashboard
+- Get Started tasks are ordered by priority and estimated time; completed tasks collapse gracefully
+- ForYou cards are dismissible and limited to 3 visible + 1 peeking to signal scrollability without overwhelming
+- Snackbar is used for non-blocking confirmations (wallet created, order placed, deposit confirmed) — never blocking modals
+
+### KYB / KYC flows
+- Multi-step flows show progress and allow back-navigation; users should never feel stuck
+- Form fields validate inline where possible; submission errors appear inline, not as page-level alerts
+- Verification steps that require async processing show optimistic UI first
+
+### Destinations page
+- Consolidation flow is in-context (modal anchored to the active row group) — no full-page takeover
+- Label animation (delete → type) communicates the transformation happening, not just the result
+- Scope badges appear after rows collapse — causality is clear: merge first, then result appears
+- Copy icon appears on row hover only — reduces visual noise in the default state
+- Trash/delete action is always visible (not hover-only) as it is a primary row action
+
+### Routing
+- Hash-based routing keeps the app self-contained without a server; all routes are deep-linkable and bookmarkable
+- Navigating away from a flow resets its local state; no stale data persists across visits
+
 ## Stack
 
 - React 19, TypeScript, Vite
