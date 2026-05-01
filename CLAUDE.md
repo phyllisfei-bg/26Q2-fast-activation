@@ -35,14 +35,18 @@ The dashboard has a linear progression: task completion unlocks callouts, and co
 | `gsGoAccount` | Trade on Go Account | User completes a trade in `TradeCard` → `markDone('gsGoAccount')` |
 | `gsPolicy` | Configure Your First Policy | `PolicyModal` publishes → `markDone('gsPolicy')` |
 
-**Callout sequence** (triggered after `gsWallet`):
-1. `WalletCreationFlow` completes → wallet detail panel opens + snackbar shows "Wallet created. Back to dashboard"
-2. User dismisses the snackbar → `walletCalloutReady = true` is set
-3. `WalletDetailPage` detects `calloutReady` and starts a 3-step in-context callout tour:
-   - **Deposit** — anchored to the deposit button ("Fund your wallet")
-   - **Invite** — anchored to the avatar area ("Invite your team")
-   - **Policies** — anchored to the wallet name ("Set spending policies")
-4. Each callout is dismissed individually; all are portal-rendered so they float over the UI
+**Callout triggers — two scenarios:**
+
+1. **Initiated from Get Started** — user clicks a task CTA, completes the workflow, and lands on a new surface (e.g. wallet detail page). Callouts fire contextually to educate them about what they can do next on that surface.
+   - Example: `gsWallet` → `WalletCreationFlow` completes → wallet detail panel opens + snackbar "Wallet created." → user dismisses snackbar → `walletCalloutReady = true` → 3-step callout tour starts on the wallet detail page (Deposit → Invite → Policies)
+
+2. **First visit to a new page** — when a user lands on a feature page for the first time, callouts appear to explain the key functions available, even outside of a Get Started flow.
+
+**Callout behaviour:**
+- Anchored to specific UI elements (portal-rendered, float over the UI)
+- Each callout is dismissed individually
+- Sequence is linear — next callout appears after the current one is dismissed
+- Never block the underlying UI; user can always interact around them
 
 **For You section** (`src/pages/Dashboard.tsx`):
 - `<ForYou />` renders only when `allDone === true` (all 3 tasks complete)
