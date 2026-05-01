@@ -1,12 +1,35 @@
 # BitGo Fast Activation — 26Q2 Prototype
 
-A React prototype exploring a streamlined onboarding and activation experience for new BitGo customers.
+A React prototype for the Q2 2026 Fast Activation initiative.
+
+---
+
+## Project Context
+
+Fast Activation (FA) gets businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible. The prototype covers three sequential stages:
+
+1. **KYB** — entity-level compliance (business verification)
+2. **KYC** — individual user verification + goal setting
+3. **Dashboard** — role-based getting-started experience with priority actions
 
 ---
 
 ## Project Goal
 
-Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new BitGo customers. The goal is to get businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible — reducing drop-off, shortening onboarding time, and delivering a role-appropriate experience from day one.
+- **Bring more users in as early as possible** — reduce friction in the onboarding funnel so users reach the platform faster
+- **Encourage first deposit as soon as we can** — surface deposit entry points early and prominently; every workflow should create a natural path to funding
+- **Help users complete first-class actions more easily** — wallet creation, trading, and policy setup should feel guided and achievable, not intimidating
+- **Educate users about our products** — use callouts, For You recommendations, and contextual nudges to help users discover features relevant to their goals
+
+---
+
+## Design Goals
+
+- **Reduce time-to-value** — get users to their first meaningful action (wallet creation, trading, staking) as fast as possible after signup
+- **Role-appropriate experience** — surface the right priorities per user type from day one; avoid overwhelming new users with everything at once
+- **Progressive disclosure** — show complexity only when needed; walkthrough stepper and callouts reveal guidance in-context
+- **Trust through clarity** — compliance flows (KYB/KYC) should feel structured and credible, not bureaucratic; every step has a clear purpose
+- **Consistency with BitGo platform** — built on the Kintsugi design system with full dark/light mode support
 
 ---
 
@@ -23,10 +46,9 @@ Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new
 | Page | URL |
 |---|---|
 | Flow Overview | [phyllisfei-bg.github.io/26Q2-fast-activation/#flow](https://phyllisfei-bg.github.io/26Q2-fast-activation/#flow) |
-| Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
 | KYB Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyb](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyb) |
 | KYC Flow | [phyllisfei-bg.github.io/26Q2-fast-activation/#kyc](https://phyllisfei-bg.github.io/26Q2-fast-activation/#kyc) |
-| Destinations | [phyllisfei-bg.github.io/26Q2-fast-activation/#destinations](https://phyllisfei-bg.github.io/26Q2-fast-activation/#destinations) |
+| Dashboard | [phyllisfei-bg.github.io/26Q2-fast-activation/](https://phyllisfei-bg.github.io/26Q2-fast-activation/) |
 
 ---
 
@@ -48,10 +70,9 @@ Open [http://localhost:5173](http://localhost:5173).
 | Route | Page | Description |
 |---|---|---|
 | `/#flow` | Flow Overview | Flowchart linking all stages of the activation journey |
-| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
 | `/#kyb` | KYB Flow | Business / entity verification (multi-step) |
 | `/#kyc` | KYC Flow | Individual user verification |
-| `/#destinations` | Whitelist Destinations | Address allowlist with label consolidation flow |
+| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
 
 ### Flows (launched from Dashboard)
 
@@ -70,7 +91,6 @@ Open [http://localhost:5173](http://localhost:5173).
 |---|---|
 | `src/pages/Dashboard.tsx` | Main dashboard |
 | `src/pages/WalletDetailPage.tsx` | Wallet detail view |
-| `src/pages/DestinationsPage.tsx` | Whitelist destinations with consolidation flow |
 | `src/flows/KYBFlow.tsx` | Business verification flow |
 | `src/flows/KYCFlow.tsx` | Individual user verification flow |
 | `src/flows/WalletCreationFlow.tsx` | Create wallet modal |
@@ -86,4 +106,20 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Design
 
-Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the topbar.
+Built with Kintsugi-inspired design tokens (colors, spacing, typography) with full dark/light mode support. Theme toggle is available in the topbar.
+
+> **Note:** This prototype does not use Storybook components and does not directly reflect the Kintsugi design system. UI components are custom-built for prototyping speed and may deviate from production component specs.
+
+---
+
+## Out of scope — Whitelist Destinations
+
+> This prototype is included in the same repo but is outside the Fast Activation project scope.
+
+**What it is:** A security management feature for whitelisting withdrawal addresses — includes address allowlist, scope management, label consolidation flow, and approval workflows.
+
+| Route | URL |
+|---|---|
+| `/#destinations` | [phyllisfei-bg.github.io/26Q2-fast-activation/#destinations](https://phyllisfei-bg.github.io/26Q2-fast-activation/#destinations) |
+
+Source: `src/pages/DestinationsPage.tsx`
