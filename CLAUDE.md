@@ -9,6 +9,13 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 2. **KYC** — individual user verification + goal setting
 3. **Dashboard** — role-based getting-started experience with priority actions
 
+## Project goal
+
+- **Bring more users in as early as possible** — reduce friction in the onboarding funnel so users reach the platform faster
+- **Encourage first deposit as soon as we can** — surface deposit entry points early and prominently; every workflow should create a natural path to funding
+- **Help users complete first-class actions more easily** — wallet creation, trading, and policy setup should feel guided and achievable, not intimidating
+- **Educate users about our products** — use callouts, For You recommendations, and contextual nudges to help users discover features relevant to their goals
+
 ## Design goals
 
 - **Reduce time-to-value** — get users to their first meaningful action (wallet creation, trading, staking) as fast as possible after signup
