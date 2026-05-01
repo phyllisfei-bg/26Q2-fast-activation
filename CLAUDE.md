@@ -24,10 +24,32 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 - Destructive or irreversible actions use confirmation patterns or animations that signal finality
 - Empty states, loading states, and error states should always be handled — no raw spinners or blank panels
 
-### Dashboard
-- Get Started tasks are ordered by priority and estimated time; completed tasks collapse gracefully
-- ForYou cards are dismissible and limited to 3 visible + 1 peeking to signal scrollability without overwhelming
-- Snackbar is used for non-blocking confirmations (wallet created, order placed, deposit confirmed) — never blocking modals
+### Dashboard — Getting Started → Callouts → For You progression
+
+The dashboard has a linear progression: task completion unlocks callouts, and completing all tasks reveals For You.
+
+**3 Get Started tasks** (`src/hooks/useGetStarted.ts`, `src/types/index.ts`):
+| Task ID | Action | Completes when |
+|---|---|---|
+| `gsWallet` | Create Your First Wallet | `WalletCreationFlow` completes → `markDone('gsWallet')` |
+| `gsGoAccount` | Trade on Go Account | User completes a trade in `TradeCard` → `markDone('gsGoAccount')` |
+| `gsPolicy` | Configure Your First Policy | `PolicyModal` publishes → `markDone('gsPolicy')` |
+
+**Callout sequence** (triggered after `gsWallet`):
+1. `WalletCreationFlow` completes → wallet detail panel opens + snackbar shows "Wallet created. Back to dashboard"
+2. User dismisses the snackbar → `walletCalloutReady = true` is set
+3. `WalletDetailPage` detects `calloutReady` and starts a 3-step in-context callout tour:
+   - **Deposit** — anchored to the deposit button ("Fund your wallet")
+   - **Invite** — anchored to the avatar area ("Invite your team")
+   - **Policies** — anchored to the wallet name ("Set spending policies")
+4. Each callout is dismissed individually; all are portal-rendered so they float over the UI
+
+**For You section** (`src/pages/Dashboard.tsx`):
+- `<ForYou />` renders only when `allDone === true` (all 3 tasks complete)
+- Cards are horizontally scrollable, dismissible individually, and limited to 3 visible + 1 peeking
+- Once all tasks are done, Get Started collapses and For You takes its place
+
+**Snackbar** is used throughout for non-blocking confirmations — wallet created, order placed, deposit confirmed, policies published. Never blocking modals.
 
 ### KYB / KYC flows
 - Multi-step flows show progress and allow back-navigation; users should never feel stuck
