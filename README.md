@@ -106,7 +106,9 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Design
 
-Built on the Kintsugi design system with full dark/light mode support. Theme toggle is available in the topbar.
+Built with Kintsugi-inspired design tokens (colors, spacing, typography) with full dark/light mode support. Theme toggle is available in the topbar.
+
+> **Note:** This prototype does not use Storybook components and does not directly reflect the Kintsugi design system. UI components are custom-built for prototyping speed and may deviate from production component specs.
 
 ---
 
