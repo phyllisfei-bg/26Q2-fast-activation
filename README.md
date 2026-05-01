@@ -1,6 +1,6 @@
 # BitGo Fast Activation — 26Q2 Prototype
 
-> ⚠️ **Prototype only.** Not built with Storybook components. May not reflect the latest product or design system. Refer to the design files and BitGo app for current state.
+> ⚠️ **Prototype only.** Not built with Storybook components, not strictly following the Kintsugi design system, and may not reflect the latest product. Refer to the design files and BitGo app for current state.
 
 A React prototype for the Q2 2026 Fast Activation initiative.
 
@@ -108,11 +108,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Design
 
-Built with Kintsugi-inspired design tokens (colors, spacing, typography) with full dark/light mode support. Theme toggle is available in the topbar.
-
-> **Note:** This prototype does not use Storybook components and does not directly reflect the Kintsugi design system. UI components are custom-built for prototyping speed and may deviate from production component specs.
->
-> Since this is a prototype, it may not be in sync with all the updates in the product. Refer to the up-to-date design files and the BitGo app for the latest.
+Uses Kintsugi-inspired design tokens with full dark/light mode support. Theme toggle is available in the topbar.
 
 ---
 
