@@ -1,12 +1,35 @@
 # BitGo Fast Activation — 26Q2 Prototype
 
-A React prototype exploring a streamlined onboarding and activation experience for new BitGo customers.
+A React prototype for the Q2 2026 Fast Activation initiative.
+
+---
+
+## Project Context
+
+Fast Activation (FA) gets businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible. The prototype covers three sequential stages:
+
+1. **KYB** — entity-level compliance (business verification)
+2. **KYC** — individual user verification + goal setting
+3. **Dashboard** — role-based getting-started experience with priority actions
 
 ---
 
 ## Project Goal
 
-Fast Activation (FA) is a Q2 2026 initiative to accelerate time-to-value for new BitGo customers. The goal is to get businesses and their users through compliance verification and into their first meaningful platform actions as quickly as possible — reducing drop-off, shortening onboarding time, and delivering a role-appropriate experience from day one.
+- **Bring more users in as early as possible** — reduce friction in the onboarding funnel so users reach the platform faster
+- **Encourage first deposit as soon as we can** — surface deposit entry points early and prominently; every workflow should create a natural path to funding
+- **Help users complete first-class actions more easily** — wallet creation, trading, and policy setup should feel guided and achievable, not intimidating
+- **Educate users about our products** — use callouts, For You recommendations, and contextual nudges to help users discover features relevant to their goals
+
+---
+
+## Design Goals
+
+- **Reduce time-to-value** — get users to their first meaningful action (wallet creation, trading, staking) as fast as possible after signup
+- **Role-appropriate experience** — surface the right priorities per user type from day one; avoid overwhelming new users with everything at once
+- **Progressive disclosure** — show complexity only when needed; walkthrough stepper and callouts reveal guidance in-context
+- **Trust through clarity** — compliance flows (KYB/KYC) should feel structured and credible, not bureaucratic; every step has a clear purpose
+- **Consistency with BitGo platform** — built on the Kintsugi design system with full dark/light mode support
 
 ---
 
