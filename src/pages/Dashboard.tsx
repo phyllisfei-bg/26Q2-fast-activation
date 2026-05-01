@@ -5,11 +5,13 @@ import { GetStarted } from '../components/GetStarted';
 import { ForYou }     from '../components/ForYou';
 import { Balances }   from '../components/Balances';
 import { TradeCard }  from '../components/TradeCard';
-import type { GsTask }     from '../types';
+import type { GsTask, UserRole } from '../types';
 
 interface DashboardProps {
   isLight:         boolean;
   onThemeToggle:   () => void;
+  role:            UserRole;
+  tasks:           GsTask[];
   doneTasks:       GsTask[];
   allDone:         boolean;
   onGsLaunch:      (task: GsTask) => void;
@@ -22,6 +24,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({
   isLight, onThemeToggle,
+  role, tasks,
   doneTasks, allDone,
   onGsLaunch, onOrderPlaced,
   tradeHighlightVer = 0,
@@ -31,15 +34,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [gsDismissed, setGsDismissed] = useState(false);
 
+  // Reset dismissed state when role changes so the card re-appears
+  const prevRoleRef = React.useRef(role);
+  React.useEffect(() => {
+    if (prevRoleRef.current !== role) {
+      setGsDismissed(false);
+      prevRoleRef.current = role;
+    }
+  }, [role]);
+
   return (
     <>
       <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
 
       <div className="content-area">
         <div className="main-panel">
-          {/* Get Started — always shown until explicitly dismissed */}
           {!gsDismissed && (
             <GetStarted
+              tasks={tasks}
+              role={role}
               doneTasks={doneTasks}
               onLaunch={onGsLaunch}
               allDone={allDone}
@@ -47,17 +60,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
           )}
 
-          {/* Portfolio */}
           <Portfolio onOpenDeposit={onOpenDeposit} />
 
-          {/* For You — shown after all Get Started tasks complete */}
           {allDone && <ForYou />}
 
-          {/* Balances */}
           <Balances onDeposit={() => onOpenDeposit?.()} />
         </div>
 
-        {/* Sticky trade card */}
         <TradeCard
           highlightVer={tradeHighlightVer}
           funded={goAccountFunded}
