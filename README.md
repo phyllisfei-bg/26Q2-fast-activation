@@ -106,12 +106,6 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ---
 
-## Design
-
-Uses Kintsugi-inspired design tokens with full dark/light mode support. Theme toggle is available in the topbar.
-
----
-
 ## Out of scope — Whitelist Destinations
 
 > This prototype is included in the same repo but is outside the Fast Activation project scope.
