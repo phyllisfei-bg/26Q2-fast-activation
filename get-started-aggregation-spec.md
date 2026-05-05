@@ -2,13 +2,13 @@
 
 **Feature:** Fast Activation · Dashboard · Get Started card  
 **Author:** Phyllis Fei  
-**Status:** Ready for engineering
+**Status:** In progress
 
 ---
 
 ## Overview
 
-The Get Started card shows each user up to 3 prioritized tasks on their first dashboard visit. Tasks are computed at runtime from the user's role(s), the current org state, and which tasks they've already completed. The aggregation algorithm runs for non-super users only.
+The Get Started card shows each user up to 3 prioritized actions on their first dashboard visit. Actions are computed at runtime from the user's role(s), the current org state, and which actions they've already completed. The aggregation algorithm runs for non-super users only.
 
 ```
 if onboardingType = sales-led AND user is super_user:
@@ -20,20 +20,33 @@ else if onboardingType = organic AND user is super_user:
 
 else:
   → run aggregation algorithm (steps 1–6)
-    (organic non-super users: pending — TBD)
+    (applies to sales-led non-super users; organic non-super users: pending — TBD)
 ```
 
 ---
 
-## 1. Data model
+<details>
+<summary><strong>1. Data model</strong></summary>
 
-### 1.1 User roles
+### 1.1 Org state
+
+| Key | Value | Meaning | `goAccountActivated` state |
+|---|---|---|---|
+| `onboardingType` | `sales-led` | KYB and KYC are completed (KYB may not be approved yet; KYC approval is near-instant) by the time the user lands on the dashboard. | Always `true` |
+| `onboardingType` | `organic` | KYB and/or KYC has not been started, but the user is already on the dashboard. | Starts as `false`; flips to `true` once verification is complete |
+
+### 1.2 User roles
+
+`super_user` is an exclusive role — a user who is `super_user` cannot hold any other role simultaneously. Their action sets are fixed and handled via the decision tree in the overview; the aggregation algorithm does not apply.
+
+| Role ID | Label |
+|---|---|
+| `super_user` | Super User |
 
 A user can hold one or more of the following roles simultaneously:
 
 | Role ID | Label |
 |---|---|
-| `super_user` | Super User |
 | `org_admin` | Org Admin |
 | `ent_admin` | Enterprise Admin |
 | `wallet_admin` | Wallet Admin |
@@ -43,31 +56,30 @@ A user can hold one or more of the following roles simultaneously:
 | `video_id_user` | Video ID User |
 | `auditor` | Auditor |
 
-### 1.2 Org state
-
-Three attributes tracked at the org level (shared across all users in the org):
+### 1.3 Enterprise state
 
 | Key | Type | Meaning |
 |---|---|---|
-| `onboardingType` | enum: `sales-led` \| `organic` | How the org entered the product. Set once at signup, never mutates. Determines the initial value of `goAccountActivated`. |
-| `bankAccountAdded` | boolean | A bank account has been linked to the org |
-| `goAccountActivated` | boolean | The org's Go Account is active and ready to trade. **Derived from `onboardingType`**: always `true` for `sales-led` orgs; starts as `false` for `organic` orgs and flips to `true` once verification is complete (KYB + KYC for business entities; KYC only for individuals). Do not use `goAccountActivated` as a routing condition — use `onboardingType` instead. |
+| `bankAccountAdded` | boolean | A bank account has been linked to the enterprise |
+| `goAccountActivated` | boolean | Whether the enterprise's Go Account is currently active. Initial value is determined by `onboardingType` (see 1.1); mutable for organic orgs as verification progresses. For organic individuals, KYC completion flips this to `true`. For organic business entities, KYB completion (NEEDS TO DOUBLE CHECK) flips this to `true`. Do not use as a routing condition — use `onboardingType` instead. |
+| `walletExists` (NEED INPUT) | boolean | Whether at least one wallet exists in the enterprise. When `false`, `createWallet` is treated as a business goal in scoring — ensuring it floats to the top and does not become a blocker for roles that need a wallet to perform actions. |
 
-These attributes are org-wide, not per-user. `walletExists` is no longer used by the aggregation algorithm — it is only relevant inside the deposit and wallet flows.
+### 1.4 Per-user completion state
 
-### 1.3 Per-user completion state
-
-A set of task IDs the current user has individually completed. Tracked per user, not per org.
+A set of task IDs the current user has individually completed. Tracked per user, not per org or enterprise. Note: the TypeScript type names (`TaskId`, `UserCompletedTasks`) use "task" — this aligns with the code, not the product terminology.
 
 ```ts
 type UserCompletedTasks = Set<TaskId>
 ```
 
+</details>
+
 ---
 
-## 2. Task catalog
+<details>
+<summary><strong>2. Action catalog</strong></summary>
 
-Each task definition has the following shape:
+Each action definition has the following shape:
 
 ```ts
 type Task = {
@@ -77,28 +89,26 @@ type Task = {
   isBusinessGoal?: boolean                     // floats to top of scoring
   substitution?: {
     whenOrgKey: keyof OrgState   // if this org flag is true...
-    replaceWith: TaskId          // ...swap this task out for another
+    replaceWith: TaskId          // ...swap this action out for another
   }
 }
 ```
 
-### 2.1 Full task catalog
+### 2.1 Full action catalog
 
-| Task ID | Default title | Business goal | Notes |
+| Action ID | Default title | Business goal | Notes / Callout flow |
 |---|---|---|---|
 | `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state; deposit flow handles bank account context internally (see 2.2) |
-| `firstTrade` | "Make first trade" | Yes | Activation path variation — see section 8 |
-| `createWallet` | "Create first wallet" | — | |
+| `firstTrade` | "Make first trade" | Yes | Dependent on first deposit (and possibly wallet creation) |
+| `createWallet` | "Create first wallet" | Conditional | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise |
 | `addBankAccount` | "Add bank account" | — | Substitution rule: swaps to `understandTasksApprovals` when `bankAccountAdded = true` |
-| `explorePolicies` | "Explore policies" | — | Backfill eligible (role-restricted) |
-| `explorePortfolio` | "Explore portfolio" | — | |
-| `startFirstTrade` | "Start first trade" | — | |
+| `explorePolicies` | "Explore policies" | — | Callout order: Default policies → Manage policies → Create custom policy.<br><br>Backfill eligible (role-restricted) |
+| `explorePortfolio` | "Explore portfolio" | — | Use Go Account as sample walkthrough whenever possible.<br><br>Callout order: "What's Go Account" → View Members → View Policies |
 | `viewReports` | "View reports" | — | |
 | `viewTrades` | "View trades" | — | |
 | `viewMembersRoles` | "View members & roles" | — | |
-| `viewUMSTasks` | "View UMS tasks" | — | |
 | `viewEnterprisesWallets` | "View enterprises & wallets" | — | |
-| `understandTasksApprovals` | "Understand tasks & approvals" | — | Backfill eligible (role-restricted) |
+| `understandTasksApprovals` | "Understand tasks & approvals" | — | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible, callout guides to enterprise-level tasks page first, then UMS tasks on the CTA<br><br>Backfill eligible (role-restricted). |
 | `completeKYB` | "Complete KYB" | — | Organic business entities only |
 | `completeKYC` | "Complete KYC" | — | Organic users only (business entities and individuals) |
 | `completeVideoID` | "Complete Video ID" | — | |
@@ -107,67 +117,83 @@ type Task = {
 
 ### 2.2 `fundGoAccount` — deposit flow behaviour
 
-The task card title and description are static: always **"Fund Go Account"**. The deposit method available to the user varies by org state, but this is handled inside the deposit flow itself — not on the Get Started card.
+The action card title and description are static: always **"Fund Go Account"**. The deposit method available to the user varies by org state, but this is handled inside the deposit flow itself — not on the Get Started card.
 
 | Org state | Deposit flow behaviour |
 |---|---|
-| `bankAccountAdded = true`, user has `super_user`, `wallet_admin`, `wallet_spender`, or `wallet_viewer` | User can choose cash or crypto deposit |
-| `bankAccountAdded = false`, user has `ent_admin` or `super_user` | User can add a bank account from within the deposit flow |
+| `bankAccountAdded = true`, user is `super_user` or has `wallet_admin`, `wallet_spender`, or `wallet_viewer` | User can choose cash or crypto deposit |
+| `bankAccountAdded = false`, user is `super_user` or has `ent_admin` | User can add a bank account from within the deposit flow |
 | `bankAccountAdded = false`, user has `wallet_admin`, `wallet_spender`, or `wallet_viewer` | User lands on crypto deposit by default; a banner is shown on the cash deposit tab explaining that a bank account has not been set up yet |
-
-**This task is never locked.** It is always active regardless of whether a wallet exists or a bank account has been added. Do not apply a block rule to `fundGoAccount`.
 
 ### 2.3 Substitution rule — `addBankAccount`
 
-When `bankAccountAdded = true`, the task `addBankAccount` is replaced with `understandTasksApprovals` in the candidate pool before scoring. If `understandTasksApprovals` is already in the pool from another role, `addBankAccount` is simply removed (no duplicate).
+When `bankAccountAdded = true`, the action `addBankAccount` is replaced with `understandTasksApprovals` in the candidate pool before scoring. If `understandTasksApprovals` is already in the pool from another role, `addBankAccount` is simply removed (no duplicate).
+
+</details>
 
 ---
 
-## 3. Role task pools (top 3 per role)
+<details>
+<summary><strong>3. Role action pools (top 3 per role)</strong></summary>
 
-Each role has a fixed ordered list of up to 3 candidate tasks. Order within the list signals default priority for that role.
+Each role has a fixed ordered list of up to 3 candidate actions. Order within the list signals default priority for that role.
 
 | Role | Slot 1 | Slot 2 | Slot 3 |
 |---|---|---|---|
 | `super_user` | `fundGoAccount` | `firstTrade` | `createWallet` |
-| `org_admin` | `viewMembersRoles` | `viewUMSTasks` | `viewEnterprisesWallets` |
+| `org_admin` | `viewMembersRoles` | `understandTasksApprovals` | `viewEnterprisesWallets` |
 | `ent_admin` | `createWallet` | `addBankAccount` | `explorePolicies` |
 | `wallet_admin` | `fundGoAccount` | `explorePortfolio` | `explorePolicies` |
-| `wallet_spender` | `fundGoAccount` | `explorePortfolio` | `startFirstTrade` |
+| `wallet_spender` | `fundGoAccount` | `explorePortfolio` | `firstTrade` |
 | `wallet_viewer` | `fundGoAccount` | `explorePortfolio` | `viewReports` |
-| `wallet_trader` | `firstTrade` | `viewTrades` | *(only 2 tasks — no backfill)* |
+| `wallet_trader` | `firstTrade` | `viewTrades` | *(only 2 actions — no backfill)* |
 | `video_id_user` | `completeVideoID` | `understandTasksApprovals` | `unlockPolicy` |
-| `auditor` | `viewActivityLog` | *(only 1 task — no backfill)* | |
+| `auditor` | `viewActivityLog` | *(only 1 action — no backfill)* | |
 
-**Important:** `wallet_trader` and `auditor` intentionally show fewer than 3 tasks. Do not pad with backfill for these roles.
+> **Note:** The `super_user` row is reference only — not processed by the aggregation algorithm. Super user action sets are handled via the decision tree in the overview.
 
-**Note:** `super_user` row is reference only — not processed by the aggregation algorithm. Super user task sets are handled via the decision tree in the overview.
+</details>
 
 ---
 
-## 4. Backfill catalog
+<details>
+<summary><strong>4. Backfill catalog</strong></summary>
 
-When a user ends up with fewer than 3 tasks after scoring (because their role pool is thin or tasks are completed), backfill tasks are appended in order until 3 tasks are reached — subject to role eligibility.
+When a user ends up with fewer than 3 actions after scoring (because their role pool is thin or actions are completed), backfill actions are appended in order until 3 actions are reached — subject to role eligibility.
 
-| Backfill task | Eligible roles |
+| Backfill action | Eligible roles |
 |---|---|
 | `explorePolicies` | `ent_admin`, `wallet_admin` |
 | `understandTasksApprovals` | `org_admin`, `ent_admin`, `wallet_admin`, `video_id_user` |
 
-`wallet_trader` and `auditor` are **not eligible** for any backfill tasks.
+> **Note:** `wallet_trader` and `auditor` intentionally show fewer than 3 actions and are not eligible for any backfill actions.
 
-**Page routing for `understandTasksApprovals`:**
-- `org_admin` → lands on the UMS tasks page
-- `ent_admin`, `wallet_admin`, `video_id_user` → land on the enterprise-level tasks page
-- A user who holds both `org_admin` and `ent_admin` → can access both the UMS tasks page and the enterprise-level tasks page
+</details>
 
 ---
 
-## 5. Aggregation algorithm
+<details>
+<summary><strong>5. Aggregation algorithm</strong></summary>
 
-**This algorithm applies to non-super user accounts only** — whether the user holds a single role or multiple roles. For `super_user` (sales-led and organic), tasks are fixed sets defined in the overview decision tree and section 8 — no aggregation or scoring is needed.
+**This algorithm applies to non-super user accounts only** — whether the user holds a single role or multiple roles. For `super_user` (sales-led and organic), actions are fixed sets defined in the overview decision tree and section 8 — no aggregation or scoring is needed.
 
-Run this function at render time for all non-super users. Input: `roles[]`, `orgState`, `userCompletedTasks`. Output: ordered array of up to 3 resolved task objects.
+Run this function at render time for all non-super users. Input: `roles[]`, `orgState`, `userCompletedTasks`. Output: ordered array of up to 3 resolved action objects.
+
+```mermaid
+flowchart TD
+    A["<b>Input</b><br>roles[], orgState, userCompletedTasks"] --> B
+    B["<b>Step 1</b> — Resolve effective roles<br>Collect all roles assigned to the user"] --> C
+    C["<b>Step 2</b> — Build candidate pool<br>Union action lists from all roles;<br>track role overlap count &amp; best slot per action"] --> D
+    D["<b>Step 3</b> — Apply substitutions &amp; flag overrides<br>Swap actions based on org state flags<br>Override isBusinessGoal when walletExists = false"] --> E
+    E["<b>Step 4</b> — Filter completed actions<br>Remove actions already completed by the user"] --> F
+    F["<b>Step 5</b> — Score and sort<br>1. Business goal flag<br>2. Role overlap count<br>3. Best slot position"] --> G
+    G["<b>Step 6</b> — Take top 3"] --> H
+    H{Fewer than 3?}
+    H -->|No| J["<b>Return</b> resolved action list<br>(up to 3 actions)"]
+    H -->|"Yes — wallet_trader or auditor"| J
+    H -->|"Yes — all other roles"| I["Append eligible backfill actions<br>until 3 reached or catalog exhausted"]
+    I --> J
+```
 
 ### Step 1 — Resolve effective roles
 
@@ -179,7 +205,7 @@ effectiveRoles = roles  // super_user is handled separately, not via this algori
 
 ### Step 2 — Build candidate pool
 
-Union the task lists from all effective roles. Track which roles each task appears in and its best (lowest) slot position across those roles.
+Union the action lists from all effective roles. Track which roles each action appears in and its best (lowest) slot position across those roles.
 
 ```
 for each role in effectiveRoles:
@@ -191,10 +217,11 @@ for each role in effectiveRoles:
       pool[taskId].bestSlot = min(pool[taskId].bestSlot, slotIndex)
 ```
 
-### Step 3 — Apply substitutions
+### Step 3 — Apply substitutions and state-based flag overrides
 
-For each task in the pool, check its substitution rule against current org state. Apply before filtering or scoring.
+For each action in the pool, check its substitution rule against current org state. Also apply any state-based flag overrides. Apply before filtering or scoring.
 
+**Substitutions:**
 ```
 for each task in pool:
   if task.substitution exists AND orgState[task.substitution.whenOrgKey] === true:
@@ -205,9 +232,15 @@ for each task in pool:
       replace task with { id: replacementId, roles: task.roles, bestSlot: task.bestSlot }
 ```
 
-### Step 4 — Filter completed tasks
+**State-based flag overrides:**
+```
+if walletExists === false AND pool contains createWallet:
+  pool[createWallet].isBusinessGoal = true
+```
 
-Remove any task the current user has already completed.
+### Step 4 — Filter completed actions
+
+Remove any action the current user has already completed.
 
 ```
 pool = pool.filter(task => !userCompletedTasks.has(task.id))
@@ -217,8 +250,8 @@ pool = pool.filter(task => !userCompletedTasks.has(task.id))
 
 Sort the pool using this priority order (highest to lowest):
 
-1. **Business goal flag** — tasks marked `isBusinessGoal = true` sort first
-2. **Role overlap count** — tasks appearing in more of the user's roles sort higher
+1. **Business goal flag** — actions marked `isBusinessGoal = true` sort first
+2. **Role overlap count** — actions appearing in more of the user's roles sort higher
 3. **Best slot position** — lower slot number sorts higher (tiebreaker)
 
 ```
@@ -230,7 +263,7 @@ pool.sort by:
 
 ### Step 6 — Take top 3, then backfill
 
-Take the first 3 from the sorted pool. If fewer than 3 remain, iterate through the backfill catalog and append eligible tasks (checking role eligibility and that the task isn't already in the top 3 or completed) until 3 tasks are reached or backfill is exhausted.
+Take the first 3 from the sorted pool. If fewer than 3 remain, iterate through the backfill catalog and append eligible actions (checking role eligibility and that the action isn't already in the top 3 or completed) until 3 actions are reached or backfill is exhausted.
 
 ```
 top3 = pool.slice(0, 3)
@@ -246,43 +279,54 @@ if top3.length < 3:
 
 Skip backfill entirely for `wallet_trader` and `auditor`.
 
-Return the resolved task list. Each item includes: `id`, `title`, `description`. All returned tasks are active — no block states apply.
+Return the resolved action list. Each item includes: `id`, `title`, `description`. All returned actions are active — no block states apply.
+
+</details>
 
 ---
 
-## 6. Special cases summary
+<details>
+<summary><strong>6. Special cases summary</strong></summary>
 
 | Scenario | Behaviour |
 |---|---|
-| User is `super_user` | Tasks are fixed sets per the overview decision tree. Aggregation algorithm does not run. No tasks are ever locked for super user. |
-| User has multiple roles | Tasks appearing in more roles float higher via overlap score |
+| User is `super_user` | Actions are fixed sets per the overview decision tree. Aggregation algorithm does not run. |
+| User has multiple roles | Actions appearing in more roles float higher via overlap score |
 | `bankAccountAdded` flips to true | `addBankAccount` is substituted with `understandTasksApprovals` in pool, for ent admins |
-| `fundGoAccount`, no bank account, user without `ent_admin` or `super_user` | Task is always active; inside the deposit flow, cash tab shows a banner; crypto deposit is the default |
-| `fundGoAccount`, no bank account, user has `ent_admin` or `super_user` | Task is always active; inside the deposit flow, user can add a bank account from within the cash tab |
-| `wallet_trader` or `auditor` | No backfill applied; card shows 2 or 1 task respectively |
-| All tasks completed | All actions are marked as complete; Get Started card becomes dismissable; For You section unlocks |
+| `fundGoAccount`, no bank account, user without `ent_admin` or `super_user` | Action is always active; inside the deposit flow, cash tab shows a banner; crypto deposit is the default |
+| `fundGoAccount`, no bank account, user has `ent_admin` or `super_user` | Action is always active; inside the deposit flow, user can add a bank account from within the cash tab |
+| `wallet_trader` or `auditor` | No backfill applied; card shows 2 or 1 action respectively |
+| All actions completed | All actions are marked as complete; Get Started card becomes dismissable; For You section unlocks |
+
+</details>
 
 ---
 
-## 7. Rendering rules
+<details>
+<summary><strong>7. Rendering rules</strong></summary>
 
-- **Active** tasks: fully interactive, CTA button shown
-- **Completed** tasks: the "Start" button is replaced by a "Complete" badge with a checkmark; the task card remains visible in place until the user's next session or until dismissed. When all tasks are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
-- Card shows a maximum of 3 actions — computed once at load and does not change during the session
-- For You section renders only when all tasks in the user's pool (including backfill) are completed (`allDone = true`)
+- **Active** actions: fully interactive, CTA button shown
+- **Completed** actions: the "Start" button is replaced by a "Complete" badge with a checkmark; the action card remains visible in place until the user's next session or until dismissed. When all actions are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
+- Card shows a maximum of 3 actions — the set is computed once at load and does not change during the session; completion state (Active → Complete) updates in place as the user completes actions
+- For You section renders only when all actions in the user's pool (including backfill) are completed (`allDone = true`)
+
+</details>
 
 ---
 
-## 8. Sales-led vs. organic signup activation path (super user)
+<details>
+<summary><strong>8. Sales-led vs. organic signup activation path (super user)</strong></summary>
 
 Institutions onboarded via sales can only land on the dashboard when they've completed KYB and KYC. Their Go Account is already activated. Users who sign up with BitGo themselves (organic) have not yet gone through compliance verification, so their Go Account is not yet activated when they land on the dashboard.
 
 This means the Getting Started card should surface a different set of actions for organic users compared to institutions that were onboarded via sales, where verification is already complete and the Go Account is active from day one.
 
-For organic users, the card prioritizes guiding them through the verification steps needed to unlock trading before surfacing `firstTrade`. The specific verification required depends on whether the user is signing up as a business entity or an individual.
+For organic super users, the card prioritizes guiding them through the verification steps needed to unlock trading before surfacing `firstTrade`. The specific verification required depends on whether the user is signing up as a business entity or an individual.
 
 | User type | `onboardingType` | `goAccountActivated` | KYB | KYC | Action shown in card |
 |---|---|---|---|---|---|
 | Institutional | `sales-led` | `true` | Required, complete | Required, complete | `fundGoAccount`, `firstTrade`, `createWallet` |
 | Institutional | `organic` | `false` | Required, incomplete | Required, incomplete | `completeKYB`, `completeKYC`, `fundGoAccount` |
 | Individual | `organic` | `false` | Not required | Required, incomplete | `completeKYC`, `fundGoAccount`, `firstTrade` |
+
+</details>
