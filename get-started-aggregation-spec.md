@@ -98,24 +98,24 @@ type Task = {
 
 ### 2.1 Full action catalog
 
-| Action ID | Default title | Business goal | Notes / Callout flow |
-|---|---|---|---|
-| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state.<br><br>Deposit flow handles bank account context internally (see 2.2). |
-| `firstTrade` | "Make first trade" | Yes | Dependent on first deposit (and possibly wallet creation) |
-| `createWallet` | "Create first wallet" | Conditional | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise |
-| `addBankAccount` | "Add bank account" | — | Substitution rule: swaps to `understandTasksApprovals` when `bankAccountAdded = true` |
-| `explorePolicies` | "Explore policies" | — | Callout order: Default policies → Manage policies → Create custom policy.<br><br>Backfill eligible (role-restricted) |
-| `explorePortfolio` | "Explore portfolio" | — | Use Go Account as sample walkthrough whenever possible.<br><br>Callout order: "What's Go Account" → View Members → View Policies |
-| `viewReports` | "View reports" | — | |
-| `viewTrades` | "View trades" | — | |
-| `viewMembersRoles` | "View members & roles" | — | |
-| `viewEnterprisesWallets` | "View enterprises & wallets" | — | |
-| `understandTasksApprovals` | "Understand tasks & approvals" | — | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible, callout guides to enterprise-level tasks page first, then UMS tasks on the CTA<br><br>Backfill eligible (role-restricted). |
-| `completeKYB` | "Complete KYB" | — | Organic business entities only |
-| `completeKYC` | "Complete KYC" | — | Organic users only (business entities and individuals) |
-| `completeVideoID` | "Complete Video ID" | Yes | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else |
-| `unlockPolicy` | "Unlock policy controls" | — | |
-| `viewActivityLog` | "View activity log" | — | |
+| Action ID | Default title | Business goal | Notes | Flow triggered |
+|---|---|---|---|---|
+| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state. | Deposit flow — bank account context handled internally (see 2.2). |
+| `firstTrade` | "Make first trade" | Yes | Dependent on first deposit (and possibly wallet creation). | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. |
+| `createWallet` | "Create first wallet" | Conditional | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View wallet members → View policies (if have access). |
+| `addBankAccount` | "Add bank account" | — | Substitution rule: swaps to `understandTasksApprovals` when `bankAccountAdded = true`. | Bank account setup flow. |
+| `explorePolicies` | "Explore policies" | — | Backfill eligible (role-restricted). | Land on policy dashboard.<br><br>Callout order: Default policies → Manage policies → Create custom policy. |
+| `explorePortfolio` | "Explore portfolio" | — | Use Go Account as sample walkthrough whenever possible. | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View Members → View Policies. |
+| `viewReports` | "View reports" | — | — | Land on report page. |
+| `viewTrades` | "View trades" | — | — | Land on trade page. |
+| `viewMembersRoles` | "View members & roles" | — | — | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. |
+| `viewEnterprisesWallets` | "View enterprises & wallets" | — | — | TBD |
+| `understandTasksApprovals` | "Understand tasks & approvals" | — | Backfill eligible (role-restricted). | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. |
+| `completeKYB` | "Complete KYB" | — | Organic business entities only. | KYB flow. |
+| `completeKYC` | "Complete KYC" | — | Organic users only (business entities and individuals). | KYC flow. |
+| `completeVideoID` | "Complete Video ID" | Yes | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else. | Start video ID scheduling flow. |
+| `unlockPolicy` | "Learn about unlocking policies" | — | — | Land on policy page.<br><br>Callout order: Click here to unlock. |
+| `viewActivityLog` | "View activity log" | — | — | Land on activity log page. |
 
 ### 2.2 `fundGoAccount` — deposit flow behaviour
 
