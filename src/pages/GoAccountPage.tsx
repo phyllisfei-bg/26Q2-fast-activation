@@ -21,7 +21,7 @@ const fmt = (n: number) =>
   n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const GoAccountPage: React.FC<Props> = ({
-  open, depositedAmount = 0, role, onBack, onCalloutInvite, onCalloutPolicies,
+  open, depositedAmount = 0, role: _role, onBack, onCalloutInvite, onCalloutPolicies,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('Balances by Asset');
   const [search, setSearch]       = useState('');
