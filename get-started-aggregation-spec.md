@@ -98,7 +98,7 @@ type Task = {
 
 | Action ID | Default title | Business goal | Notes / Callout flow |
 |---|---|---|---|
-| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state; deposit flow handles bank account context internally (see 2.2) |
+| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state; deposit flow handles bank account context internally (see 2.2). Always ranks first within the business goal tier in scoring — it is the most foundational action and a prerequisite for all other business goals (see Step 5). |
 | `firstTrade` | "Make first trade" | Yes | Dependent on first deposit (and possibly wallet creation) |
 | `createWallet` | "Create first wallet" | Conditional | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise |
 | `addBankAccount` | "Add bank account" | — | Substitution rule: swaps to `understandTasksApprovals` when `bankAccountAdded = true` |
@@ -111,7 +111,7 @@ type Task = {
 | `understandTasksApprovals` | "Understand tasks & approvals" | — | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible, callout guides to enterprise-level tasks page first, then UMS tasks on the CTA<br><br>Backfill eligible (role-restricted). |
 | `completeKYB` | "Complete KYB" | — | Organic business entities only |
 | `completeKYC` | "Complete KYC" | — | Organic users only (business entities and individuals) |
-| `completeVideoID` | "Complete Video ID" | — | |
+| `completeVideoID` | "Complete Video ID" | Yes | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else |
 | `unlockPolicy` | "Unlock policy controls" | — | |
 | `viewActivityLog` | "View activity log" | — | |
 
@@ -186,7 +186,7 @@ flowchart TD
     C["<b>Step 2</b> — Build candidate pool<br>Union action lists from all roles;<br>track role overlap count &amp; best slot per action"] --> D
     D["<b>Step 3</b> — Apply substitutions &amp; flag overrides<br>Swap actions based on org state flags<br>Override isBusinessGoal when walletExists = false"] --> E
     E["<b>Step 4</b> — Filter completed actions<br>Remove actions already completed by the user"] --> F
-    F["<b>Step 5</b> — Score and sort<br>1. Business goal flag<br>2. Role overlap count<br>3. Best slot position"] --> G
+    F["<b>Step 5</b> — Score and sort<br>1. Business goal flag<br>2. fundGoAccount always first when present<br>3. Weighted slot score (slot 1=3pts, slot 2=2pts, slot 3=1pt)"] --> G
     G["<b>Step 6</b> — Take top 3"] --> H
     H{Fewer than 3?}
     H -->|No| J["<b>Return</b> resolved action list<br>(up to 3 actions)"]
@@ -205,16 +205,17 @@ effectiveRoles = roles  // super_user is handled separately, not via this algori
 
 ### Step 2 — Build candidate pool
 
-Union the action lists from all effective roles. Track which roles each action appears in and its best (lowest) slot position across those roles.
+Union the action lists from all effective roles. For each action, accumulate its weighted slot score across all roles it appears in (slot 1 = 3pts, slot 2 = 2pts, slot 3 = 1pt).
 
 ```
 for each role in effectiveRoles:
   for each (taskId, slotIndex) in R3[role]:
+    pts = 3 - slotIndex  // slot 1=3pts, slot 2=2pts, slot 3=1pt
     if taskId not in pool:
-      pool.add({ id: taskId, roles: [role], bestSlot: slotIndex })
+      pool.add({ id: taskId, roles: [role], weightedScore: pts })
     else:
       pool[taskId].roles.push(role)
-      pool[taskId].bestSlot = min(pool[taskId].bestSlot, slotIndex)
+      pool[taskId].weightedScore += pts
 ```
 
 ### Step 3 — Apply substitutions and state-based flag overrides
@@ -229,7 +230,7 @@ for each task in pool:
     if replacementId already in pool:
       remove task from pool  // avoid duplicate
     else:
-      replace task with { id: replacementId, roles: task.roles, bestSlot: task.bestSlot }
+      replace task with { id: replacementId, roles: task.roles, weightedScore: task.weightedScore }
 ```
 
 **State-based flag overrides:**
@@ -251,14 +252,14 @@ pool = pool.filter(task => !userCompletedTasks.has(task.id))
 Sort the pool using this priority order (highest to lowest):
 
 1. **Business goal flag** — actions marked `isBusinessGoal = true` sort first
-2. **Role overlap count** — actions appearing in more of the user's roles sort higher
-3. **Best slot position** — lower slot number sorts higher (tiebreaker)
+2. **`fundGoAccount` anchor** — within the business goal tier, `fundGoAccount` always ranks first when present, regardless of weighted score; it is the most foundational action and a prerequisite for all other business goals
+3. **Weighted slot score** — remaining business goal and non-business goal actions sorted by sum of slot points across all roles (slot 1 = 3pts, slot 2 = 2pts, slot 3 = 1pt); higher score sorts higher
 
 ```
 pool.sort by:
   1. isBusinessGoal DESC
-  2. roles.length DESC
-  3. bestSlot ASC
+  2. fundGoAccount always first within business goal tier
+  3. weightedScore DESC
 ```
 
 ### Step 6 — Take top 3, then backfill
@@ -291,12 +292,12 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 | Scenario | Behaviour |
 |---|---|
 | User is `super_user` | Actions are fixed sets per the overview decision tree. Aggregation algorithm does not run. |
-| User has multiple roles | Actions appearing in more roles float higher via overlap score |
+| User has multiple roles | Weighted slot scores accumulate across roles — an action in slot 1 for two roles scores 6pts, outranking an action in slot 3 for three roles (3pts) |
 | `bankAccountAdded` flips to true | `addBankAccount` is substituted with `understandTasksApprovals` in pool, for ent admins |
 | `fundGoAccount`, no bank account, user without `ent_admin` or `super_user` | Action is always active; inside the deposit flow, cash tab shows a banner; crypto deposit is the default |
 | `fundGoAccount`, no bank account, user has `ent_admin` or `super_user` | Action is always active; inside the deposit flow, user can add a bank account from within the cash tab |
 | `wallet_trader` or `auditor` | No backfill applied; card shows 2 or 1 action respectively |
-| All actions completed | All actions are marked as complete; Get Started card becomes dismissable; For You section unlocks |
+| All actions completed | All actions are marked as complete; Get Started card becomes dismissable; For You section expands to full set |
 
 </details>
 
@@ -308,7 +309,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 - **Active** actions: fully interactive, CTA button shown
 - **Completed** actions: the "Start" button is replaced by a "Complete" badge with a checkmark; the action card remains visible in place until the user's next session or until dismissed. When all actions are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
 - Card shows a maximum of 3 actions — the set is computed once at load and does not change during the session; completion state (Active → Complete) updates in place as the user completes actions
-- For You section renders only when all actions in the user's pool (including backfill) are completed (`allDone = true`)
+- For You section is always visible. Before Get Started is complete, it shows a maximum of 3 cards. Once all Get Started actions are completed (`allDone = true`), the full set is shown. Card ordering inside For You follows the same weighted slot scoring as the aggregation algorithm.
 
 </details>
 
