@@ -35,12 +35,27 @@ export const ALL_GS_TASKS = [
   'gsGoAccountFund', 'gsFirstTrade', 'gsGoAccountStaking',
   // org admin
   'gsViewOrgMembers', 'gsExploreRoles', 'gsExplorePortfolio',
-  // ent admin / wallet admin (shared)
-  'gsUnderstandTasks', 'gsUnderstandPolicies',
-  // wallet spender
-  'gsInitiateTransaction', 'gsUnderstandStaking',
+  'gsViewUMSTasks', 'gsViewEnterprisesWallets',
+  // ent admin
+  'gsAddBankAccount', 'gsExplorePolicies',
+  // wallet admin / spender shared
+  'gsStartFirstTrade',
   // wallet viewer
+  'gsViewReports',
+  // wallet trader
+  'gsViewTrades',
+  // ent admin / wallet admin (shared, legacy)
+  'gsUnderstandTasks', 'gsUnderstandPolicies',
+  // wallet spender (legacy)
+  'gsInitiateTransaction', 'gsUnderstandStaking',
+  // wallet viewer (legacy)
   'gsLearnDeposit', 'gsTryReports',
+  // video id user
+  'gsCompleteVideoID', 'gsUnderstandTasksApprovals', 'gsUnlockPolicy',
+  // auditor
+  'gsViewActivityLog',
+  // organic super user
+  'gsCompleteKYB', 'gsCompleteKYC',
 ] as const;
 
 export type GsTask = typeof ALL_GS_TASKS[number];
@@ -205,13 +220,92 @@ export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
     description: 'Export transaction history and audit logs for compliance and tax.',
     time: '2 min', colorKey: 'reporting',
   },
+  // ── spec-aligned tasks ───────────────────────────────────────────────
+  gsViewUMSTasks: {
+    id: 'gsViewUMSTasks', type: 'explore',
+    title: 'View UMS Tasks',
+    description: 'Review pending tasks and approvals across all enterprise users.',
+    time: '1 min', colorKey: 'policy',
+  },
+  gsViewEnterprisesWallets: {
+    id: 'gsViewEnterprisesWallets', type: 'explore',
+    title: 'View Enterprises & Wallets',
+    description: 'Browse all enterprise accounts and wallet configurations in your org.',
+    time: '2 min', colorKey: 'wallet',
+  },
+  gsAddBankAccount: {
+    id: 'gsAddBankAccount', type: 'action',
+    title: 'Add Bank Account',
+    description: 'Link a bank account to enable cash deposits and withdrawals.',
+    time: '3 min', colorKey: 'deposit',
+  },
+  gsExplorePolicies: {
+    id: 'gsExplorePolicies', type: 'explore',
+    title: 'Explore Policies',
+    description: 'Review spend limits and approval rules protecting your wallets.',
+    time: '2 min', colorKey: 'policy',
+  },
+  gsStartFirstTrade: {
+    id: 'gsStartFirstTrade', type: 'action',
+    title: 'Start First Trade',
+    description: 'Place a buy or sell order using your Go Account balance.',
+    time: '2 min', colorKey: 'go-account',
+  },
+  gsViewReports: {
+    id: 'gsViewReports', type: 'explore',
+    title: 'View Reports',
+    description: 'Browse transaction history, audit logs, and compliance exports.',
+    time: '2 min', colorKey: 'reporting',
+  },
+  gsViewTrades: {
+    id: 'gsViewTrades', type: 'explore',
+    title: 'View Trades',
+    description: 'See your executed trades and Go Account performance history.',
+    time: '1 min', colorKey: 'go-account',
+  },
+  gsCompleteVideoID: {
+    id: 'gsCompleteVideoID', type: 'action',
+    title: 'Complete Video ID',
+    description: 'Complete a short video session to verify and approve actions.',
+    time: '5 min', colorKey: 'verify',
+  },
+  gsUnderstandTasksApprovals: {
+    id: 'gsUnderstandTasksApprovals', type: 'explore',
+    title: 'Understand Tasks & Approvals',
+    description: 'Learn how transactions above policy limits get reviewed and approved.',
+    time: '2 min', colorKey: 'policy',
+  },
+  gsUnlockPolicy: {
+    id: 'gsUnlockPolicy', type: 'explore',
+    title: 'Unlock Policy Controls',
+    description: 'Understand how policies are configured and who can approve changes.',
+    time: '2 min', colorKey: 'policy',
+  },
+  gsViewActivityLog: {
+    id: 'gsViewActivityLog', type: 'explore',
+    title: 'View Activity Log',
+    description: 'Audit transaction history and org-level activity for compliance.',
+    time: '1 min', colorKey: 'reporting',
+  },
+  gsCompleteKYB: {
+    id: 'gsCompleteKYB', type: 'action',
+    title: 'Complete KYB',
+    description: 'Submit entity documents to verify your business for compliance.',
+    time: '10 min', colorKey: 'compliance',
+  },
+  gsCompleteKYC: {
+    id: 'gsCompleteKYC', type: 'action',
+    title: 'Complete KYC',
+    description: 'Verify your identity to unlock full platform access.',
+    time: '5 min', colorKey: 'compliance',
+  },
 };
 
 // ── Roles ─────────────────────────────────────────────────────────────
 
 export type UserRole =
   | 'super_user' | 'org_admin' | 'ent_admin' | 'wallet_admin'
-  | 'wallet_spender' | 'wallet_viewer' | 'trader' | 'video_id_user' | 'auditor';
+  | 'wallet_spender' | 'wallet_viewer' | 'wallet_trader' | 'video_id_user' | 'auditor';
 
 export const USER_ROLES: { id: UserRole; label: string; description: string }[] = [
   { id: 'super_user',     label: 'Super User',       description: 'Full access, all permissions' },
@@ -220,21 +314,21 @@ export const USER_ROLES: { id: UserRole; label: string; description: string }[] 
   { id: 'wallet_admin',   label: 'Wallet Admin',     description: 'Manage wallets, wallet-level whitelist and policies' },
   { id: 'wallet_spender', label: 'Wallet Spender',   description: 'All kinds of transactions on assigned wallets' },
   { id: 'wallet_viewer',  label: 'Wallet Viewer',    description: 'Read-only wallet access' },
-  { id: 'trader',         label: 'Trader',           description: 'Buy/sell with Go Account' },
+  { id: 'wallet_trader',  label: 'Wallet Trader',    description: 'Buy/sell with Go Account' },
   { id: 'video_id_user',  label: 'Video ID User',    description: 'Approve actions via Video ID calls' },
   { id: 'auditor',        label: 'Auditor',          description: 'Read-only reporting access' },
 ];
 
 export const ROLE_TASKS: Record<UserRole, GsTask[]> = {
-  super_user:     ['gsGoAccountFund', 'gsFirstTrade', 'gsGoAccountStaking'],
-  org_admin:      ['gsViewOrgMembers', 'gsExploreRoles', 'gsExplorePortfolio'],
-  ent_admin:      ['gsExplorePortfolio', 'gsUnderstandTasks', 'gsUnderstandPolicies'],
-  wallet_admin:   ['gsExplorePortfolio', 'gsUnderstandTasks', 'gsUnderstandPolicies'],
-  wallet_spender: ['gsExplorePortfolio', 'gsInitiateTransaction', 'gsUnderstandStaking'],
-  wallet_viewer:  ['gsExplorePortfolio', 'gsLearnDeposit', 'gsTryReports'],
-  trader:         ['gsGoAccount', 'gsStaking', 'gsTrading'],
-  video_id_user:  ['gsVerify', 'gsGoAccount', 'gsStaking'],
-  auditor:        ['gsCompliance', 'gsReporting'],
+  super_user:     ['gsGoAccountFund', 'gsFirstTrade', 'gsWallet'],
+  org_admin:      ['gsViewOrgMembers', 'gsViewUMSTasks', 'gsViewEnterprisesWallets'],
+  ent_admin:      ['gsWallet', 'gsAddBankAccount', 'gsExplorePolicies'],
+  wallet_admin:   ['gsGoAccountFund', 'gsExplorePortfolio', 'gsExplorePolicies'],
+  wallet_spender: ['gsGoAccountFund', 'gsExplorePortfolio', 'gsStartFirstTrade'],
+  wallet_viewer:  ['gsGoAccountFund', 'gsExplorePortfolio', 'gsViewReports'],
+  wallet_trader:  ['gsFirstTrade', 'gsViewTrades'],
+  video_id_user:  ['gsCompleteVideoID', 'gsUnderstandTasksApprovals', 'gsUnlockPolicy'],
+  auditor:        ['gsViewActivityLog'],
 };
 
 export const ROLE_GS_SUBTITLE: Record<UserRole, string> = {
@@ -244,7 +338,7 @@ export const ROLE_GS_SUBTITLE: Record<UserRole, string> = {
   wallet_admin:   'Explore your portfolio and the controls that protect it.',
   wallet_spender: 'See your holdings, move funds, and learn about staking.',
   wallet_viewer:  'Get familiar with what you can see and do.',
-  trader:         'Hit the ground running with your first trades.',
+  wallet_trader:  'Hit the ground running with your first trades.',
   video_id_user:  'Complete verification to unlock full platform access.',
   auditor:        'Get familiar with what you can review and report on.',
 };
@@ -328,7 +422,7 @@ export const ROLE_CALLOUT_SEQUENCE: Record<UserRole, string[]> = {
   wallet_admin:   ['policies', 'invite'],
   wallet_spender: ['deposit', 'staking'],
   wallet_viewer:  ['explore'],
-  trader:         ['deposit', 'staking'],
+  wallet_trader:  ['deposit', 'staking'],
   video_id_user:  ['explore'],
   auditor:        ['explore'],
 };
