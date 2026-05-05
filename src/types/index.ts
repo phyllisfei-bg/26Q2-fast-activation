@@ -68,6 +68,7 @@ export interface GsTaskMeta {
   description: string;
   time: string;
   colorKey: string;
+  isBusinessGoal?: boolean;
 }
 
 export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
@@ -148,13 +149,13 @@ export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
     id: 'gsGoAccountFund', type: 'action',
     title: 'Fund Go Account',
     description: 'Deposit cash or crypto to your Go Account to start trading.',
-    time: '3 min', colorKey: 'deposit',
+    time: '3 min', colorKey: 'deposit', isBusinessGoal: true,
   },
   gsFirstTrade: {
     id: 'gsFirstTrade', type: 'action',
     title: 'Complete Your First Trade',
     description: 'Instant off-exchange settlement with no on-chain wait or gas fees.',
-    time: '2 min', colorKey: 'go-account',
+    time: '2 min', colorKey: 'go-account', isBusinessGoal: true,
   },
   gsGoAccountStaking: {
     id: 'gsGoAccountStaking', type: 'explore',
