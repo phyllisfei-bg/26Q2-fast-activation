@@ -62,7 +62,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <Portfolio onOpenDeposit={onOpenDeposit} />
 
-          {allDone && <ForYou />}
+          <ForYou allDone={allDone} />
 
           <Balances onDeposit={() => onOpenDeposit?.()} />
         </div>

@@ -41,17 +41,24 @@ function computeTasks(
   // Step 1: effective roles
   const effectiveRoles = roles.filter(r => r !== 'super_user');
 
-  // Step 2: build candidate pool — track all roles a task appears in + best slot
-  const pool = new Map<GsTask, { roles: UserRole[]; bestSlot: number }>();
+  // Step 2: build candidate pool
+  // Weighted slot score: slot 1 = 3pts, slot 2 = 2pts, slot 3 = 1pt; accumulates across roles
+  type PoolEntry = { roles: UserRole[]; weightedScore: number; isBusinessGoal: boolean };
+  const pool = new Map<GsTask, PoolEntry>();
   for (const role of effectiveRoles) {
     const roleTasks = ROLE_TASKS[role] ?? [];
     roleTasks.forEach((taskId, slotIndex) => {
+      const pts = 3 - slotIndex;
       const existing = pool.get(taskId);
       if (existing) {
         existing.roles.push(role);
-        existing.bestSlot = Math.min(existing.bestSlot, slotIndex);
+        existing.weightedScore += pts;
       } else {
-        pool.set(taskId, { roles: [role], bestSlot: slotIndex });
+        pool.set(taskId, {
+          roles: [role],
+          weightedScore: pts,
+          isBusinessGoal: GS_TASK_META[taskId]?.isBusinessGoal ?? false,
+        });
       }
     });
   }
@@ -61,26 +68,31 @@ function computeTasks(
     if (!pool.has(taskId)) continue;
     const orgVal = enterpriseState[sub.whenOrgKey];
     if (orgVal === true) {
-      const entry = pool.get(taskId)!;
+      const { roles, weightedScore } = pool.get(taskId)!;
       pool.delete(taskId);
       if (!pool.has(sub.replaceWith)) {
-        pool.set(sub.replaceWith, entry);
+        pool.set(sub.replaceWith, { roles, weightedScore, isBusinessGoal: GS_TASK_META[sub.replaceWith]?.isBusinessGoal ?? false });
       }
-      // if replaceWith already exists, just drop the original (no duplicate)
     }
+  }
+
+  // Step 3b: state-based flag override
+  if (!enterpriseState.walletExists && pool.has('gsWallet')) {
+    pool.get('gsWallet')!.isBusinessGoal = true;
   }
 
   // Step 4: filter completed tasks
   const candidates = [...pool.entries()].filter(([tid]) => !completedTasks.includes(tid));
 
   // Step 5: score and sort
-  // Priority: isBusinessGoal DESC → role overlap count DESC → bestSlot ASC
+  // Priority: isBusinessGoal DESC → fundGoAccount anchor (always first within goal tier) → weightedScore DESC
   candidates.sort(([aId, a], [bId, b]) => {
-    const aGoal = GS_TASK_META[aId]?.isBusinessGoal ? 1 : 0;
-    const bGoal = GS_TASK_META[bId]?.isBusinessGoal ? 1 : 0;
-    if (bGoal !== aGoal) return bGoal - aGoal;
-    if (b.roles.length !== a.roles.length) return b.roles.length - a.roles.length;
-    return a.bestSlot - b.bestSlot;
+    if (a.isBusinessGoal !== b.isBusinessGoal) return a.isBusinessGoal ? -1 : 1;
+    if (a.isBusinessGoal && b.isBusinessGoal) {
+      if (aId === 'gsGoAccountFund') return -1;
+      if (bId === 'gsGoAccountFund') return 1;
+    }
+    return b.weightedScore - a.weightedScore;
   });
 
   // Step 6: take top 3, then backfill if eligible
