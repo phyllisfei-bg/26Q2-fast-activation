@@ -3,6 +3,7 @@ import { Sidebar }            from './components/Sidebar';
 import { Snackbar } from './components/Snackbar';
 import type { SnackbarHandle } from './components/Snackbar';
 import { RoleSwitcher }       from './components/RoleSwitcher';
+import type { EnterpriseState } from './components/RoleSwitcher';
 import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { GoAccountPage }      from './pages/GoAccountPage';
@@ -35,7 +36,13 @@ function getTopPage(): TopPage {
 export default function App() {
   const { isLight, toggle } = useTheme();
   const [topPage, setTopPage] = useState<TopPage>(getTopPage);
-  const [role, setRole] = useState<UserRole>('super_user');
+  const [roles, setRoles] = useState<UserRole[]>(['super_user']);
+  const role = roles[0];
+  const [enterpriseState, setEnterpriseState] = useState<EnterpriseState>({
+    onboardingType: 'sales-led',
+    bankAccountAdded: false,
+    walletExists: false,
+  });
 
   const navigateTo = (page: TopPage) => {
     window.location.hash = page === 'dashboard' ? '' : page;
@@ -181,7 +188,7 @@ export default function App() {
       <div className="workspace" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 14 }}>
         Advanced Trading — coming soon
       </div>
-      <RoleSwitcher role={role} onChange={setRole} />
+      <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
   if (topPage === 'destinations') return (
@@ -195,7 +202,7 @@ export default function App() {
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
       </div>
-      <RoleSwitcher role={role} onChange={setRole} />
+      <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
 
@@ -280,7 +287,7 @@ export default function App() {
       />
 
       <Snackbar ref={snackRef} onBackToDashboard={handleBackToDashboard} />
-      <RoleSwitcher role={role} onChange={setRole} />
+      <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </>
   );
 }

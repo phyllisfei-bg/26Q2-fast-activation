@@ -175,11 +175,9 @@ export const GetStarted: React.FC<GetStartedProps> = ({
           </button>
         )}
       </div>
-      <div className="gs-card-sub">
-        {allDone
-          ? 'All essentials are active — your enterprise is ready to go.'
-          : 'Complete these steps to set up your account. Takes about 5 minutes.'}
-      </div>
+      {allDone && (
+        <div className="gs-card-sub">All essentials are active — your enterprise is ready to go.</div>
+      )}
     </div>
 
     <div className="gs-actions">
@@ -196,6 +194,8 @@ export const GetStarted: React.FC<GetStartedProps> = ({
                 {meta.time}
               </div>
             </div>
+
+            <div className="gs-action-desc">{meta.description}</div>
 
             <div className="gs-action-btn-row">
               {done ? (
