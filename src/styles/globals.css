@@ -344,21 +344,21 @@ body {
 /* ─── Role Switcher (floating, bottom-right) ─────────────────────── */
 .role-switcher {
   position: fixed; bottom: 24px; right: 24px; z-index: 9000;
-  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
   cursor: grab;
 }
 .role-switcher:active { cursor: grabbing; }
 /* pill row: grip handle + trigger button side by side */
 .role-switcher-pill {
   display: flex; align-items: center; gap: 0;
-  background: var(--color-level2); border: 1px solid var(--color-border);
+  background: var(--color-level1); border: 2px solid rgba(128,128,0,.35);
   border-radius: 99px; cursor: grab;
   box-shadow: 0 2px 12px rgba(0,0,0,.14);
   transition: border-color .15s, box-shadow .15s;
 }
 .role-switcher-pill:hover {
-  border-color: var(--color-border-strong);
-  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  border-color: rgba(128,128,0,.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 3px rgba(128,128,0,.1);
 }
 .role-switcher-pill:active { cursor: grabbing; }
 .role-switcher-grip {
@@ -381,8 +381,22 @@ body {
 .role-switcher-prefix {
   font-size: 12.5px; font-weight: 400; color: var(--color-text-muted);
 }
+.role-switcher-pill-sep {
+  width: 1px; height: 14px; background: var(--color-border-strong);
+  flex-shrink: 0; margin: 0 6px; opacity: 0.6;
+}
+.role-switcher-org-state {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--color-text-muted); white-space: nowrap;
+}
+.role-switcher-org-mid { opacity: 0.4; }
+.role-switcher-ent-tag {
+  font-size: 10.5px; font-weight: 500; color: var(--brand-500);
+  background: var(--brand-a100); border: 1px solid var(--brand-a200);
+  padding: 1px 6px; border-radius: 5px; margin-left: 2px;
+}
 .role-switcher-menu {
-  background: var(--color-level1); border: 1px solid var(--color-border);
+  background: var(--color-level1); border: 2px solid rgba(128,128,0,.35);
   border-radius: 14px; padding: 8px;
   box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
   animation: gsFadeIn .15s ease both;
@@ -412,6 +426,9 @@ body {
 }
 .role-switcher-item:hover { cursor: pointer; }
 .role-switcher-item:hover { background: var(--color-level3); }
+.role-switcher-item.disabled, .role-switcher-item:disabled {
+  opacity: 0.35; cursor: not-allowed; pointer-events: none;
+}
 .role-switcher-item.active { background: var(--brand-a100); }
 .role-switcher-item-body { flex: 1; min-width: 0; }
 .role-switcher-item-name {
@@ -459,6 +476,9 @@ body {
   cursor: default; transition: background .12s, color .12s;
 }
 .rs-segment-btn:hover { color: var(--color-text); cursor: pointer; }
+.rs-segment-btn.disabled, .rs-segment-btn:disabled {
+  opacity: 0.35; cursor: not-allowed; pointer-events: none;
+}
 .rs-segment-btn.active {
   background: var(--color-level1); color: var(--color-text);
   box-shadow: 0 1px 3px rgba(0,0,0,.12);

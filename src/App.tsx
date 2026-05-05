@@ -87,7 +87,7 @@ export default function App() {
         gsCompliance:         'Compliance status is current — no outstanding items.',
         gsTrading:            'Use the Go Account panel on the right to set up your trading workflow.',
         gsGoAccountStaking:   'Go Account staking earns yield on idle assets — available in the Go Account panel.',
-        gsViewOrgMembers:     'Org members are managed under Security → Roles.',
+        gsViewMembersRoles:   'Org members are managed under Security → Roles.',
         gsExploreRoles:       'User roles and permissions are defined under Security → Roles.',
         gsExplorePortfolio:   'Your portfolio overview is in the main dashboard.',
         gsUnderstandTasks:    'Pending approvals and transaction tasks are managed from your wallet.',
