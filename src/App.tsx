@@ -40,6 +40,7 @@ export default function App() {
   const role = roles[0];
   const [enterpriseState, setEnterpriseState] = useState<EnterpriseState>({
     onboardingType: 'sales-led',
+    entityType: 'business',
     bankAccountAdded: false,
     walletExists: false,
   });
@@ -55,7 +56,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const { done, markDone, allDone, tasks } = useGetStarted(role);
+  const { done, markDone, allDone, tasks } = useGetStarted(roles, enterpriseState);
 
   const [securityPage, setSecurityPage] = React.useState<SecuritySubPage | null>(null);
   const [flow, setFlow]               = React.useState<ActiveFlow>('none');

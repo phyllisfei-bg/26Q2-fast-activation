@@ -4,6 +4,7 @@ import { USER_ROLES } from '../types';
 
 export interface EnterpriseState {
   onboardingType: 'sales-led' | 'organic';
+  entityType: 'business' | 'individual';
   bankAccountAdded: boolean;
   walletExists: boolean;
 }
@@ -108,7 +109,7 @@ export const RoleSwitcher: React.FC<Props> = ({
     }
   };
 
-  const setEnt = (key: keyof EnterpriseState, val: boolean) =>
+  const setEnt = <K extends keyof EnterpriseState>(key: K, val: EnterpriseState[K]) =>
     onEnterpriseStateChange({ ...enterpriseState, [key]: val });
 
   // Prevents click handlers from firing at drag-end
@@ -195,6 +196,24 @@ export const RoleSwitcher: React.FC<Props> = ({
                     onClick={guard(() => setEnt('onboardingType', opt))}
                   >
                     {opt === 'sales-led' ? 'Sales-led' : 'Organic'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="role-switcher-menu-header" style={{ marginTop: 10 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                Entity type
+              </div>
+              <div className="rs-segment-control">
+                {(['business', 'individual'] as const).map(opt => (
+                  <button
+                    key={opt}
+                    className={`rs-segment-btn${enterpriseState.entityType === opt ? ' active' : ''}`}
+                    onClick={guard(() => setEnt('entityType', opt))}
+                  >
+                    {opt === 'business' ? 'Business' : 'Individual'}
                   </button>
                 ))}
               </div>
