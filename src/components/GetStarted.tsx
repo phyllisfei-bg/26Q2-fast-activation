@@ -1,6 +1,6 @@
 import React from 'react';
 import type { GsTask, UserRole } from '../types';
-import { GS_TASK_META, ROLE_GS_SUBTITLE } from '../types';
+import { GS_TASK_META } from '../types';
 
 interface GetStartedProps {
   tasks: GsTask[];
@@ -229,7 +229,7 @@ const TASK_ICONS: Record<GsTask, React.ReactNode> = {
 };
 
 export const GetStarted: React.FC<GetStartedProps> = ({
-  tasks, role, doneTasks, onLaunch, allDone, onDismiss,
+  tasks, role: _role, doneTasks, onLaunch, allDone, onDismiss,
 }) => (
   <div className={`gs-card${allDone ? ' gs-card-complete' : ''}`}>
     <div className="gs-card-header">
