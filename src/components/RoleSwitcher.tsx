@@ -290,7 +290,6 @@ export const RoleSwitcher: React.FC<Props> = ({
           </div>
         </div>
       )}
-
     </div>
   );
 };

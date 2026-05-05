@@ -81,6 +81,7 @@ function computeTasks(
     pool.get('gsWallet')!.isBusinessGoal = true;
   }
 
+
   // Step 4: filter completed tasks
   const candidates = [...pool.entries()].filter(([tid]) => !completedTasks.includes(tid));
 
