@@ -4,6 +4,8 @@
 **Author:** Phyllis Fei  
 **Status:** In progress
 
+> **Note:** All pseudocode and code snippets in this document are for reference only — they describe logic and intent, not final implementation. Actual TypeScript implementation may differ.
+
 ---
 
 ## Overview
@@ -98,7 +100,7 @@ type Task = {
 
 | Action ID | Default title | Business goal | Notes / Callout flow |
 |---|---|---|---|
-| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state; deposit flow handles bank account context internally (see 2.2). Always ranks first within the business goal tier in scoring — it is the most foundational action and a prerequisite for all other business goals (see Step 5). |
+| `fundGoAccount` | "Fund Go Account" | Yes | Always active regardless of wallet or bank state.<br><br>Deposit flow handles bank account context internally (see 2.2). |
 | `firstTrade` | "Make first trade" | Yes | Dependent on first deposit (and possibly wallet creation) |
 | `createWallet` | "Create first wallet" | Conditional | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise |
 | `addBankAccount` | "Add bank account" | — | Substitution rule: swaps to `understandTasksApprovals` when `bankAccountAdded = true` |
