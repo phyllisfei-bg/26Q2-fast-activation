@@ -5,16 +5,16 @@ import { GetStarted } from '../components/GetStarted';
 import { ForYou }     from '../components/ForYou';
 import { Balances }   from '../components/Balances';
 import { TradeCard }  from '../components/TradeCard';
-import type { GsTask, UserRole } from '../types';
+import type { TaskId, UserRole } from '../types';
 
 interface DashboardProps {
   isLight:         boolean;
   onThemeToggle:   () => void;
   role:            UserRole;
-  tasks:           GsTask[];
-  doneTasks:       GsTask[];
+  tasks:           TaskId[];
+  doneTasks:       TaskId[];
   allDone:         boolean;
-  onGsLaunch:      (task: GsTask) => void;
+  onGsLaunch:      (task: TaskId) => void;
   onOrderPlaced:   (msg: string) => void;
   tradeHighlightVer?: number;
   goAccountFunded?:   boolean;
@@ -48,8 +48,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
 
       <div className="content-area">
-        <div className="main-panel">
-          {!gsDismissed && (
+        {!gsDismissed && (
+          <div className="gs-row">
             <GetStarted
               tasks={tasks}
               role={role}
@@ -58,22 +58,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
               allDone={allDone}
               onDismiss={() => setGsDismissed(true)}
             />
-          )}
+          </div>
+        )}
 
-          <Portfolio onOpenDeposit={onOpenDeposit} />
+        <div className="content-cols">
+          <div className="main-panel">
+            <Portfolio onOpenDeposit={onOpenDeposit} />
 
-          <ForYou allDone={allDone} />
+            <ForYou allDone={allDone} />
 
-          <Balances onDeposit={() => onOpenDeposit?.()} />
+            <Balances onDeposit={() => onOpenDeposit?.()} />
+          </div>
+
+          <TradeCard
+            highlightVer={tradeHighlightVer}
+            funded={goAccountFunded}
+            onOpenDeposit={onOpenDeposit}
+            onOrderPlaced={onOrderPlaced}
+            onTradeDone={onTradeDone}
+          />
         </div>
-
-        <TradeCard
-          highlightVer={tradeHighlightVer}
-          funded={goAccountFunded}
-          onOpenDeposit={onOpenDeposit}
-          onOrderPlaced={onOrderPlaced}
-          onTradeDone={onTradeDone}
-        />
       </div>
     </>
   );
