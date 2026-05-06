@@ -33,19 +33,28 @@ Fast Activation (FA) gets businesses and their users through compliance verifica
 
 ### Dashboard — Getting Started → Callouts → For You progression
 
-The dashboard has a linear progression: task completion unlocks callouts, and completing all tasks reveals For You.
+The dashboard has a linear progression: action completion unlocks callouts, and completing all actions unlocks the full set of For You cards.
 
-**3 Get Started tasks** (`src/hooks/useGetStarted.ts`, `src/types/index.ts`):
-| Task ID | Action | Completes when |
+**Get Started actions** (`src/hooks/useGetStarted.ts`, `src/types/index.ts`):
+
+Actions are role-based — the action set is computed from the user's assigned role(s) and enterprise state. See [`get-started-aggregation-spec.md`](./get-started-aggregation-spec.md) for the full aggregation algorithm.
+
+The sample below reflects the **sales-led super user (Platform Admin)** scenario — the fixed 3-action set used in the prototype:
+
+| Action ID | Action | Completes when |
 |---|---|---|
-| `gsWallet` | Create Your First Wallet | `WalletCreationFlow` completes → `markDone('gsWallet')` |
-| `gsGoAccount` | Trade on Go Account | User completes a trade in `TradeCard` → `markDone('gsGoAccount')` |
-| `gsPolicy` | Configure Your First Policy | `PolicyModal` publishes → `markDone('gsPolicy')` |
+| `fundGoAccount` | Fund Go Account | Deposit confirmed → `markDone('fundGoAccount')` |
+| `firstTrade` | Make First Trade | User completes a trade in `TradeCard` → `markDone('firstTrade')` |
+| `createWallet` | Create First Wallet | `WalletCreationFlow` completes → `markDone('createWallet')` |
+
+**Get Started completed state:**
+- Each completed action: "Start" button replaced by a "Complete" badge with a checkmark; card remains visible in place
+- When `allDone === true`: card title changes to "Setup Complete", subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header
 
 **Callout triggers — two scenarios:**
 
-1. **Initiated from Get Started** — user clicks a task CTA, completes the workflow, and lands on a new surface (e.g. wallet detail page). Callouts fire contextually to educate them about what they can do next on that surface.
-   - Example: `gsWallet` → `WalletCreationFlow` completes → wallet detail panel opens + snackbar "Wallet created." → user dismisses snackbar → `walletCalloutReady = true` → 3-step callout tour starts on the wallet detail page (Deposit → Invite → Policies)
+1. **Initiated from Get Started** — user clicks an action CTA, completes the workflow, and lands on a new surface (e.g. wallet detail page). Callouts fire contextually to educate them about what they can do next on that surface.
+   - Example: `createWallet` → `WalletCreationFlow` completes → wallet detail panel opens + snackbar "Wallet created." → user dismisses snackbar → `walletCalloutReady = true` → 3-step callout tour starts on the wallet detail page (Deposit → Invite → Policies)
 
 2. **First visit to a new page** — when a user lands on a feature page for the first time, callouts appear to explain the key functions available, even outside of a Get Started flow.
 
@@ -56,9 +65,11 @@ The dashboard has a linear progression: task completion unlocks callouts, and co
 - Never block the underlying UI; user can always interact around them
 
 **For You section** (`src/pages/Dashboard.tsx`):
-- `<ForYou />` renders only when `allDone === true` (all 3 tasks complete)
+- `<ForYou />` is always visible — it does not wait for Get Started to be complete
+- Before completion, shows a maximum of 3 cards; once `allDone === true`, the full set is shown
+- Card content and ordering are calculated based on the user's role(s) and BitGo product interest — detailed logic spec coming soon
 - Cards are horizontally scrollable, dismissible individually, and limited to 3 visible + 1 peeking
-- Once all tasks are done, Get Started collapses and For You takes its place
+- Once all actions are done, Get Started collapses and For You expands to its full set
 
 **Snackbar** is used throughout for non-blocking confirmations — wallet created, order placed, deposit confirmed, policies published. Never blocking modals.
 
@@ -103,13 +114,14 @@ The dashboard has a linear progression: task completion unlocks callouts, and co
 | `src/flows/WalkthroughStepper.tsx` | In-context walkthrough stepper |
 | `src/components/Sidebar.tsx` | Left nav with security submenu |
 | `src/components/Topbar.tsx` | Top bar with theme toggle |
-| `src/components/GetStarted.tsx` | Onboarding task list |
+| `src/components/GetStarted.tsx` | Onboarding action list |
 | `src/components/ForYou.tsx` | Horizontal-scroll recommendation cards |
 | `src/components/Balances.tsx` | Balance summary |
 | `src/components/Portfolio.tsx` | Portfolio chart |
 | `src/components/TradeCard.tsx` | Trade / Go Account panel |
 | `src/components/Snackbar.tsx` | Toast notification (imperative via ref) |
-| `src/hooks/useGetStarted.ts` | Get Started task state |
+| `get-started-aggregation-spec.md` | Get Started role-based aggregation logic — canonical spec for task selection algorithm |
+| `src/hooks/useGetStarted.ts` | Get Started action state |
 | `src/hooks/useTheme.ts` | Light/dark theme toggle |
 | `src/types/index.ts` | Shared types, constants, trade pairs, walkthrough definitions |
 | `src/styles/globals.css` | Global styles + animations |
