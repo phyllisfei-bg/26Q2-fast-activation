@@ -97,9 +97,14 @@ Defined per action in the action catalog (section 2.1); conditionally overridden
 |---|---|---|
 | `isBusinessGoal` | boolean | When `true`, elevates the action above non-business-goal actions in scoring. |
 
-**Static business goals** (always `true`): `fundGoAccount`, `firstTrade`, `completeVideoID`
+The following actions are designated as business goals, either statically or conditionally based on enterprise state:
 
-**Conditional business goal**: `createWallet` — set to `true` at runtime when `walletExists = false`.
+| Action | Type | `isBusinessGoal = true` when |
+|---|---|---|
+| `fundGoAccount` | Static | Always |
+| `firstTrade` | Static | Always |
+| `completeVideoID` | Static | Always |
+| `createWallet` | Conditional | `walletExists = false` |
 
 ### 1.5 Per-user completion state
 
