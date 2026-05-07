@@ -323,7 +323,7 @@ pool.sort by:
   3. weightedScore DESC
 ```
 
-> **Note:** No tiebreaker is defined for equal-scoring actions — order between ties is arbitrary.
+> ⚠️ **Note:** No tiebreaker is defined for equal-scoring actions — order between ties is arbitrary.
 
 ### Step 5 — Take top 3, then backfill
 
