@@ -91,7 +91,7 @@ type EnterpriseState = {
 
 ### 1.4 Business goal flag
 
-Defined per action in the action catalog (section 2.1); conditionally overridden at runtime in Step 3.
+Defined per action in the action catalog (section 3.1); conditionally overridden at runtime in Step 3.
 
 | Flag | Type | Effect |
 |---|---|---|
@@ -119,66 +119,7 @@ type UserCompletedTasks = Set<TaskId>
 ---
 
 <details>
-<summary><h2>2. Action catalog</h2></summary>
-
-Defines every Get Started action: its metadata, business goal flag, the flow triggered when a user starts it, and any substitution rules. The `Task` type below describes the shape of each entry.
-
-```ts
-type Task = {
-  id: TaskId                                   // all valid IDs listed in table below
-  title: string                                // static copy — never changes
-  description: string                          // static copy — never changes
-  isBusinessGoal?: boolean                     // floats to top of scoring
-  substitution?: {
-    whenEnterpriseKey: keyof EnterpriseState   // if this enterprise flag is true...
-    replaceWith: TaskId          // ...substitute this action with another
-  }
-}
-```
-
-### 2.1 Full action catalog & flows
-
-| Action ID | Default title | `isBusinessGoal` | Notes | Flow triggered |
-|---|---|---|---|---|
-| `fundGoAccount` | "Fund Go Account" | `true` | Always active regardless of wallet or bank state. | Deposit flow — bank account context handled internally (see 2.2). |
-| `firstTrade` | "Make first trade" | `true` | Dependent on first deposit (and possibly wallet creation). | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. |
-| `createWallet` | "Create first wallet" | `true`* | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View wallet members → View policies (if have access). |
-| `addBankAccount` | "Add bank account" | `false` | Substitution rule: substituted with `understandTasksApprovals` when `bankAccountAdded = true`. | Bank account setup flow. |
-| `explorePolicies` | "Explore policies" | `false` | Backfill eligible (role-restricted). | Land on policy dashboard.<br><br>Callout order: Default policies → Manage policies → Create custom policy. |
-| `explorePortfolio` | "Explore portfolio" | `false` | Use Go Account as sample walkthrough whenever possible. | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View Members → View Policies. |
-| `viewReports` | "View reports" | `false` | — | Land on report page. |
-| `viewTrades` | "View trades" | `false` | — | Land on trade page. |
-| `viewMembersRoles` | "View members & roles" | `false` | — | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. |
-| `viewEnterprisesWallets` | "View enterprises & wallets" | `false` | — | TBD |
-| `understandTasksApprovals` | "Understand tasks & approvals" | `false` | Backfill eligible (role-restricted). | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. |
-| `completeKYB` | "Complete KYB" | `false` | Organic business entities only. Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYB flow. |
-| `completeKYC` | "Complete KYC" | `false` | Organic users only (business entities and individuals). Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYC flow. |
-| `completeVideoID` | "Complete Video ID" | `true` | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else. | Start video ID scheduling flow. |
-| `unlockPolicy` | "Learn about unlocking policies" | `false` | — | Land on policy page.<br><br>Callout order: Click here to unlock. |
-| `viewActivityLog` | "View activity log" | `false` | — | Land on activity log page. |
-
-> \* `createWallet` is `false` by default; overridden to `true` at runtime in Step 3 when `walletExists = false`.
-
-### 2.2 `fundGoAccount` — deposit flow behaviour
-
-The action card title and description are static: always **"Fund Go Account"**. The deposit method available to the user varies by enterprise state, but this is handled inside the deposit flow itself — not on the Get Started card.
-
-| Enterprise state | User role | Deposit flow behaviour |
-|---|---|---|
-| `bankAccountAdded = false` | • is `super_user`, or<br>• has `ent_admin` + one or multiple of `wallet_admin` / `wallet_spender` / `wallet_viewer` | User can add a bank account from within the deposit flow |
-| `bankAccountAdded = true` | • is `super_user`, or<br>• has one or multiple of `wallet_admin` / `wallet_spender` / `wallet_viewer` | User can choose cash or crypto deposit |
-| `bankAccountAdded = false` | • has `wallet_admin` / `wallet_spender` / `wallet_viewer` (without `ent_admin`) | User lands on crypto deposit by default; a banner is shown on the cash deposit tab explaining that a bank account has not been set up yet |
-
-### 2.3 Substitution rule — `addBankAccount`
-
-When `bankAccountAdded = true`, the action `addBankAccount` is replaced with `understandTasksApprovals` in the candidate pool before scoring. If `understandTasksApprovals` is already in the pool from another role, `addBankAccount` is simply removed (no duplicate).
-
-</details>
-
----
-
-<details>
-<summary><h2>3. Role action pools (top 3 per role)</h2></summary>
+<summary><h2>2. Role action pools (top 3 per role)</h2></summary>
 
 Each role has a fixed ordered list of up to 3 candidate actions. Order within the list signals default priority for that role.
 
@@ -208,6 +149,65 @@ const ROLE_POOLS: Record<UserRole, TaskId[]> = {
 | `auditor` | `viewActivityLog` | *(only 1 action — no backfill)* | |
 
 > **Note:** The `super_user` row is reference only — not processed by the aggregation algorithm. Super user action sets are handled via the decision tree in the overview.
+
+</details>
+
+---
+
+<details>
+<summary><h2>3. Action catalog</h2></summary>
+
+Defines every Get Started action: its metadata, business goal flag, the flow triggered when a user starts it, and any substitution rules. The `Task` type below describes the shape of each entry.
+
+```ts
+type Task = {
+  id: TaskId                                   // all valid IDs listed in table below
+  title: string                                // static copy — never changes
+  description: string                          // static copy — never changes
+  isBusinessGoal?: boolean                     // floats to top of scoring
+  substitution?: {
+    whenEnterpriseKey: keyof EnterpriseState   // if this enterprise flag is true...
+    replaceWith: TaskId          // ...substitute this action with another
+  }
+}
+```
+
+### 3.1 Full action catalog & flows
+
+| Action ID | Default title | `isBusinessGoal` | Notes | Flow triggered |
+|---|---|---|---|---|
+| `fundGoAccount` | "Fund Go Account" | `true` | Always active regardless of wallet or bank state. | Deposit flow — bank account context handled internally (see 3.2). |
+| `firstTrade` | "Make first trade" | `true` | Dependent on first deposit (and possibly wallet creation). | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. |
+| `createWallet` | "Create first wallet" | `true`* | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View wallet members → View policies (if have access). |
+| `addBankAccount` | "Add bank account" | `false` | Substitution rule: substituted with `understandTasksApprovals` when `bankAccountAdded = true`. | Bank account setup flow. |
+| `explorePolicies` | "Explore policies" | `false` | Backfill eligible (role-restricted). | Land on policy dashboard.<br><br>Callout order: Default policies → Manage policies → Create custom policy. |
+| `explorePortfolio` | "Explore portfolio" | `false` | Use Go Account as sample walkthrough whenever possible. | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View Members → View Policies. |
+| `viewReports` | "View reports" | `false` | — | Land on report page. |
+| `viewTrades` | "View trades" | `false` | — | Land on trade page. |
+| `viewMembersRoles` | "View members & roles" | `false` | — | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. |
+| `viewEnterprisesWallets` | "View enterprises & wallets" | `false` | — | TBD |
+| `understandTasksApprovals` | "Understand tasks & approvals" | `false` | Backfill eligible (role-restricted). | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. |
+| `completeKYB` | "Complete KYB" | `false` | Organic business entities only. Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYB flow. |
+| `completeKYC` | "Complete KYC" | `false` | Organic users only (business entities and individuals). Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYC flow. |
+| `completeVideoID` | "Complete Video ID" | `true` | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else. | Start video ID scheduling flow. |
+| `unlockPolicy` | "Learn about unlocking policies" | `false` | — | Land on policy page.<br><br>Callout order: Click here to unlock. |
+| `viewActivityLog` | "View activity log" | `false` | — | Land on activity log page. |
+
+> \* `createWallet` is `false` by default; overridden to `true` at runtime in Step 3 when `walletExists = false`.
+
+### 3.2 `fundGoAccount` — deposit flow behaviour
+
+The action card title and description are static: always **"Fund Go Account"**. The deposit method available to the user varies by enterprise state, but this is handled inside the deposit flow itself — not on the Get Started card.
+
+| Enterprise state | User role | Deposit flow behaviour |
+|---|---|---|
+| `bankAccountAdded = false` | • is `super_user`, or<br>• has `ent_admin` + one or multiple of `wallet_admin` / `wallet_spender` / `wallet_viewer` | User can add a bank account from within the deposit flow |
+| `bankAccountAdded = true` | • is `super_user`, or<br>• has one or multiple of `wallet_admin` / `wallet_spender` / `wallet_viewer` | User can choose cash or crypto deposit |
+| `bankAccountAdded = false` | • has `wallet_admin` / `wallet_spender` / `wallet_viewer` (without `ent_admin`) | User lands on crypto deposit by default; a banner is shown on the cash deposit tab explaining that a bank account has not been set up yet |
+
+### 3.3 Substitution rule — `addBankAccount`
+
+When `bankAccountAdded = true`, the action `addBankAccount` is replaced with `understandTasksApprovals` in the candidate pool before scoring. If `understandTasksApprovals` is already in the pool from another role, `addBankAccount` is simply removed (no duplicate).
 
 </details>
 
