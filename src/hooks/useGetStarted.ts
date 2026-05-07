@@ -1,17 +1,17 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import type { GsTask, UserRole } from '../types';
-import { ROLE_TASKS, GS_TASK_META } from '../types';
+import type { TaskId, UserRole } from '../types';
+import { ROLE_POOLS, ACTION_CATALOG } from '../types';
 import type { EnterpriseState } from '../components/RoleSwitcher';
 
-// Substitution rules: when org key is true, swap task out for replacement
-const SUBSTITUTIONS: Partial<Record<GsTask, { whenOrgKey: keyof EnterpriseState; replaceWith: GsTask }>> = {
-  gsAddBankAccount: { whenOrgKey: 'bankAccountAdded', replaceWith: 'gsUnderstandTasksApprovals' },
+// Substitution rules: when enterprise key is true, swap task out for replacement
+const SUBSTITUTIONS: Partial<Record<TaskId, { whenEnterpriseKey: keyof EnterpriseState; replaceWith: TaskId }>> = {
+  addBankAccount: { whenEnterpriseKey: 'bankAccountAdded', replaceWith: 'understandTasksApprovals' },
 };
 
 // Backfill catalog (in priority order) with role eligibility
-const BACKFILL: { id: GsTask; eligible: UserRole[] }[] = [
-  { id: 'gsExplorePolicies',          eligible: ['ent_admin', 'wallet_admin'] },
-  { id: 'gsUnderstandTasksApprovals', eligible: ['org_admin', 'ent_admin', 'wallet_admin', 'video_id_user'] },
+const BACKFILL_CATALOG: { id: TaskId; eligibleRoles: UserRole[] }[] = [
+  { id: 'explorePolicies',          eligibleRoles: ['ent_admin', 'wallet_admin'] },
+  { id: 'understandTasksApprovals', eligibleRoles: ['org_admin', 'ent_admin', 'wallet_admin', 'video_id_user'] },
 ];
 
 // These roles never receive backfill tasks (per spec section 3)
@@ -20,20 +20,20 @@ const NO_BACKFILL_ROLES: UserRole[] = ['wallet_trader', 'auditor'];
 function computeTasks(
   roles: UserRole[],
   enterpriseState: EnterpriseState,
-  completedTasks: GsTask[],
-): GsTask[] {
+  completedTasks: TaskId[],
+): TaskId[] {
   const isSuperUser = roles.includes('super_user');
 
   // ── Super user: fixed sets, no aggregation ───────────────────────────
   if (isSuperUser) {
     if (enterpriseState.onboardingType === 'sales-led') {
-      return ROLE_TASKS['super_user'];
+      return ROLE_POOLS['super_user'];
     }
     // organic super user — tasks depend on entity type
     if (enterpriseState.entityType === 'business') {
-      return ['gsCompleteKYB', 'gsCompleteKYC', 'gsGoAccountFund'];
+      return ['completeKYB', 'completeKYC', 'fundGoAccount'];
     }
-    return ['gsCompleteKYC', 'gsGoAccountFund', 'gsFirstTrade'];
+    return ['completeKYC', 'fundGoAccount', 'firstTrade'];
   }
 
   // ── Non-super: run aggregation algorithm ─────────────────────────────
@@ -44,9 +44,9 @@ function computeTasks(
   // Step 2: build candidate pool
   // Weighted slot score: slot 1 = 3pts, slot 2 = 2pts, slot 3 = 1pt; accumulates across roles
   type PoolEntry = { roles: UserRole[]; weightedScore: number; isBusinessGoal: boolean };
-  const pool = new Map<GsTask, PoolEntry>();
+  const pool = new Map<TaskId, PoolEntry>();
   for (const role of effectiveRoles) {
-    const roleTasks = ROLE_TASKS[role] ?? [];
+    const roleTasks = ROLE_POOLS[role] ?? [];
     roleTasks.forEach((taskId, slotIndex) => {
       const pts = 3 - slotIndex;
       const existing = pool.get(taskId);
@@ -57,28 +57,28 @@ function computeTasks(
         pool.set(taskId, {
           roles: [role],
           weightedScore: pts,
-          isBusinessGoal: GS_TASK_META[taskId]?.isBusinessGoal ?? false,
+          isBusinessGoal: ACTION_CATALOG[taskId]?.isBusinessGoal ?? false,
         });
       }
     });
   }
 
   // Step 3: apply substitutions
-  for (const [taskId, sub] of Object.entries(SUBSTITUTIONS) as [GsTask, NonNullable<typeof SUBSTITUTIONS[GsTask]>][]) {
+  for (const [taskId, sub] of Object.entries(SUBSTITUTIONS) as [TaskId, NonNullable<typeof SUBSTITUTIONS[TaskId]>][]) {
     if (!pool.has(taskId)) continue;
-    const orgVal = enterpriseState[sub.whenOrgKey];
+    const orgVal = enterpriseState[sub.whenEnterpriseKey];
     if (orgVal === true) {
       const { roles, weightedScore } = pool.get(taskId)!;
       pool.delete(taskId);
       if (!pool.has(sub.replaceWith)) {
-        pool.set(sub.replaceWith, { roles, weightedScore, isBusinessGoal: GS_TASK_META[sub.replaceWith]?.isBusinessGoal ?? false });
+        pool.set(sub.replaceWith, { roles, weightedScore, isBusinessGoal: ACTION_CATALOG[sub.replaceWith]?.isBusinessGoal ?? false });
       }
     }
   }
 
   // Step 3b: state-based flag override
-  if (!enterpriseState.walletExists && pool.has('gsWallet')) {
-    pool.get('gsWallet')!.isBusinessGoal = true;
+  if (!enterpriseState.walletExists && pool.has('createWallet')) {
+    pool.get('createWallet')!.isBusinessGoal = true;
   }
 
 
@@ -90,8 +90,8 @@ function computeTasks(
   candidates.sort(([aId, a], [bId, b]) => {
     if (a.isBusinessGoal !== b.isBusinessGoal) return a.isBusinessGoal ? -1 : 1;
     if (a.isBusinessGoal && b.isBusinessGoal) {
-      if (aId === 'gsGoAccountFund') return -1;
-      if (bId === 'gsGoAccountFund') return 1;
+      if (aId === 'fundGoAccount') return -1;
+      if (bId === 'fundGoAccount') return 1;
     }
     return b.weightedScore - a.weightedScore;
   });
@@ -101,11 +101,11 @@ function computeTasks(
 
   const backfillEligible = !effectiveRoles.every(r => NO_BACKFILL_ROLES.includes(r));
   if (top3.length < 3 && backfillEligible) {
-    for (const bf of BACKFILL) {
+    for (const bf of BACKFILL_CATALOG) {
       if (top3.length >= 3) break;
       if (top3.includes(bf.id)) continue;
       if (completedTasks.includes(bf.id)) continue;
-      if (effectiveRoles.some(r => bf.eligible.includes(r))) {
+      if (effectiveRoles.some(r => bf.eligibleRoles.includes(r))) {
         top3.push(bf.id);
       }
     }
@@ -115,7 +115,7 @@ function computeTasks(
 }
 
 export function useGetStarted(roles: UserRole[], enterpriseState: EnterpriseState) {
-  const [done, setDone] = useState<GsTask[]>([]);
+  const [done, setDone] = useState<TaskId[]>([]);
 
   // Computed once per role/org-state combination; stable within a session
   const tasks = useMemo(
@@ -134,7 +134,7 @@ export function useGetStarted(roles: UserRole[], enterpriseState: EnterpriseStat
     }
   }, [tasks]);
 
-  const markDone = useCallback((task: GsTask) => {
+  const markDone = useCallback((task: TaskId) => {
     setDone(prev => prev.includes(task) ? prev : [...prev, task]);
   }, []);
 

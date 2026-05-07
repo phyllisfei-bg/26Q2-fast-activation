@@ -28,22 +28,22 @@ export const TRADE_PAIRS: TradePair[] = [
 
 export const ALL_GS_TASKS = [
   // legacy (kept for wallet-creation flow compatibility)
-  'gsWallet', 'gsDeposit', 'gsGoAccount', 'gsTransact',
-  'gsPolicy', 'gsStaking', 'gsInvite', 'gsRoles',
+  'createWallet', 'deposit', 'goAccount', 'transact',
+  'firstPolicy', 'staking', 'invite',
   'gsCompliance', 'gsReporting', 'gsVerify', 'gsTrading',
   // super user
-  'gsGoAccountFund', 'gsFirstTrade', 'gsGoAccountStaking',
+  'fundGoAccount', 'firstTrade', 'goAccountStaking',
   // org admin
-  'gsViewMembersRoles', 'gsExploreRoles', 'gsExplorePortfolio',
-  'gsViewUMSTasks', 'gsViewEnterprisesWallets',
+  'viewMembersRoles', 'explorePortfolio',
+  'viewUMSTasks', 'viewEnterprisesWallets',
   // ent admin
-  'gsAddBankAccount', 'gsExplorePolicies',
+  'addBankAccount', 'explorePolicies',
   // wallet admin / spender shared
   'gsStartFirstTrade',
   // wallet viewer
-  'gsViewReports',
+  'viewReports',
   // wallet trader
-  'gsViewTrades',
+  'viewTrades',
   // ent admin / wallet admin (shared, legacy)
   'gsUnderstandTasks', 'gsUnderstandPolicies',
   // wallet spender (legacy)
@@ -51,18 +51,18 @@ export const ALL_GS_TASKS = [
   // wallet viewer (legacy)
   'gsLearnDeposit', 'gsTryReports',
   // video id user
-  'gsCompleteVideoID', 'gsUnderstandTasksApprovals', 'gsUnlockPolicy',
+  'completeVideoID', 'understandTasksApprovals', 'unlockPolicy',
   // auditor
-  'gsViewActivityLog',
+  'viewActivityLog',
   // organic super user
-  'gsCompleteKYB', 'gsCompleteKYC',
+  'completeKYB', 'completeKYC',
 ] as const;
 
-export type GsTask = typeof ALL_GS_TASKS[number];
+export type TaskId = typeof ALL_GS_TASKS[number];
 export type TaskType = 'action' | 'explore';
 
-export interface GsTaskMeta {
-  id: GsTask;
+export interface TaskMeta {
+  id: TaskId;
   type: TaskType;
   title: string;
   description: string;
@@ -71,54 +71,49 @@ export interface GsTaskMeta {
   isBusinessGoal?: boolean;
 }
 
-export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
-  gsWallet: {
-    id: 'gsWallet', type: 'action',
+export const ACTION_CATALOG: Record<TaskId, TaskMeta> = {
+  createWallet: {
+    id: 'createWallet', type: 'action',
     title: 'Create Your First Wallet',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'wallet',
   },
-  gsDeposit: {
-    id: 'gsDeposit', type: 'action',
+  deposit: {
+    id: 'deposit', type: 'action',
     title: 'Make Your First Deposit',
     description: 'This is a 12 word max description',
     time: '3 min', colorKey: 'deposit',
   },
-  gsGoAccount: {
-    id: 'gsGoAccount', type: 'action',
+  goAccount: {
+    id: 'goAccount', type: 'action',
     title: 'Trade on Go Account',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'go-account',
   },
-  gsTransact: {
-    id: 'gsTransact', type: 'action',
+  transact: {
+    id: 'transact', type: 'action',
     title: 'Send Your First Transaction',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'transact',
   },
-  gsPolicy: {
-    id: 'gsPolicy', type: 'action',
+  // Not in spec — legacy flow (PolicyModal). Kept in case this flow returns.
+  firstPolicy: {
+    id: 'firstPolicy', type: 'action',
     title: 'Configure Your First Policy',
     description: 'This is a 12 word max description',
     time: '3 min', colorKey: 'policy',
   },
-  gsStaking: {
-    id: 'gsStaking', type: 'explore',
+  staking: {
+    id: 'staking', type: 'explore',
     title: 'Explore Staking',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'staking',
   },
-  gsInvite: {
-    id: 'gsInvite', type: 'action',
+  invite: {
+    id: 'invite', type: 'action',
     title: 'Invite Team Members',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'invite',
-  },
-  gsRoles: {
-    id: 'gsRoles', type: 'action',
-    title: 'Set Up Roles & Permissions',
-    description: 'This is a 12 word max description',
-    time: '3 min', colorKey: 'roles',
   },
   gsCompliance: {
     id: 'gsCompliance', type: 'explore',
@@ -145,39 +140,33 @@ export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
     time: '2 min', colorKey: 'trading',
   },
   // ── super user ───────────────────────────────────────────────────────
-  gsGoAccountFund: {
-    id: 'gsGoAccountFund', type: 'action',
+  fundGoAccount: {
+    id: 'fundGoAccount', type: 'action',
     title: 'Fund Go Account',
     description: 'This is a 12 word max description',
     time: '3 min', colorKey: 'deposit', isBusinessGoal: true,
   },
-  gsFirstTrade: {
-    id: 'gsFirstTrade', type: 'action',
+  firstTrade: {
+    id: 'firstTrade', type: 'action',
     title: 'Complete Your First Trade',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'go-account', isBusinessGoal: true,
   },
-  gsGoAccountStaking: {
-    id: 'gsGoAccountStaking', type: 'explore',
+  goAccountStaking: {
+    id: 'goAccountStaking', type: 'explore',
     title: 'Try Go Account Staking',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'staking',
   },
   // ── org admin ────────────────────────────────────────────────────────
-  gsViewMembersRoles: {
-    id: 'gsViewMembersRoles', type: 'explore',
+  viewMembersRoles: {
+    id: 'viewMembersRoles', type: 'explore',
     title: 'View Members & Roles',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'invite',
   },
-  gsExploreRoles: {
-    id: 'gsExploreRoles', type: 'explore',
-    title: 'Explore User Roles',
-    description: 'This is a 12 word max description',
-    time: '2 min', colorKey: 'roles',
-  },
-  gsExplorePortfolio: {
-    id: 'gsExplorePortfolio', type: 'explore',
+  explorePortfolio: {
+    id: 'explorePortfolio', type: 'explore',
     title: 'Explore Portfolio',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'wallet',
@@ -222,26 +211,26 @@ export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
     time: '2 min', colorKey: 'reporting',
   },
   // ── spec-aligned tasks ───────────────────────────────────────────────
-  gsViewUMSTasks: {
-    id: 'gsViewUMSTasks', type: 'explore',
+  viewUMSTasks: {
+    id: 'viewUMSTasks', type: 'explore',
     title: 'View UMS Tasks',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'policy',
   },
-  gsViewEnterprisesWallets: {
-    id: 'gsViewEnterprisesWallets', type: 'explore',
+  viewEnterprisesWallets: {
+    id: 'viewEnterprisesWallets', type: 'explore',
     title: 'View Enterprises & Wallets',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'wallet',
   },
-  gsAddBankAccount: {
-    id: 'gsAddBankAccount', type: 'action',
+  addBankAccount: {
+    id: 'addBankAccount', type: 'action',
     title: 'Add Bank Account',
     description: 'This is a 12 word max description',
     time: '3 min', colorKey: 'deposit',
   },
-  gsExplorePolicies: {
-    id: 'gsExplorePolicies', type: 'explore',
+  explorePolicies: {
+    id: 'explorePolicies', type: 'explore',
     title: 'Explore Policies',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'policy',
@@ -252,50 +241,50 @@ export const GS_TASK_META: Record<GsTask, GsTaskMeta> = {
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'go-account',
   },
-  gsViewReports: {
-    id: 'gsViewReports', type: 'explore',
+  viewReports: {
+    id: 'viewReports', type: 'explore',
     title: 'View Reports',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'reporting',
   },
-  gsViewTrades: {
-    id: 'gsViewTrades', type: 'explore',
+  viewTrades: {
+    id: 'viewTrades', type: 'explore',
     title: 'View Trades',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'go-account',
   },
-  gsCompleteVideoID: {
-    id: 'gsCompleteVideoID', type: 'action',
+  completeVideoID: {
+    id: 'completeVideoID', type: 'action',
     title: 'Complete Video ID',
     description: 'This is a 12 word max description',
     time: '5 min', colorKey: 'verify', isBusinessGoal: true,
   },
-  gsUnderstandTasksApprovals: {
-    id: 'gsUnderstandTasksApprovals', type: 'explore',
+  understandTasksApprovals: {
+    id: 'understandTasksApprovals', type: 'explore',
     title: 'Understand Tasks & Approvals',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'policy',
   },
-  gsUnlockPolicy: {
-    id: 'gsUnlockPolicy', type: 'explore',
+  unlockPolicy: {
+    id: 'unlockPolicy', type: 'explore',
     title: 'Unlock Policy Controls',
     description: 'This is a 12 word max description',
     time: '2 min', colorKey: 'policy',
   },
-  gsViewActivityLog: {
-    id: 'gsViewActivityLog', type: 'explore',
+  viewActivityLog: {
+    id: 'viewActivityLog', type: 'explore',
     title: 'View Activity Log',
     description: 'This is a 12 word max description',
     time: '1 min', colorKey: 'reporting',
   },
-  gsCompleteKYB: {
-    id: 'gsCompleteKYB', type: 'action',
+  completeKYB: {
+    id: 'completeKYB', type: 'action',
     title: 'Complete KYB',
     description: 'This is a 12 word max description',
     time: '10 min', colorKey: 'compliance',
   },
-  gsCompleteKYC: {
-    id: 'gsCompleteKYC', type: 'action',
+  completeKYC: {
+    id: 'completeKYC', type: 'action',
     title: 'Complete KYC',
     description: 'This is a 12 word max description',
     time: '5 min', colorKey: 'compliance',
@@ -320,16 +309,16 @@ export const USER_ROLES: { id: UserRole; label: string; description: string }[] 
   { id: 'auditor',        label: 'Auditor',          description: 'Read-only reporting access' },
 ];
 
-export const ROLE_TASKS: Record<UserRole, GsTask[]> = {
-  super_user:     ['gsGoAccountFund', 'gsFirstTrade', 'gsWallet'],
-  org_admin:      ['gsViewMembersRoles', 'gsUnderstandTasksApprovals', 'gsViewEnterprisesWallets'],
-  ent_admin:      ['gsWallet', 'gsAddBankAccount', 'gsExplorePolicies'],
-  wallet_admin:   ['gsGoAccountFund', 'gsExplorePortfolio', 'gsExplorePolicies'],
-  wallet_spender: ['gsGoAccountFund', 'gsExplorePortfolio', 'gsFirstTrade'],
-  wallet_viewer:  ['gsGoAccountFund', 'gsExplorePortfolio', 'gsViewReports'],
-  wallet_trader:  ['gsFirstTrade', 'gsViewTrades'],
-  video_id_user:  ['gsCompleteVideoID', 'gsUnderstandTasksApprovals', 'gsUnlockPolicy'],
-  auditor:        ['gsViewActivityLog'],
+export const ROLE_POOLS: Record<UserRole, TaskId[]> = {
+  super_user:     ['fundGoAccount', 'firstTrade', 'createWallet'],
+  org_admin:      ['viewMembersRoles', 'understandTasksApprovals', 'viewEnterprisesWallets'],
+  ent_admin:      ['createWallet', 'addBankAccount', 'explorePolicies'],
+  wallet_admin:   ['fundGoAccount', 'explorePortfolio', 'explorePolicies'],
+  wallet_spender: ['fundGoAccount', 'explorePortfolio', 'firstTrade'],
+  wallet_viewer:  ['fundGoAccount', 'explorePortfolio', 'viewReports'],
+  wallet_trader:  ['firstTrade', 'viewTrades'],
+  video_id_user:  ['completeVideoID', 'understandTasksApprovals', 'unlockPolicy'],
+  auditor:        ['viewActivityLog'],
 };
 
 export const ROLE_GS_SUBTITLE: Record<UserRole, string> = {

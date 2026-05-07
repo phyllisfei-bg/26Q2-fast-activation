@@ -3,26 +3,26 @@ import React, { useState } from 'react';
 const CARDS = [
   {
     id: 'warm-wallet',
-    title: 'Add a Warm Wallet',
-    desc:  'A warm wallet gives you faster access to funds while keeping them more secure than a hot wallet.',
+    title: 'Secondary Action 1',
+    desc:  'This action is related to user role(s) or BitGo strategy, description length 2-line max.',
     link:  'Set up →',
   },
   {
     id: 'staking',
-    title: 'Start Earning with Staking',
-    desc:  'Put your crypto assets to work. Earn rewards by staking supported assets directly from BitGo.',
+    title: 'Secondary Action 2',
+    desc:  'This action is related to user role(s) or BitGo strategy, description length 2-line max.',
     link:  'Learn more →',
   },
   {
     id: 'prime',
-    title: 'Explore Prime Services',
-    desc:  'Access institutional-grade OTC trading, lending, and borrowing through BitGo Prime.',
+    title: 'Secondary Action 3',
+    desc:  'This action is related to user role(s) or BitGo strategy, description length 2-line max.',
     link:  'Learn more →',
   },
   {
     id: 'team',
-    title: 'Add team members',
-    desc:  'Invite colleagues and assign roles to manage wallets and policies together.',
+    title: 'Secondary Action 4',
+    desc:  'This action is related to user role(s) or BitGo strategy, description length 2-line max.',
     link:  'Invite →',
   },
 ];

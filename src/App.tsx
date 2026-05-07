@@ -16,8 +16,8 @@ import { KYBFlow }            from './flows/KYBFlow';
 import { KYCFlow }            from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
-import type { GsTask, UserRole, WalletInfo } from './types';
-import { GS_TASK_META } from './types';
+import type { TaskId, UserRole, WalletInfo } from './types';
+import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
 type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'flow' | 'trade';
@@ -75,21 +75,20 @@ export default function App() {
   const snackRef = useRef<SnackbarHandle>(null);
 
   // ── Get Started launch routing ───────────────────────────────────
-  const handleGsLaunch = (task: GsTask) => {
-    const meta = GS_TASK_META[task];
+  const handleGsLaunch = (task: TaskId) => {
+    const meta = ACTION_CATALOG[task];
 
     // Explore tasks: mark done immediately + show contextual snackbar
     if (meta.type === 'explore') {
       markDone(task);
-      const msgs: Partial<Record<GsTask, string>> = {
-        gsStaking:            'Staking earns yield on ETH, SOL, and more — available in Wallets.',
+      const msgs: Partial<Record<TaskId, string>> = {
+        staking:            'Staking earns yield on ETH, SOL, and more — available in Wallets.',
         gsReporting:          'Audit logs and reports are available under Security → Activity Log.',
         gsCompliance:         'Compliance status is current — no outstanding items.',
         gsTrading:            'Use the Go Account panel on the right to set up your trading workflow.',
-        gsGoAccountStaking:   'Go Account staking earns yield on idle assets — available in the Go Account panel.',
-        gsViewMembersRoles:   'Org members are managed under Security → Roles.',
-        gsExploreRoles:       'User roles and permissions are defined under Security → Roles.',
-        gsExplorePortfolio:   'Your portfolio overview is in the main dashboard.',
+        goAccountStaking:   'Go Account staking earns yield on idle assets — available in the Go Account panel.',
+        viewMembersRoles:   'Org members are managed under Security → Roles.',
+        explorePortfolio:   'Your portfolio overview is in the main dashboard.',
         gsUnderstandTasks:    'Pending approvals and transaction tasks are managed from your wallet.',
         gsUnderstandPolicies: 'Spending policies are configured per wallet under Security → Policies.',
         gsUnderstandStaking:  'Staking earns yield on ETH, SOL, and more — available in Wallets.',
@@ -102,35 +101,32 @@ export default function App() {
 
     // Action tasks: launch the relevant flow
     switch (task) {
-      case 'gsGoAccountFund':
+      case 'fundGoAccount':
         setDepositTab('cash');
         setDepositOpen(true);
         break;
-      case 'gsFirstTrade':
+      case 'firstTrade':
         setTradeHighlightVer(v => v + 1);
         break;
       case 'gsInitiateTransaction':
         snackRef.current?.show('Transaction flow coming soon.', false);
         break;
-      case 'gsWallet':
+      case 'createWallet':
         setFlow('wallet-creation');
         break;
-      case 'gsGoAccount':
+      case 'goAccount':
         setTradeHighlightVer(v => v + 1);
         break;
-      case 'gsPolicy':
-        setPolicyOpen(true);
-        break;
-      case 'gsDeposit':
-      case 'gsTransact':
+      // case 'firstPolicy':        // Not in spec — legacy PolicyModal flow. Uncomment if this flow returns.
+      //   setPolicyOpen(true);
+      //   break;
+      case 'deposit':
+      case 'transact':
         setDepositTab('cash');
         setDepositOpen(true);
         break;
-      case 'gsInvite':
+      case 'invite':
         snackRef.current?.show('Team management coming soon.', false);
-        break;
-      case 'gsRoles':
-        snackRef.current?.show('Role & permissions management coming soon.', false);
         break;
       case 'gsVerify':
         snackRef.current?.show('Video verification coming soon.', false);
@@ -143,9 +139,9 @@ export default function App() {
     setDepositOpen(false);
     setGoAccountFunded(true);
     if (amount) setGoAccountDepositAmt(a => a + amount);
-    markDone('gsGoAccountFund');
-    markDone('gsDeposit');
-    markDone('gsTransact');
+    markDone('fundGoAccount');
+    markDone('deposit');
+    markDone('transact');
     snackRef.current?.show(msg, false, undefined, {
       label: 'Go to Go Account',
       onClick: () => setGoAccountOpen(true),
@@ -157,7 +153,7 @@ export default function App() {
     setWallet(w);
     setFlow('none');
     setWalletOpen(true);
-    markDone('gsWallet');
+    markDone('createWallet');
     setTimeout(() => snackRef.current?.show('Wallet created.', true, () => setWalletCalloutReady(true)), 300);
   };
 
@@ -238,7 +234,7 @@ export default function App() {
               tradeHighlightVer={tradeHighlightVer}
               goAccountFunded={goAccountFunded}
               onOpenDeposit={(tab = 'cash') => { setDepositTab(tab); setDepositOpen(true); }}
-              onTradeDone={() => { markDone('gsGoAccount'); markDone('gsFirstTrade'); }}
+              onTradeDone={() => { markDone('goAccount'); markDone('firstTrade'); }}
             />
           )}
         </div>
@@ -273,7 +269,7 @@ export default function App() {
         onClose={() => setPolicyOpen(false)}
         onPublished={() => {
           setPolicyOpen(false);
-          markDone('gsPolicy');
+          // markDone('firstPolicy');  // Not in spec — uncomment if firstPolicy flow returns.
           snackRef.current?.show('Policies published.', false);
         }}
       />
