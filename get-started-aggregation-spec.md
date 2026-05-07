@@ -25,6 +25,23 @@ else:
     (applies to sales-led non-super users; organic non-super users: pending — TBD)
 ```
 
+### Aggregation algorithm flowchart
+
+```mermaid
+flowchart TD
+    A["<b>Input</b><br>roles[], onboardingType, enterpriseState"] --> B
+    B["<b>Step 1</b> — Resolve effective roles<br>Collect all roles assigned to the user"] --> C
+    C["<b>Step 2</b> — Build candidate pool<br>Union action lists from all roles;<br>accumulate weighted slot score per action"] --> D
+    D["<b>Step 3</b> — Apply substitutions &amp; flag overrides<br>Substitute actions based on enterprise state flags<br>Override isBusinessGoal when walletExists = false"] --> E
+    E["<b>Step 4</b> — Score and sort<br>1. Business goal flag<br>2. fundGoAccount always first when present<br>3. Weighted slot score (slot 1=3pts, slot 2=2pts, slot 3=1pt)"] --> F
+    F["<b>Step 5</b> — Take top 3"] --> G
+    G{Fewer than 3?}
+    G -->|No| J["<b>Return</b> resolved action list<br>(up to 3 actions)"]
+    G -->|"Yes — no eligible backfill"| J
+    G -->|"Yes — all other roles"| I["Append eligible backfill actions<br>until 3 reached or catalog exhausted"]
+    I --> J
+```
+
 ---
 
 <details>
@@ -241,22 +258,9 @@ const BACKFILL_CATALOG: { id: TaskId; eligibleRoles: UserRole[] }[] = [
 
 **This algorithm applies to non-super user accounts only** — whether the user holds a single role or multiple roles. For `super_user` (sales-led and organic), actions are fixed sets defined in the overview decision tree and section 8 — no aggregation or scoring is needed.
 
-Run this function at render time for all non-super users. Input: `roles[]`, `onboardingType`, `enterpriseState`. Output: ordered array of up to 3 resolved action objects.
+> See [Aggregation algorithm flowchart](#aggregation-algorithm-flowchart) in the Overview.
 
-```mermaid
-flowchart TD
-    A["<b>Input</b><br>roles[], onboardingType, enterpriseState"] --> B
-    B["<b>Step 1</b> — Resolve effective roles<br>Collect all roles assigned to the user"] --> C
-    C["<b>Step 2</b> — Build candidate pool<br>Union action lists from all roles;<br>accumulate weighted slot score per action"] --> D
-    D["<b>Step 3</b> — Apply substitutions &amp; flag overrides<br>Substitute actions based on enterprise state flags<br>Override isBusinessGoal when walletExists = false"] --> E
-    E["<b>Step 4</b> — Score and sort<br>1. Business goal flag<br>2. fundGoAccount always first when present<br>3. Weighted slot score (slot 1=3pts, slot 2=2pts, slot 3=1pt)"] --> F
-    F["<b>Step 5</b> — Take top 3"] --> G
-    G{Fewer than 3?}
-    G -->|No| J["<b>Return</b> resolved action list<br>(up to 3 actions)"]
-    G -->|"Yes — no eligible backfill"| J
-    G -->|"Yes — all other roles"| I["Append eligible backfill actions<br>until 3 reached or catalog exhausted"]
-    I --> J
-```
+Run this function at render time for all non-super users. Input: `roles[]`, `onboardingType`, `enterpriseState`. Output: ordered array of up to 3 resolved action objects.
 
 ### Step 1 — Resolve effective roles
 
