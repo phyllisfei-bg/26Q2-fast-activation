@@ -28,7 +28,7 @@ else:
 ---
 
 <details>
-<summary><strong>1. Data model</strong></summary>
+<summary><h1>1. Data model</h1></summary>
 
 Defines the algorithm's inputs and surrounding state.
 
@@ -119,7 +119,7 @@ type UserCompletedTasks = Set<TaskId>
 ---
 
 <details>
-<summary><strong>2. Action catalog</strong></summary>
+<summary><h1>2. Action catalog</h1></summary>
 
 Defines every Get Started action: its metadata, business goal flag, the flow triggered when a user starts it, and any substitution rules. The `Task` type below describes the shape of each entry.
 
@@ -178,7 +178,7 @@ When `bankAccountAdded = true`, the action `addBankAccount` is replaced with `un
 ---
 
 <details>
-<summary><strong>3. Role action pools (top 3 per role)</strong></summary>
+<summary><h1>3. Role action pools (top 3 per role)</h1></summary>
 
 Each role has a fixed ordered list of up to 3 candidate actions. Order within the list signals default priority for that role.
 
@@ -214,7 +214,7 @@ const ROLE_POOLS: Record<UserRole, TaskId[]> = {
 ---
 
 <details>
-<summary><strong>4. Backfill catalog</strong></summary>
+<summary><h1>4. Backfill catalog</h1></summary>
 
 When a user ends up with fewer than 3 actions after scoring (because their role pool is thin), backfill actions are appended in order until 3 actions are reached — subject to role eligibility.
 
@@ -237,7 +237,7 @@ const BACKFILL_CATALOG: { id: TaskId; eligibleRoles: UserRole[] }[] = [
 ---
 
 <details>
-<summary><strong>5. Aggregation algorithm</strong></summary>
+<summary><h1>5. Aggregation algorithm</h1></summary>
 
 **This algorithm applies to non-super user accounts only** — whether the user holds a single role or multiple roles. For `super_user` (sales-led and organic), actions are fixed sets defined in the overview decision tree and section 8 — no aggregation or scoring is needed.
 
@@ -350,7 +350,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 ---
 
 <details>
-<summary><strong>6. Special cases summary</strong></summary>
+<summary><h1>6. Special cases summary</h1></summary>
 
 | Scenario | Behaviour |
 |---|---|
@@ -369,7 +369,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 ---
 
 <details>
-<summary><strong>7. Rendering rules</strong></summary>
+<summary><h1>7. Rendering rules</h1></summary>
 
 - **Active** actions: fully interactive, CTA button shown
 - **Completed** actions: the "Start" button is replaced by a "Complete" badge with a checkmark; the action card remains visible in place until the user's next session or until dismissed. When all actions are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
@@ -381,7 +381,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 ---
 
 <details>
-<summary><strong>8. Sales-led vs. organic signup activation path (super user)</strong></summary>
+<summary><h1>8. Sales-led vs. organic signup activation path (super user)</h1></summary>
 
 Institutions onboarded via sales can only land on the dashboard when they've completed KYB and KYC. Their Go Account is already activated. Users who sign up with BitGo themselves (organic) have not yet gone through compliance verification, so their Go Account is not yet activated when they land on the dashboard.
 
