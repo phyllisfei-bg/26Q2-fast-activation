@@ -27,6 +27,8 @@ else:
 
 ### Aggregation algorithm flowchart
 
+Detailed calculation logic and data specifications are defined in the sections below.
+
 ```mermaid
 flowchart TD
     A["<b>Input</b><br>roles[], onboardingType, enterpriseState"] --> B
