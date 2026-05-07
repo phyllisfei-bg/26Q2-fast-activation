@@ -46,7 +46,7 @@ const TASK_ICONS: Record<TaskId, React.ReactNode> = {
       <path d="M5 12h14m0 0l-4-4m4 4l-4 4"/><path d="M3 6h4M3 18h4"/>
     </svg>
   ),
-  policy: (
+  firstPolicy: (
     <svg className="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
     </svg>
@@ -60,12 +60,6 @@ const TASK_ICONS: Record<TaskId, React.ReactNode> = {
     <svg className="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
-    </svg>
-  ),
-  exploreRoles: (
-    <svg className="gs-preview-img-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
   ),
   gsCompliance: (
