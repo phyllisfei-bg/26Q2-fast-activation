@@ -193,24 +193,24 @@ type Task = {
 
 ### 3.1 Full action catalog & flows
 
-| Action ID | Default title | `isBusinessGoal` | Notes | Flow triggered |
+| Action ID | Default title | `isBusinessGoal` | Flow triggered | Notes |
 |---|---|---|---|---|
-| `fundGoAccount` | "Fund Go Account" | `true` | Always active regardless of wallet or bank state. | Deposit flow — bank account context handled internally (see 3.2). |
-| `firstTrade` | "Make first trade" | `true` | Dependent on first deposit (and possibly wallet creation). | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. |
-| `createWallet` | "Create first wallet" | `true`* | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View wallet members → View policies (if have access). |
-| `addBankAccount` | "Add bank account" | `false` | Substitution rule: substituted with `understandTasksApprovals` when `bankAccountAdded = true`. | Bank account setup flow. |
+| `fundGoAccount` | "Fund Go Account" | `true` | Deposit flow — bank account context handled internally (see 3.2). | Always active regardless of wallet or bank state. |
+| `firstTrade` | "Make first trade" | `true` | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. | Dependent on first deposit (and possibly wallet creation). |
+| `createWallet` | "Create first wallet" | `true`* | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View policies (if have access) → View wallet members. | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. |
+| `addBankAccount` | "Add bank account" | `false` | Bank account setup flow. | Substitution rule: substituted with `understandTasksApprovals` when `bankAccountAdded = true`. |
 | `explorePolicies` | "Explore policies" | `false` | Land on policy dashboard.<br><br>Callout order: What is policies → Default policies → Manage policies → Create custom policy. | Backfill eligible (role-restricted). |
 | `explorePortfolio` | "Explore portfolio" | `false` | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View policies → View or Invite Members. | Use Go Account as sample walkthrough whenever possible. |
-| `viewReports` | "View reports" | `false` | — | Land on report page. |
-| `viewTrades` | "View trades" | `false` | — | Land on trade page. |
-| `viewMembersRoles` | "View members & roles" | `false` | — | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. |
-| `viewEnterprisesWallets` | "View enterprises & wallets" | `false` | — | TBD |
-| `understandTasksApprovals` | "Understand tasks & approvals" | `false` | Backfill eligible (role-restricted). | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. |
-| `completeKYB` | "Complete KYB" | `false` | Organic business entities only. Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYB flow. |
-| `completeKYC` | "Complete KYC" | `false` | Organic users only (business entities and individuals). Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). | KYC flow. |
-| `completeVideoID` | "Complete Video ID" | `true` | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else. | Start video ID scheduling flow. |
-| `unlockPolicy` | "Learn about unlocking policies" | `false` | — | Land on policy page.<br><br>Callout order: Click here to unlock. |
-| `viewActivityLog` | "View activity log" | `false` | — | Land on activity log page. |
+| `viewReports` | "View reports" | `false` | Land on report page. | — |
+| `viewTrades` | "View trades" | `false` | Land on trade page. | — |
+| `viewMembersRoles` | "View members & roles" | `false` | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. | — |
+| `viewEnterprisesWallets` | "View enterprises & wallets" | `false` | TBD | — |
+| `understandTasksApprovals` | "Understand tasks & approvals" | `false` | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. | Backfill eligible (role-restricted). |
+| `unlockPolicy` | "Learn about unlocking policies" | `false` | Land on policy page.<br><br>Callout order: Click here to unlock. | — |
+| `viewActivityLog` | "View activity log" | `false` | Land on activity log page. | — |
+| `completeVideoID` | "Complete Video ID" | `true` | Start video ID scheduling flow. | Always a business goal — completing video verification is the primary purpose of the `video_id_user` role and a prerequisite for everything else. |
+| `completeKYB` | "Complete KYB" | `false` | KYB flow. | Organic business entities only. Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). |
+| `completeKYC` | "Complete KYC" | `false` | KYC flow. | Organic users only (business entities and individuals). Not included in any role pool — only appears in the super user fixed action sets for organic onboarding (see section 8). |
 
 > \* `createWallet` is `false` by default; overridden to `true` at runtime in Step 3 when `walletExists = false`.
 
