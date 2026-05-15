@@ -339,7 +339,7 @@ export type CalloutType = 'info' | 'workflow';
 
 export interface CalloutConfig {
   id: string;
-  anchor: 'deposit' | 'avatar' | 'walletName';
+  anchor: 'deposit' | 'avatar' | 'walletName' | 'icon';
   caretDir: 'left' | 'up-right' | 'up-left';
   title: string;
   body: string;
@@ -372,6 +372,13 @@ export const CALLOUT_CONFIGS: Record<string, CalloutConfig> = {
     type: 'workflow',
     primaryCta: 'Configure Policies',
     secondaryCta: 'Learn More',
+  },
+  ga_whatsGoAccount: {
+    id: 'ga_whatsGoAccount', anchor: 'icon', caretDir: 'up-left',
+    title: "What's Go Account?",
+    body: "Go Account is BitGo's off-exchange settlement layer — fund it to start trading across counterparties without moving assets off custody.",
+    type: 'info',
+    primaryCta: 'Got it',
   },
   ga_invite: {
     id: 'ga_invite', anchor: 'avatar', caretDir: 'up-right',

@@ -81,6 +81,10 @@ export default function App() {
     // Explore tasks: mark done immediately + show contextual snackbar
     if (meta.type === 'explore') {
       markDone(task);
+      if (task === 'explorePortfolio') {
+        setGoAccountOpen(true);
+        return;
+      }
       const msgs: Partial<Record<TaskId, string>> = {
         staking:            'Staking earns yield on ETH, SOL, and more — available in Wallets.',
         gsReporting:          'Audit logs and reports are available under Security → Activity Log.',
@@ -88,7 +92,6 @@ export default function App() {
         gsTrading:            'Use the Go Account panel on the right to set up your trading workflow.',
         goAccountStaking:   'Go Account staking earns yield on idle assets — available in the Go Account panel.',
         viewMembersRoles:   'Org members are managed under Security → Roles.',
-        explorePortfolio:   'Your portfolio overview is in the main dashboard.',
         gsUnderstandTasks:    'Pending approvals and transaction tasks are managed from your wallet.',
         gsUnderstandPolicies: 'Spending policies are configured per wallet under Security → Policies.',
         gsUnderstandStaking:  'Staking earns yield on ETH, SOL, and more — available in Wallets.',
