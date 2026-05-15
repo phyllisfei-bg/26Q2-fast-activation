@@ -199,8 +199,8 @@ type Task = {
 | `firstTrade` | "Make first trade" | `true` | Dependent on first deposit (and possibly wallet creation). | Highlights the Trade panel on the dashboard.<br><br>If unfunded, an inline nudge prompts deposit first. User selects asset, payment method, enters amount → Review Order. |
 | `createWallet` | "Create first wallet" | `true`* | Treated as a business goal (`isBusinessGoal = true`) when `walletExists = false`; standard priority otherwise. | Start wallet creation flow; land on wallet page upon creation.<br><br>Callout flow: Fund your wallet → View wallet members → View policies (if have access). |
 | `addBankAccount` | "Add bank account" | `false` | Substitution rule: substituted with `understandTasksApprovals` when `bankAccountAdded = true`. | Bank account setup flow. |
-| `explorePolicies` | "Explore policies" | `false` | Backfill eligible (role-restricted). | Land on policy dashboard.<br><br>Callout order: Default policies → Manage policies → Create custom policy. |
-| `explorePortfolio` | "Explore portfolio" | `false` | Use Go Account as sample walkthrough whenever possible. | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View Members → View Policies. |
+| `explorePolicies` | "Explore policies" | `false` | Land on policy dashboard.<br><br>Callout order: What is policies → Default policies → Manage policies → Create custom policy. | Backfill eligible (role-restricted). |
+| `explorePortfolio` | "Explore portfolio" | `false` | Land on portfolio page.<br><br>Callout order: "What's Go Account" → View policies → View or Invite Members. | Use Go Account as sample walkthrough whenever possible. |
 | `viewReports` | "View reports" | `false` | — | Land on report page. |
 | `viewTrades` | "View trades" | `false` | — | Land on trade page. |
 | `viewMembersRoles` | "View members & roles" | `false` | — | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. |

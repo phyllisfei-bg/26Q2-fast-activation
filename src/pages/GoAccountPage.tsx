@@ -28,10 +28,11 @@ export const GoAccountPage: React.FC<Props> = ({
   const [calloutIdx, setCalloutIdx] = useState<number>(-1);
   const [positions, setPositions]   = useState<Record<string, CalloutPos>>({});
 
-  const avatarRef     = useRef<HTMLDivElement>(null);
-  const titleRef      = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+  const titleRef  = useRef<HTMLDivElement>(null);
+  const iconRef   = useRef<HTMLDivElement>(null);
 
-  const sequence = ['ga_invite', 'ga_policies'];
+  const sequence = ['ga_whatsGoAccount', 'ga_policies', 'ga_invite'];
   const activeCalloutId = calloutIdx >= 0 && calloutIdx < sequence.length
     ? sequence[calloutIdx] : null;
   const activeCallout = activeCalloutId ? CALLOUT_CONFIGS[activeCalloutId] : null;
@@ -49,6 +50,7 @@ export const GoAccountPage: React.FC<Props> = ({
       avatar:     avatarRef,
       walletName: titleRef,
       deposit:    titleRef,
+      icon:       iconRef,
     };
     const ref = refs[activeCallout.anchor];
     if (!ref?.current) return;
@@ -71,8 +73,8 @@ export const GoAccountPage: React.FC<Props> = ({
   const handlePrimary = () => {
     if (!activeCallout) return;
     if (activeCallout.type === 'workflow') {
-      if (activeCallout.id === 'invite')   onCalloutInvite?.();
-      if (activeCallout.id === 'policies') onCalloutPolicies?.();
+      if (activeCallout.id === 'invite'   || activeCallout.id === 'ga_invite')   onCalloutInvite?.();
+      if (activeCallout.id === 'policies' || activeCallout.id === 'ga_policies') onCalloutPolicies?.();
     }
     advance();
   };
@@ -103,7 +105,7 @@ export const GoAccountPage: React.FC<Props> = ({
           {/* Header */}
           <div className="wallet-detail-header">
             <div className="wallet-detail-title-group">
-              <div className="wallet-detail-icon-wrap">
+              <div className="wallet-detail-icon-wrap" ref={iconRef}>
                 <div className="wallet-detail-icon-bg">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2B4FD4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
