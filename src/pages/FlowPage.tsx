@@ -17,6 +17,7 @@ interface Node {
 interface FlowStep {
   label: string;
   note?: string;
+  isNew?: boolean;
 }
 
 const CARD_W = 280;
@@ -38,7 +39,7 @@ const FLOW_STEPS: Record<FlowKey, { title: string; steps: FlowStep[] }> = {
       { label: 'Upload business docs' },
       { label: 'Answer asset questionnaire' },
       { label: 'Add authorized signer' },
-      { label: 'Add people of interest', note: 'Platform Admin is added here' },
+      { label: 'Add people of interest', note: 'Platform Admin is added here', isNew: true },
       { label: 'Sign agreements' },
       { label: 'Review & submit' },
     ],
@@ -47,11 +48,11 @@ const FLOW_STEPS: Record<FlowKey, { title: string; steps: FlowStep[] }> = {
     title: 'KYC — User Verification',
     steps: [
       { label: 'Sign up via link in email', note: 'Account creation' },
-      { label: 'Answer "goal to achieve"', note: 'With bundled feature preview' },
+      { label: 'Answer "goal to achieve"', note: 'With bundled feature preview', isNew: true },
       { label: 'Fill in personal info' },
       { label: 'Upload ID' },
       { label: 'Review info' },
-      { label: 'Invite members', note: 'If permission allows, e.g. Platform Admin or Org Admin' },
+      { label: 'Invite members', note: 'If permission allows, e.g. Platform Admin or Org Admin', isNew: true },
     ],
   },
   dashboard: {
@@ -319,8 +320,8 @@ export const FlowPage: React.FC = () => {
             <React.Fragment key={i}>
               <div style={{
                 flex: 1,
-                background: '#F8F9FF',
-                border: '1px solid #E0E5FB',
+                background: step.isNew ? '#EEF1FD' : '#F8F9FF',
+                border: step.isNew ? '1.5px solid #3D65F0' : '1px solid #E0E5FB',
                 borderRadius: 10,
                 padding: '14px 16px',
                 display: 'flex',
