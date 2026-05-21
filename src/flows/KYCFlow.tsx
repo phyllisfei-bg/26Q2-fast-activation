@@ -53,7 +53,7 @@ const GOAL_DATA: Record<string, { desc: string; features: string[]; tags: string
 };
 
 /* ── Types ── */
-type KYCScreen = 1 | 3 | '3b' | 6 | 7 | 9 | 5;
+export type KYCScreen = 1 | 3 | '3b' | 6 | 7 | 9 | 5;
 
 const ROLES = [
   'Organization Admin', 'Enterprise Admin', 'Wallet Admin', 'Wallet Spender',
@@ -172,9 +172,9 @@ function InviteRowItem({ row, onEmailChange, onToggleRole, onToggleOpen, onRemov
 }
 
 /* ── KYCFlow ── */
-export function KYCFlow() {
+export function KYCFlow({ initialScreen }: { initialScreen?: KYCScreen } = {}) {
   const { isLight, toggle } = useTheme();
-  const [screen, setScreen] = useState<KYCScreen>(1);
+  const [screen, setScreen] = useState<KYCScreen>(initialScreen ?? 1);
 
   /* Toast */
   const [toastMsg, setToastMsg] = useState('');

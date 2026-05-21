@@ -14,6 +14,7 @@ import { DepositModal }       from './flows/DepositModal';
 import { PolicyModal }        from './flows/PolicyModal';
 import { KYBFlow }            from './flows/KYBFlow';
 import { KYCFlow }            from './flows/KYCFlow';
+import type { KYCScreen }     from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
 import type { TaskId, UserRole, WalletInfo } from './types';
@@ -26,11 +27,19 @@ type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 function getTopPage(): TopPage {
   const h = window.location.hash;
   if (h === '#kyb') return 'kyb';
-  if (h === '#kyc') return 'kyc';
+  if (h.startsWith('#kyc')) return 'kyc';
   if (h === '#destinations') return 'destinations';
   if (h === '#flow') return 'flow';
   if (h === '#trade') return 'trade';
   return 'dashboard';
+}
+
+function getInitialKYCScreen(): KYCScreen | undefined {
+  const m = window.location.hash.match(/^#kyc-(\d+)$/);
+  if (!m) return undefined;
+  const n = Number(m[1]) as KYCScreen;
+  const valid: KYCScreen[] = [1, 3, 6, 7, 9, 5];
+  return valid.includes(n) ? n : undefined;
 }
 
 export default function App() {
@@ -181,7 +190,7 @@ export default function App() {
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
-  if (topPage === 'kyc') return <KYCFlow />;
+  if (topPage === 'kyc') return <KYCFlow initialScreen={getInitialKYCScreen()} />;
   if (topPage === 'trade') return (
     <div className="app">
       <Sidebar activeItem="trade" onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }} />
