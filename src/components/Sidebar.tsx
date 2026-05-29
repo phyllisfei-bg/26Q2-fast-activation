@@ -8,6 +8,7 @@ interface SidebarProps {
   activeSecurity?: SecuritySubPage;
   onNavigate?: (item: 'home' | 'trade') => void;
   onNavigateSecurity?: (sub: SecuritySubPage) => void;
+  onSearchOpen?: () => void;
 }
 
 const NavItem: React.FC<{
@@ -80,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeSecurity,
   onNavigate,
   onNavigateSecurity,
+  onSearchOpen,
 }) => {
   const [securityOpen, setSecurityOpen] = useState(false);
   const [submenuPos, setSubmenuPos] = useState({ top: 0, left: 0 });
@@ -124,18 +126,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      <div className="sidebar-search">
-        <svg className="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <span className="sidebar-search-text">Search</span>
-        <span className="sidebar-search-kbd">
-          <span className="kbd">⌘</span>
-          <span className="kbd">K</span>
-        </span>
-      </div>
-
       <nav className="sidebar-nav">
+        <div className="nav-item" onClick={() => onSearchOpen?.()}>
+          <span className="nav-item-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <span className="nav-item-label">Search</span>
+          <span className="sidebar-search-kbd">
+            <span className="kbd">⌘</span>
+            <span className="kbd">K</span>
+          </span>
+        </div>
+        <div className="sidebar-nav-divider" />
         <NavItem
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>}
           label="Home" active={activeItem === 'home'} onClick={() => { setSecurityOpen(false); onNavigate?.('home'); }}

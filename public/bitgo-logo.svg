@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180" fill="none">
+  <path d="M80 0L0 30v60c0 48 34.4 92.8 80 105 45.6-12.2 80-57 80-105V30L80 0Z" fill="#1652F0"/>
+  <g fill="#FFFFFF">
+    <!-- top ticks -->
+    <rect x="66" y="36" width="9" height="16" rx="1.5"/>
+    <rect x="85" y="36" width="9" height="16" rx="1.5"/>
+    <!-- bottom ticks -->
+    <rect x="66" y="118" width="9" height="16" rx="1.5"/>
+    <rect x="85" y="118" width="9" height="16" rx="1.5"/>
+    <!-- B body -->
+    <path d="M52 46h36c12 0 21 9 21 20.5 0 6.6-3 12.3-7.8 15.8C108.6 85.4 113 92 113 100c0 12-9.4 21.5-22 21.5H52V46zm15 13v16h19c4.7 0 8-3.4 8-8s-3.3-8-8-8H67zm0 28v18h22c5.2 0 9-3.9 9-9s-3.8-9-9-9H67z"/>
+  </g>
+</svg>

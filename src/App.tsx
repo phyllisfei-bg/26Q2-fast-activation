@@ -14,6 +14,8 @@ import { DepositModal }       from './flows/DepositModal';
 import { PolicyModal }        from './flows/PolicyModal';
 import { KYBFlow }            from './flows/KYBFlow';
 import { KYCFlow }            from './flows/KYCFlow';
+import { AIChatPanel }        from './components/AIChatPanel';
+import { SearchPopover }      from './components/SearchPopover';
 import type { KYCScreen }     from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
@@ -80,6 +82,28 @@ export default function App() {
   const [depositOpen,       setDepositOpen]       = React.useState(false);
   const [depositTab,        setDepositTab]        = React.useState<'cash' | 'crypto'>('cash');
   const [policyOpen,        setPolicyOpen]        = React.useState(false);
+  const [chatOpen,          setChatOpen]          = React.useState(false);
+  const [searchOpen,        setSearchOpen]        = React.useState(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
+
+  // From the search modal: open the chat, optionally pre-sending a prompt.
+  const openChatWithPrompt = (prompt?: string) => {
+    setSearchOpen(false);
+    setChatInitialPrompt(prompt ?? null);
+    setChatOpen(true);
+  };
+
+  // ⌘K / Ctrl+K opens the search command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const snackRef = useRef<SnackbarHandle>(null);
 
@@ -193,10 +217,11 @@ export default function App() {
   if (topPage === 'kyc') return <KYCFlow initialScreen={getInitialKYCScreen()} />;
   if (topPage === 'trade') return (
     <div className="app">
-      <Sidebar activeItem="trade" onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }} />
+      <Sidebar activeItem="trade" onSearchOpen={() => setSearchOpen(true)} onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }} />
       <div className="workspace" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 14 }}>
         Advanced Trading — coming soon
       </div>
+      <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
       <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
@@ -205,12 +230,14 @@ export default function App() {
       <Sidebar
         activeItem="security"
         activeSecurity="destinations"
+        onSearchOpen={() => setSearchOpen(true)}
         onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
         onNavigateSecurity={(sub) => { if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
       </div>
+      <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
       <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
@@ -221,6 +248,7 @@ export default function App() {
         <Sidebar
           activeItem={securityPage ? 'security' : 'home'}
           activeSecurity={securityPage ?? undefined}
+          onSearchOpen={() => setSearchOpen(true)}
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); if (item === 'trade') navigateTo('trade'); }}
           onNavigateSecurity={(sub) => {
             if (sub === 'destinations') { navigateTo('destinations'); }
@@ -247,6 +275,7 @@ export default function App() {
               goAccountFunded={goAccountFunded}
               onOpenDeposit={(tab = 'cash') => { setDepositTab(tab); setDepositOpen(true); }}
               onTradeDone={() => { markDone('goAccount'); markDone('firstTrade'); }}
+              onChatOpen={() => setChatOpen(true)}
             />
           )}
         </div>
@@ -294,6 +323,14 @@ export default function App() {
         onCalloutInvite={handleCalloutInvite}
         onCalloutPolicies={handleCalloutPolicies}
       />
+
+      <AIChatPanel
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        initialPrompt={chatInitialPrompt}
+        onInitialPromptConsumed={() => setChatInitialPrompt(null)}
+      />
+      <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 
       <Snackbar ref={snackRef} onBackToDashboard={handleBackToDashboard} />
       <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />

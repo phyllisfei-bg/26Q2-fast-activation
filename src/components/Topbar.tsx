@@ -4,9 +4,10 @@ interface TopbarProps {
   isLight: boolean;
   onThemeToggle: () => void;
   onWalkthroughOpen?: (key: string) => void;
+  onChatOpen?: () => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ isLight, onThemeToggle }) => (
+export const Topbar: React.FC<TopbarProps> = ({ isLight, onThemeToggle, onChatOpen }) => (
   <header className="topbar">
     <div className="topbar-enterprise">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -62,6 +63,20 @@ export const Topbar: React.FC<TopbarProps> = ({ isLight, onThemeToggle }) => (
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
       )}
+    </button>
+
+    <button className="topbar-icon-btn ai-chat-trigger-btn" title="AI Assistant" onClick={onChatOpen}>
+      {/* Placeholder icon — to be replaced */}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="4" />
+      </svg>
+    </button>
+
+    <button className="topbar-profile-btn" title="Profile">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
     </button>
   </header>
 );
