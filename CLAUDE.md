@@ -78,6 +78,11 @@ The sample below reflects the **sales-led super user (Platform Admin)** scenario
 - Form fields validate inline where possible; submission errors appear inline, not as page-level alerts
 - Verification steps that require async processing show optimistic UI first
 
+### AI Assistant (chat + search)
+- A chat panel (topbar chat icon) and a search command palette (Search nav item / ⌘K) overlay any page — rendered globally in `App.tsx`
+- Chat responses stream in (thought process → typed text → skeleton-loaded tables/charts/cards); the search palette has an "AI Mode" that hands prompts off to the chat
+- See [`AI-chat-spec.md`](./AI-chat-spec.md) for the full behavior, layout, and response-model spec
+
 ### Routing
 - Hash-based routing keeps the app self-contained without a server; all routes are deep-linkable and bookmarkable
 - Navigating away from a flow resets its local state; no stale data persists across visits
@@ -112,8 +117,13 @@ The sample below reflects the **sales-led super user (Platform Admin)** scenario
 | `src/flows/DepositModal.tsx` | Deposit flow (cash + crypto tabs) |
 | `src/flows/PolicyModal.tsx` | Policy builder modal |
 | `src/flows/WalkthroughStepper.tsx` | In-context walkthrough stepper |
-| `src/components/Sidebar.tsx` | Left nav with security submenu |
-| `src/components/Topbar.tsx` | Top bar with theme toggle |
+| `src/components/Sidebar.tsx` | Left nav with security submenu + Search command palette trigger |
+| `src/components/Topbar.tsx` | Top bar with theme toggle, AI chat trigger, and profile icon |
+| `src/components/AIChatPanel.tsx` | AI chat panel (overlay) — idle, thinking, conversation states |
+| `src/components/AIResponse.tsx` | Rich AI response rendering (thought process, blocks, streaming/skeleton) |
+| `src/components/aiChatResponses.ts` | AI response data model, sample variants, `pickResponse()`, shared `SAMPLE_PROMPTS` |
+| `src/components/SearchPopover.tsx` | Search command palette + AI Mode |
+| `AI-chat-spec.md` | AI chat & search — canonical spec for the assistant surface |
 | `src/components/GetStarted.tsx` | Onboarding action list |
 | `src/components/ForYou.tsx` | Horizontal-scroll recommendation cards |
 | `src/components/Balances.tsx` | Balance summary |

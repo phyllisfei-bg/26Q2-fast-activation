@@ -56,7 +56,7 @@
 
   /* ── Text ── */
   --color-text:             var(--white);
-  --color-text-secondary:   var(--white-a700);
+  --color-text-secondary:   #AEB6D2;
   --color-text-muted:       var(--white-a400);
   --color-text-placeholder: var(--white-a300);
 
@@ -106,7 +106,7 @@ body.light-mode {
   --color-surface-raised:   #EEF0FA;
   --color-surface-overlay:  #FFFFFF;
   --color-text:             #0D0E1C;
-  --color-text-secondary:   rgba(13,14,28,.65);
+  --color-text-secondary:   #63667B;
   --color-text-muted:       rgba(13,14,28,.42);
   --color-text-placeholder: rgba(13,14,28,.28);
   --color-success:          #16A34A;

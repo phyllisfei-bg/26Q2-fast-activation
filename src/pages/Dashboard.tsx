@@ -20,6 +20,7 @@ interface DashboardProps {
   goAccountFunded?:   boolean;
   onOpenDeposit?:     (tab?: 'cash' | 'crypto') => void;
   onTradeDone?:       () => void;
+  onChatOpen?:        () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -31,6 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   goAccountFunded = false,
   onOpenDeposit,
   onTradeDone,
+  onChatOpen,
 }) => {
   const [gsDismissed, setGsDismissed] = useState(false);
 
@@ -45,7 +47,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <>
-      <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
+      <Topbar isLight={isLight} onThemeToggle={onThemeToggle} onChatOpen={onChatOpen} />
 
       <div className="content-area">
         {!gsDismissed && (

@@ -36,6 +36,7 @@ export const RoleSwitcher: React.FC<Props> = ({
   roles, onChange, enterpriseState, onEnterpriseStateChange,
 }) => {
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false); // reset on refresh — not persisted
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -138,6 +139,8 @@ export const RoleSwitcher: React.FC<Props> = ({
     ? primary.label
     : `${primary.label} +${roles.length - 1}`;
 
+  if (dismissed) return null;
+
   return (
     <div className="role-switcher" ref={containerRef} style={posStyle} onMouseDown={handleDragStart}>
       <div className="role-switcher-pill">
@@ -167,6 +170,16 @@ export const RoleSwitcher: React.FC<Props> = ({
             style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
           >
             <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <button
+          className="role-switcher-dismiss"
+          title="Hide (returns on refresh)"
+          onClick={() => { if (!isDragging.current) { setOpen(false); setDismissed(true); } }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
