@@ -96,9 +96,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const [input, setInput]             = useState('');
   const [headlineIdx, setHeadlineIdx] = useState(0);
   const [fading, setFading]           = useState(false);
+  const [multiline, setMultiline]     = useState(false); // input wrapped past one line
   const [pending, setPending]         = useState<AIResponseData | null>(null); // response being "thought about"
   const turnRef                       = useRef(0);
   const textareaRef                   = useRef<HTMLTextAreaElement>(null);
+  const measureRef                    = useRef<HTMLDivElement>(null);   // hidden mirror for wrap detection
+  const compactWidthRef               = useRef(0);                      // textarea content width while compact
   const bodyRef                       = useRef<HTMLDivElement>(null);
   const stickToBottom                 = useRef(true);
   const roRef                         = useRef<ResizeObserver | null>(null);
@@ -140,6 +143,29 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   useEffect(() => {
     if (!open) setExpanded(false);
   }, [open]);
+
+  // Auto-grow the input; decide compact/expanded from a hidden mirror measured at a
+  // FIXED compact width (so the layout switch can't change the wrap point and oscillate).
+  // Hysteresis: once expanded, stay expanded until the content is fully cleared.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    // grow the visible textarea to fit its content
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+
+    if (!input) { setMultiline(false); return; }   // empty → back to compact
+    if (multiline) return;                          // already expanded → stay until cleared
+
+    // compact + has content: switch to expanded only if the text wraps past one line
+    compactWidthRef.current = el.clientWidth;
+    const m = measureRef.current;
+    if (m && compactWidthRef.current) {
+      m.style.width = `${compactWidthRef.current}px`;
+      m.textContent = input;
+      if (m.scrollHeight > 40) setMultiline(true);   // one mirror line ≈ 32px
+    }
+  }, [input, multiline]);
 
   // Generate a response for `text`, replacing everything from `baseMessages` onward.
   const generate = (text: string, baseMessages: Message[]) => {
@@ -306,38 +332,36 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
 
         {/* ── Input ── */}
         <div className="ai-chat-input-wrap">
-          <div className="ai-chat-input-box">
-          <textarea
-            ref={textareaRef}
-            className="ai-chat-textarea"
-            placeholder="Placeholder"
-            value={input}
-            rows={1}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <div className="ai-chat-toolbar">
-            <div className="ai-chat-toolbar-left">
-              <button className="ai-chat-tool-btn" title="Attach">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5"  y1="12" x2="19" y2="12"/>
-                </svg>
-              </button>
-              <button className="ai-chat-tool-btn" title="Options">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="4" y1="21" x2="4" y2="14"/>
-                  <line x1="4" y1="10" x2="4" y2="3"/>
-                  <line x1="12" y1="21" x2="12" y2="12"/>
-                  <line x1="12" y1="8"  x2="12" y2="3"/>
-                  <line x1="20" y1="21" x2="20" y2="16"/>
-                  <line x1="20" y1="12" x2="20" y2="3"/>
-                  <line x1="1"  y1="14" x2="7"  y2="14"/>
-                  <line x1="9"  y1="8"  x2="15" y2="8"/>
-                  <line x1="17" y1="16" x2="23" y2="16"/>
-                </svg>
-              </button>
-            </div>
+          <div ref={measureRef} className="ai-chat-measure" aria-hidden="true" />
+          <div className={`ai-chat-input-box${multiline ? ' multiline' : ''}`}>
+            <textarea
+              ref={textareaRef}
+              className="ai-chat-textarea"
+              placeholder="Placeholder"
+              value={input}
+              rows={1}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="ai-chat-tool-btn ai-chat-ib-plus" title="Attach">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5"  y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <button className="ai-chat-tool-btn ai-chat-ib-sliders" title="Options">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="4" y1="21" x2="4" y2="14"/>
+                <line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/>
+                <line x1="12" y1="8"  x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/>
+                <line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1"  y1="14" x2="7"  y2="14"/>
+                <line x1="9"  y1="8"  x2="15" y2="8"/>
+                <line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+            </button>
             <button className="ai-chat-mode-pill">
               Mode Name
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -364,7 +388,6 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
               </button>
             )}
           </div>
-          </div>{/* end ai-chat-input-box */}
           <p className="ai-chat-disclaimer">
             [AI Name] can make mistakes. Secured by BitGo.{' '}
             <a href="#" className="ai-chat-disclaimer-link" onClick={e => e.preventDefault()}>Learn More</a>
