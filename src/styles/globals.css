@@ -373,7 +373,7 @@ body.light-mode .trade-selector-row:hover { background: #ECECEC; }
 
 /* ─── Role Switcher (floating, bottom-right) ─────────────────────── */
 .role-switcher {
-  position: fixed; bottom: 24px; right: 24px; z-index: 9000;
+  position: fixed; top: 60px; left: 216px; z-index: 9000;
   display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
   cursor: grab;
 }
@@ -434,8 +434,8 @@ body.light-mode .trade-selector-row:hover { background: #ECECEC; }
 }
 .role-switcher-menu {
   position: absolute;
-  bottom: calc(100% + 6px);   /* open upward, above the pill — never off-screen at the bottom */
-  right: 0;
+  top: calc(100% + 6px);   /* open downward, below the pill (pill sits near the top nav) */
+  left: 0;
   background: var(--color-level1); border: 2px solid rgba(128,128,0,.35);
   border-radius: 14px; padding: 8px;
   box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
@@ -1980,27 +1980,40 @@ body.light-mode .ai-chat-bubble.user {
   background: var(--color-level1);
   display: flex; flex-direction: column; gap: 6px;
 }
-/* Inner box that groups textarea + toolbar */
+/* Inner box: a single flex row that reflows. Compact (default) keeps the
+   textarea, tools, and send button on one line; `.multiline` drops the
+   textarea onto its own row with the controls beneath (flex order + wrap). */
 .ai-chat-input-box {
   border: 1px solid var(--color-border-strong);
-  border-radius: 12px;
-  padding: 10px 12px 8px;
-  display: flex; flex-direction: column; gap: 6px;
+  border-radius: 14px;
+  padding: 6px 8px 6px 12px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
   background: transparent;
   transition: border-color .15s;
 }
 .ai-chat-input-box:focus-within { border-color: var(--brand-500); }
 .ai-chat-textarea {
-  width: 100%; min-height: 24px; max-height: 120px;
+  flex: 1 1 auto; min-width: 0; order: 3;
+  min-height: 24px; max-height: 140px;
   background: transparent; border: none; outline: none; resize: none;
   font-size: 16px; font-family: inherit; color: var(--color-text);
-  line-height: 1.5; padding: 0;
+  line-height: 1.5; padding: 4px 0;
 }
 .ai-chat-textarea::placeholder { color: var(--color-text-placeholder); }
-.ai-chat-toolbar {
-  display: flex; align-items: center; gap: 8px;
+/* Hidden mirror — measures text wrapping at a fixed compact width (no oscillation) */
+.ai-chat-measure {
+  position: absolute; top: -9999px; left: 0; visibility: hidden; pointer-events: none;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
+  font-size: 16px; line-height: 1.5; font-family: inherit;
+  padding: 4px 0; box-sizing: content-box;
 }
-.ai-chat-toolbar-left { display: flex; align-items: center; gap: 2px; flex: 1; }
+.ai-chat-input-box .ai-chat-ib-plus    { order: 1; }
+.ai-chat-input-box .ai-chat-ib-sliders { order: 2; }
+.ai-chat-input-box .ai-chat-mode-pill  { order: 4; display: none; }   /* hidden in compact */
+.ai-chat-input-box .ai-chat-send-btn   { order: 5; }
+/* Multiline: textarea spans its own row; controls wrap beneath it */
+.ai-chat-input-box.multiline .ai-chat-textarea { flex: 1 1 100%; order: 0; }
+.ai-chat-input-box.multiline .ai-chat-mode-pill { display: inline-flex; margin-left: auto; }
 .ai-chat-tool-btn {
   width: 28px; height: 28px; border-radius: 6px; border: none;
   background: transparent; color: var(--color-text-muted); cursor: pointer;
