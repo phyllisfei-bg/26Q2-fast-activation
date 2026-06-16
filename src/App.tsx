@@ -8,6 +8,10 @@ import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { GoAccountPage }      from './pages/GoAccountPage';
 import { DestinationsPage }   from './pages/DestinationsPage';
+import { MembersRolesPage }   from './pages/MembersRolesPage';
+import { InviteMemberFlow }   from './flows/InviteMemberFlow';
+import type { InvitePayload } from './flows/InviteMemberFlow';
+import { useMembersRoles }    from './hooks/useMembersRoles';
 import { FlowPage }           from './pages/FlowPage';
 import { WalletCreationFlow } from './flows/WalletCreationFlow';
 import { DepositModal }       from './flows/DepositModal';
@@ -23,7 +27,7 @@ import type { TaskId, UserRole, WalletInfo } from './types';
 import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
-type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'flow' | 'trade';
+type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'roles' | 'flow' | 'trade';
 type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 
 function getTopPage(): TopPage {
@@ -31,6 +35,7 @@ function getTopPage(): TopPage {
   if (h === '#kyb') return 'kyb';
   if (h.startsWith('#kyc')) return 'kyc';
   if (h === '#destinations') return 'destinations';
+  if (h === '#roles') return 'roles';
   if (h === '#flow') return 'flow';
   if (h === '#trade') return 'trade';
   return 'dashboard';
@@ -85,6 +90,18 @@ export default function App() {
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
+
+  // Members & Roles — shared state across the page and the invite flow
+  const membersRoles = useMembersRoles();
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+  const handleSendInvites = (invites: InvitePayload[]) => {
+    invites.forEach(inv => {
+      const roleIds = inv.roleNames
+        .map(name => membersRoles.roles.find(r => r.name === name)?.id)
+        .filter(Boolean) as string[];
+      membersRoles.inviteMember({ email: inv.email, roleIds });
+    });
+  };
 
   // From the search modal: open the chat, optionally pre-sending a prompt.
   const openChatWithPrompt = (prompt?: string) => {
@@ -222,7 +239,6 @@ export default function App() {
         Advanced Trading — coming soon
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
-      <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
   if (topPage === 'destinations') return (
@@ -232,15 +248,46 @@ export default function App() {
         activeSecurity="destinations"
         onSearchOpen={() => setSearchOpen(true)}
         onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
-        onNavigateSecurity={(sub) => { if (sub !== 'destinations') { navigateTo('dashboard'); } }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { navigateTo('roles'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
-      <RoleSwitcher roles={roles} onChange={setRoles} enterpriseState={enterpriseState} onEnterpriseStateChange={setEnterpriseState} />
     </div>
   );
+  if (topPage === 'roles') {
+    if (inviteOpen) {
+      return (
+        <InviteMemberFlow
+          isLight={isLight}
+          onThemeToggle={toggle}
+          onSend={handleSendInvites}
+          onClose={() => setInviteOpen(false)}
+        />
+      );
+    }
+    return (
+      <div className="app">
+        <Sidebar
+          activeItem="security"
+          activeSecurity="roles"
+          onSearchOpen={() => setSearchOpen(true)}
+          onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
+          onNavigateSecurity={(sub) => { if (sub === 'destinations') { navigateTo('destinations'); } else if (sub !== 'roles') { navigateTo('dashboard'); } }}
+        />
+        <div className="workspace">
+          <MembersRolesPage
+            isLight={isLight}
+            onThemeToggle={toggle}
+            api={membersRoles}
+            onInviteMember={() => setInviteOpen(true)}
+          />
+        </div>
+        <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -252,6 +299,7 @@ export default function App() {
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); if (item === 'trade') navigateTo('trade'); }}
           onNavigateSecurity={(sub) => {
             if (sub === 'destinations') { navigateTo('destinations'); }
+            else if (sub === 'roles') { navigateTo('roles'); }
             else setSecurityPage(sub);
           }}
         />

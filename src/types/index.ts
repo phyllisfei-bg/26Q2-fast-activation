@@ -333,6 +333,154 @@ export const ROLE_GS_SUBTITLE: Record<UserRole, string> = {
   auditor:        'Get familiar with what you can review and report on.',
 };
 
+// ── Members & Roles (admin console) ───────────────────────────────────
+
+export type EntityStatus = 'active' | 'pending' | 'inactive' | 'invited';
+
+export type PermissionCategory =
+  | 'Administrative' | 'Enterprise' | 'Wallets' | 'Transactional'
+  | 'View' | 'Audit' | 'Trade' | 'Verification';
+
+export interface Permission {
+  id: string;
+  label: string;
+  description: string;
+  category: PermissionCategory;
+}
+
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  status: EntityStatus;
+  joinedAt: string;
+  userId: string;
+  roleIds: string[];                              // → Role.id
+  roleStatuses?: Record<string, EntityStatus>;    // per-role status override (default: 'active')
+  avatarColor?: string;                           // av-blue | av-teal | av-purple | av-amber
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  kind: 'Default' | 'Custom';
+  description: string;
+  status: EntityStatus;
+  categories: PermissionCategory[];               // pills shown in the table
+  permissionIds: string[];                        // → PERMISSION_CATALOG
+  enterpriseAccess: { enterprises: string; wallets: string };
+  memberCount: number | 'All';
+  memberRollup?: { active: number; pending: number; inactive: number };
+}
+
+export const PERMISSION_CATALOG: Permission[] = [
+  { id: 'wallet_view',     label: 'Wallet View',                description: 'View all balances and transactions',                category: 'View' },
+  { id: 'enterprise_view', label: 'Enterprise View',            description: 'View enterprises and their wallets',                category: 'View' },
+  { id: 'wallet_manage',   label: 'Wallet Management',          description: 'Create, configure, and manage wallets',             category: 'Wallets' },
+  { id: 'org_admin',       label: 'Organization Administration', description: 'Manage members, roles, and organization settings', category: 'Administrative' },
+  { id: 'enterprise_admin',label: 'Enterprise Administration',  description: 'Manage enterprise settings and bank accounts',       category: 'Enterprise' },
+  { id: 'transact',        label: 'Transactions',               description: 'Initiate and approve transactions',                 category: 'Transactional' },
+  { id: 'trade',           label: 'Trading',                    description: 'Buy and sell through the Go Account',                category: 'Trade' },
+  { id: 'audit',           label: 'Audit & Reporting',          description: 'Read-only reporting and audit log access',          category: 'Audit' },
+  { id: 'video_id',        label: 'Video ID Verification',      description: 'Approve actions via Video ID calls',                category: 'Verification' },
+];
+
+export interface WalletRef {
+  name: string;
+  id: string;
+  custody: string;        // e.g. "Self-Custody Hot"
+  asset: string;          // e.g. "BTC"
+  balance?: string;       // e.g. "$23,000.34"
+}
+
+export interface EnterpriseWallets {
+  enterprise: string;
+  wallets: WalletRef[];
+}
+
+function sampleWallets(n: number, withBalance = false): WalletRef[] {
+  return Array.from({ length: n }, (_, i) => ({
+    name: 'Wallet Name',
+    id: '66d9cb…3e956b',
+    custody: 'Self-Custody Hot',
+    asset: 'BTC',
+    balance: withBalance && i === 5 ? '$23,000.34' : undefined,
+  }));
+}
+
+export const ENTERPRISE_WALLETS: EnterpriseWallets[] = [
+  { enterprise: 'Acme Capital', wallets: sampleWallets(8, true) },
+  { enterprise: 'Northwind Markets', wallets: sampleWallets(6) },
+  { enterprise: 'Globex Treasury', wallets: sampleWallets(5) },
+];
+
+export const SAMPLE_ROLES: Role[] = [
+  { id: 'org_admin',       name: 'Organization Admin', kind: 'Default', status: 'active',
+    description: 'Manage users, roles, and access permissions',
+    categories: ['Administrative'], permissionIds: ['org_admin', 'enterprise_view', 'wallet_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 23 },
+  { id: 'ent_admin',       name: 'Enterprise Admin', kind: 'Default', status: 'active',
+    description: 'Manage enterprise-level settings and policies',
+    categories: ['Enterprise'], permissionIds: ['enterprise_admin', 'wallet_manage', 'enterprise_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 'All' },
+  { id: 'wallet_admin',    name: 'Wallet Admin', kind: 'Default', status: 'active',
+    description: 'Manage wallet-level settings and policies',
+    categories: ['Wallets'], permissionIds: ['wallet_manage', 'wallet_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: '14 wallets' }, memberCount: 23 },
+  { id: 'wallet_spender',  name: 'Wallet Spender', kind: 'Default', status: 'active',
+    description: 'Initiate withdrawals and transactions',
+    categories: ['Transactional'], permissionIds: ['transact', 'wallet_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 23 },
+  { id: 'wallet_viewer',   name: 'Wallet Viewer', kind: 'Default', status: 'active',
+    description: 'Read-only access to wallets',
+    categories: ['View'], permissionIds: ['wallet_view', 'enterprise_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 72,
+    memberRollup: { active: 67, pending: 1, inactive: 4 } },
+  { id: 'auditor',         name: 'Auditor', kind: 'Default', status: 'active',
+    description: 'Read-only access to activity logs',
+    categories: ['Audit'], permissionIds: ['audit', 'wallet_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 23 },
+  { id: 'trader',          name: 'Trader', kind: 'Default', status: 'active',
+    description: 'Initiate trades within Go Account',
+    categories: ['Trade'], permissionIds: ['trade', 'wallet_view'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 23 },
+  { id: 'video_id_user',   name: 'Video ID User', kind: 'Default', status: 'active',
+    description: 'Approve sensitive actions via Video ID calls',
+    categories: ['Verification'], permissionIds: ['video_id'],
+    enterpriseAccess: { enterprises: 'All enterprises', wallets: 'All wallets' }, memberCount: 2 },
+  { id: 'external_auditor', name: 'External Auditor', kind: 'Custom', status: 'pending',
+    description: 'Scoped external audit access across selected enterprises and wallets.',
+    categories: ['Administrative', 'Transactional', 'Audit', 'View'],
+    permissionIds: ['audit', 'transact', 'wallet_view', 'enterprise_view'],
+    enterpriseAccess: { enterprises: '3 enterprises', wallets: '14 wallets' }, memberCount: 23 },
+];
+
+const _memberNames = [
+  'Charles Leclerc', 'Joseph (You)', 'Lando Norris', 'Ami Schmitt', 'Oscar Piastri',
+  'Alexander Albon', 'Fernando Alonso', 'Max Verstappen',
+];
+const _avatarColors = ['av-blue', 'av-teal', 'av-purple', 'av-amber'];
+
+export const SAMPLE_MEMBERS: Member[] = _memberNames.map((name, i) => {
+  const handle = name.replace(/\s*\(.*\)/, '').toLowerCase().replace(/\s+/g, '');
+  const base: Member = {
+    id: `m_${i + 1}`,
+    name,
+    email: `${handle}@myorg.com`,
+    status: i === 2 ? 'pending' : 'active',
+    joinedAt: 'Mar 11, 2024, 11:34 AM',
+    userId: 'e2f422…e2f422',
+    roleIds: ['org_admin', 'ent_admin', 'wallet_admin', 'wallet_viewer'],
+    avatarColor: _avatarColors[i % _avatarColors.length],
+  };
+  // Charles Leclerc → match the Member Details reference exactly
+  if (i === 0) {
+    base.roleIds = ['org_admin', 'ent_admin', 'wallet_admin'];
+    base.roleStatuses = { ent_admin: 'pending' };
+  }
+  return base;
+});
+
 // ── Wallet callouts ───────────────────────────────────────────────────
 
 export type CalloutType = 'info' | 'workflow';
