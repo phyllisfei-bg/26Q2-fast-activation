@@ -2048,3 +2048,389 @@ body.light-mode .ai-chat-bubble.user {
   transition: color .13s;
 }
 .ai-chat-disclaimer-link:hover { color: var(--color-text-secondary); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Members & Roles (admin console)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Status badge: purple "invited" tone ── */
+.ai-resp-status.invited { color: #8B5CF6; border-color: rgba(139,92,246,.45); }
+
+/* ── Avatar ── */
+.mr-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: #fff; font-weight: 600; flex-shrink: 0;
+  letter-spacing: .01em;
+}
+.mr-avatar.av-blue   { background: #3D65F0; }
+.mr-avatar.av-teal   { background: #0D9488; }
+.mr-avatar.av-purple { background: #7C3AED; }
+.mr-avatar.av-amber  { background: #D97706; }
+
+/* ── Chip (role / permission pills) — outlined, 0.5px stroke ── */
+.mr-chip {
+  display: inline-flex; align-items: center; white-space: nowrap;
+  height: 24px; padding: 0 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 500; box-sizing: border-box;
+  background: transparent;
+  border: 0.5px solid #41485C; color: #FFFFFF;            /* dark mode */
+}
+body.light-mode .mr-chip { border-color: #D3D6D9; color: #242531; }
+
+/* ── Status badge — body3 (12px), 21px tall, outlined tones ── */
+.mr-badge {
+  display: inline-flex; align-items: center; white-space: nowrap;
+  height: 21px; padding: 0 9px; border-radius: 99px; box-sizing: border-box;
+  font-size: 12px; font-weight: 500; line-height: 1; border: 1px solid; background: transparent;
+}
+.mr-badge.success { color: var(--color-success); border-color: rgba(74,222,128,.45); }
+.mr-badge.warning { color: var(--color-gold);    border-color: rgba(245,158,11,.45); }
+.mr-badge.danger  { color: var(--color-danger);  border-color: rgba(248,113,113,.45); }
+.mr-badge.invited { color: #8B5CF6;              border-color: rgba(139,92,246,.45); }
+.mr-badge.neutral { color: #FFFFFF; border-color: #41485C; }                 /* dark mode */
+body.light-mode .mr-badge.neutral { color: #161720; border-color: #D3D6D9; } /* light mode */
+.mr-badge.brand { color: var(--brand-500); border-color: var(--brand-500); } /* outlined blue, no fill */
+
+/* ── Search field — the single search component used everywhere
+      (the original page search: pill, subtle surface, magnifier) ── */
+.search-field {
+  position: relative; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px;
+  padding: 5px 16px;                       /* hugs content; symmetric top/bottom */
+  background: var(--color-level1); border: 1px solid var(--color-border); border-radius: 999px;
+  transition: border-color .14s;
+}
+.search-field:focus-within { border-color: var(--brand-500); }
+/* icon sits centred on the first row (26px) so it never shifts when chips wrap */
+.search-field-icon { color: var(--color-text-muted); display: inline-flex; align-items: center; height: 26px; flex-shrink: 0; }
+.search-field-input {
+  flex: 1; min-width: 100px; height: 26px; background: transparent; border: none; outline: none;
+  font-size: 14px; color: var(--color-text); font-family: inherit;
+}
+.search-field-input::placeholder { color: var(--color-text-muted); }
+
+/* Invite trigger: single row; overflowing chips collapse into a "+N" chip */
+.kyc-role-ms-trigger.inv-trigger { align-items: center; gap: 8px; }
+.inv-trigger .kyc-role-ms-tags { flex: 1; min-width: 0; flex-wrap: nowrap; overflow: hidden; gap: 6px; }
+.inv-trigger .kyc-role-ms-placeholder { display: inline-flex; align-items: center; }
+.inv-trigger .kyc-role-ms-chevron { align-self: center; margin-left: 8px; flex-shrink: 0; }
+.inv-plus { flex-shrink: 0; }
+.inv-measure {
+  position: absolute; left: -9999px; top: 0; display: flex; gap: 6px;
+  white-space: nowrap; visibility: hidden; pointer-events: none;
+}
+
+/* ── Invite-member role dropdown: rich role rows + multiselect checkbox.
+      Same popover surface as the member-role modal dropdown (.mr-rm-dropdown). ── */
+.kyc-role-ms-dropdown.inv-role-dropdown {
+  max-height: 384px; padding: 12px;          /* ~6 roles */
+  background: var(--color-level1); border: 1px solid var(--color-border);
+  border-radius: 14px; box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+.inv-role-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 8px; cursor: pointer; transition: background .12s;
+}
+.inv-role-opt:hover { background: var(--color-level3); }
+.inv-role-cb {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 1.5px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, border-color .12s;
+}
+.inv-role-opt.checked .inv-role-cb { background: var(--color-primary); border-color: var(--color-primary); }
+.inv-role-cb svg { opacity: 0; transition: opacity .1s; }
+.inv-role-opt.checked .inv-role-cb svg { opacity: 1; }
+.inv-role-info { min-width: 0; }
+.inv-role-title { display: flex; align-items: center; gap: 8px; }
+.inv-role-name { font-size: 16px; font-weight: 600; color: var(--color-text); }   /* Body 1 */
+.inv-role-desc { font-size: 14px; color: var(--color-text-secondary); margin-top: 2px; }  /* Body 2 */
+
+/* ── Secondary tonal button (e.g. Create Role) — neutral fill, no stroke ── */
+.mr-btn-tonal { background: #242531; color: var(--color-text); }       /* dark mode */
+.mr-btn-tonal:hover { background: #2D2F48; }
+body.light-mode .mr-btn-tonal { background: #F4F4F4; color: var(--color-text); }   /* light mode */
+body.light-mode .mr-btn-tonal:hover { background: #ECECEC; }
+
+/* ── Invite Member flow — white surface ── */
+.kyc-root.mr-invite-root,
+.mr-invite-root .kyc-flow-intro,
+.mr-invite-root .kyc-flow-body { background: #fff; }
+
+/* ── Table column widths (chrome itself matches DestinationsPage via
+      Tailwind classes on the table/cells). Column 1 = checkbox. ── */
+.mr-check { width: 15px; height: 15px; accent-color: var(--brand-500); cursor: pointer; }
+
+.mr-members-cols th:nth-child(1), .mr-members-cols td:nth-child(1) { width: 48px; }
+.mr-members-cols th:nth-child(2), .mr-members-cols td:nth-child(2) { width: 24%; }
+.mr-members-cols th:nth-child(3), .mr-members-cols td:nth-child(3) { width: 24%; }
+.mr-members-cols th:nth-child(4), .mr-members-cols td:nth-child(4) { width: 26%; }
+.mr-members-cols th:nth-child(6), .mr-members-cols td:nth-child(6) { width: 56px; }
+
+.mr-roles-cols th:nth-child(1), .mr-roles-cols td:nth-child(1) { width: 48px; }
+.mr-roles-cols th:nth-child(2), .mr-roles-cols td:nth-child(2) { width: 20%; }
+.mr-roles-cols th:nth-child(3), .mr-roles-cols td:nth-child(3) { width: 22%; }
+.mr-roles-cols th:nth-child(4), .mr-roles-cols td:nth-child(4) { width: 20%; }
+.mr-roles-cols th:nth-child(5), .mr-roles-cols td:nth-child(5) { width: 90px; }
+.mr-roles-cols th:nth-child(7), .mr-roles-cols td:nth-child(7) { width: 56px; }
+
+/* ── Kebab + actions trigger ── */
+.mr-kebab-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: transparent; color: var(--color-text-secondary);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .13s, color .13s;
+}
+.mr-kebab-btn:hover { background: var(--color-level3); color: var(--color-text); }
+/* Labeled CTA — pill radius + 14px / 600, matching the page CTAs and Move Funds radius */
+.mr-actions-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--color-border-strong); background: var(--color-level2);
+  color: var(--color-text); font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .13s;
+}
+.mr-actions-btn:hover { background: var(--color-level3); }
+
+/* ── Dropdown menu ── */
+.mr-menu {
+  width: 232px; z-index: 600; padding: 6px;
+  background: var(--color-level1); border: 1px solid var(--color-border);
+  border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,.24);
+  animation: gsFadeIn .13s ease both;
+}
+.mr-menu-item {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border: none; background: transparent; cursor: pointer;
+  font-size: 13.5px; color: var(--color-text); border-radius: 8px;
+  text-align: left; transition: background .12s; font-family: inherit;
+}
+.mr-menu-item:hover { background: var(--color-level3); }
+.mr-menu-item-icon { display: inline-flex; color: var(--color-text-secondary); }
+.mr-menu-item.danger { color: var(--color-danger); }
+.mr-menu-item.danger .mr-menu-item-icon { color: var(--color-danger); }
+
+/* ── Drawer (wider than the deposit drawer) ── */
+.dep-drawer.mr-drawer { width: 540px; }
+/* Top row: "Member Details" / "Role Details" label + inline close — no divider */
+.mr-drawer-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 24px 0; flex-shrink: 0;
+}
+.mr-drawer-eyebrow { font-size: 24px; font-weight: 400; color: var(--color-text); }   /* H4 */
+/* Identity row: avatar/name/meta + Actions CTA inline — no divider */
+.mr-drawer-identity {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 14px 24px 16px; flex-shrink: 0;
+}
+.mr-copy-btn {
+  background: none; border: none; padding: 2px; cursor: pointer; display: inline-flex;
+  color: var(--color-text-muted); transition: color .13s;
+}
+.mr-copy-btn:hover { color: var(--color-text-secondary); }
+
+/* Tabs: divider inset to match the data-row divider (margin, not padding) */
+.mr-drawer-tabs {
+  display: flex; gap: 24px; margin: 0 24px;
+  border-bottom: 1px solid var(--color-border); flex-shrink: 0;
+}
+.mr-drawer-tab {
+  padding: 11px 0; font-size: 14px; font-weight: 400; cursor: pointer;   /* Body 2, regular */
+  color: var(--color-text-secondary); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color .13s, border-color .13s; white-space: nowrap;
+}
+.mr-drawer-tab:hover { color: var(--color-text); }
+.mr-drawer-tab.active { color: var(--brand-500); border-color: var(--brand-500); font-weight: 500; }  /* medium */
+
+/* ── Overview DATA rows: divided, top-aligned label+content, regular weight,
+      difference is colour only (label secondary / value primary). Chevron centred. ── */
+.mr-summary { display: flex; flex-direction: column; }
+.mr-summary-row {
+  display: flex; align-items: flex-start; gap: 20px;
+  padding: 12px 2px; border-bottom: 1px solid var(--color-border);
+}
+.mr-summary-row:last-child { border-bottom: none; }
+.mr-summary-label { width: 160px; flex-shrink: 0; font-size: 14px; font-weight: 400; color: var(--color-text-secondary); }
+.mr-summary-col2 { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mr-summary-value { min-width: 0; text-align: left; font-size: 14px; font-weight: 400; color: var(--color-text); }
+.mr-summary-chevron { flex-shrink: 0; display: inline-flex; color: var(--color-text-muted); }
+.mr-summary-clickable { cursor: pointer; transition: background .12s; }
+.mr-summary-clickable:hover { background: var(--color-level2); }
+
+/* ── Item lists (NOT data rows → no dividers) ── */
+.mr-list-heading {
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--color-text-secondary); margin-bottom: 8px;
+}
+.mr-role-list, .mr-member-list { display: flex; flex-direction: column; gap: 2px; }
+.mr-role-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 8px; border-radius: 8px; transition: background .13s;
+}
+.mr-role-item:hover, .mr-member-row:hover { background: var(--color-level2); }
+.mr-view-detail {
+  background: none; border: none; cursor: pointer; padding: 4px;
+  color: var(--color-text-muted); display: inline-flex; transition: color .13s;
+}
+.mr-view-detail:hover { color: var(--brand-500); }
+.mr-member-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 8px; border-radius: 8px; transition: background .13s;
+}
+
+/* ── Permissions tab (NOT data rows → no dividers) ── */
+.mr-perm-list { display: flex; flex-direction: column; gap: 18px; }
+.mr-perm-item { display: flex; align-items: flex-start; gap: 12px; }
+.mr-perm-check { flex-shrink: 0; margin-top: 1px; display: inline-flex; }
+
+/* ── Enterprises & Wallets tab ── */
+.mr-wallet-search {
+  display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 14px;
+  border: 1px solid var(--color-border); border-radius: 10px;
+  background: transparent; margin-bottom: 14px;
+}
+.mr-wallet-search input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13.5px; color: var(--color-text); font-family: inherit;
+}
+.mr-wallet-search input::placeholder { color: var(--color-text-muted); }
+.mr-ent-accordion { display: flex; flex-direction: column; gap: 8px; }
+.mr-ent-group { border: 1px solid var(--color-border); border-radius: 10px; overflow: hidden; }
+.mr-ent-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 14px; border: none; background: transparent; cursor: pointer;
+  font-size: 13.5px; color: var(--color-text); font-family: inherit;
+}
+.mr-ent-chevron { color: var(--color-text-muted); display: inline-flex; transition: transform .18s; }
+.mr-ent-chevron.open { transform: rotate(180deg); }
+.mr-ent-wallets { padding: 4px 0; }
+.mr-wallet-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px;
+}
+
+/* ── Ghost close icon in drawer header (no background) ── */
+.mr-drawer .dep-drawer-close { background: transparent; color: var(--color-text-muted); }
+.mr-drawer .dep-drawer-close:hover { background: transparent; color: var(--color-text); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Manage Roles Assigned — modal
+   ═══════════════════════════════════════════════════════════════ */
+.mr-rm-modal {
+  background: var(--color-level1); border: 1px solid var(--color-border);
+  border-radius: 18px; width: 660px; max-width: calc(100vw - 32px);
+  height: calc(100vh - 128px); max-height: calc(100vh - 64px);
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,.4);
+  animation: gsFadeIn .18s ease both;
+}
+.mr-rm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 26px 28px 0;
+}
+.mr-rm-title { font-size: 24px; font-weight: 400; color: var(--color-text); }
+.mr-rm-close {
+  width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+  color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: color .14s;
+}
+.mr-rm-close:hover { color: var(--color-text); }
+
+.mr-rm-meta { display: flex; gap: 80px; padding: 18px 28px 18px; }
+.mr-rm-meta-label {
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--color-text-secondary); margin-bottom: 6px;
+}
+.mr-rm-meta-value { font-size: 16px; color: var(--color-text); }
+.mr-rm-divider { height: 1px; background: var(--color-border); margin: 0 28px; }
+
+/* Search row */
+.mr-rm-search-row { display: flex; align-items: center; gap: 12px; padding: 22px 28px 0; }
+.mr-rm-search-row .search-field { flex: 1; }
+.mr-rm-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 12px;
+  background: var(--color-level3); border-radius: 8px; font-size: 13px; color: var(--color-text);
+}
+.mr-rm-chip button {
+  display: inline-flex; border: none; background: transparent; color: var(--color-text-muted);
+  cursor: pointer; padding: 2px; border-radius: 50%;
+}
+.mr-rm-chip button:hover { color: var(--color-text); }
+
+/* Assign — labeled button, same pill radius as the other CTAs (Move Funds / Invite Member) */
+.mr-rm-assign {
+  height: 36px; padding: 0 20px; border-radius: 999px; flex-shrink: 0;
+  border: 1px solid var(--color-border-strong); background: var(--color-level2);
+  color: var(--color-text-muted); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background .14s, color .14s;
+}
+.mr-rm-assign:not(:disabled) { background: var(--color-text); color: var(--color-level1); border-color: var(--color-text); }
+.mr-rm-assign:disabled { cursor: default; }
+
+/* Section heading */
+.mr-rm-section-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--color-text-secondary);
+}
+.mr-rm-section-head--list { padding: 22px 28px 6px; }
+.mr-rm-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px;
+  padding: 0 6px; border-radius: 99px; background: var(--color-level3);
+  font-size: 11px; font-weight: 600; color: var(--color-text-secondary);
+}
+
+/* Role rows (shared by list + dropdown) */
+.mr-rm-list { flex: 1; overflow-y: auto; padding: 0 22px 8px; }
+.mr-rm-role {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background .12s;
+}
+.mr-rm-role:hover { background: var(--color-level2); }
+.mr-rm-role-main { min-width: 0; }
+.mr-rm-role-title { display: flex; align-items: center; gap: 8px; }
+.mr-rm-role-name { font-size: 15px; font-weight: 600; color: var(--color-text); }
+.mr-rm-role-meta { font-size: 13.5px; color: var(--color-text-secondary); margin-top: 3px; }
+
+/* hover icon CTAs — space is always reserved so the text never shifts */
+.mr-rm-role-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .12s; }
+.mr-rm-role:hover .mr-rm-role-actions { opacity: 1; pointer-events: auto; }
+.mr-rm-icon-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent;
+  color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .12s, color .12s;
+}
+.mr-rm-icon-btn:hover { background: var(--color-level3); color: var(--color-text); }
+.mr-rm-icon-btn.always { display: flex; flex-shrink: 0; }
+.mr-rm-check { color: var(--color-text); display: inline-flex; flex-shrink: 0; }
+
+/* staging states */
+.mr-rm-role.removed { cursor: default; }
+.mr-rm-role.removed:hover { background: transparent; }
+.mr-rm-role.removed .mr-rm-role-name,
+.mr-rm-role.removed .mr-rm-role-meta { text-decoration: line-through; color: var(--color-text-muted); }
+/* Added rows: no persistent background — only the "Added" badge + hover like any row */
+
+/* Dropdown */
+.mr-rm-dropdown {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 10;
+  background: var(--color-level1); border: 1px solid var(--color-border); border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.4); padding: 12px; max-height: 360px; overflow-y: auto;
+}
+.mr-rm-dropdown .mr-rm-section-head { padding: 4px 12px 8px; }
+.mr-rm-role.selected { background: var(--color-level2); }
+.mr-rm-empty { padding: 14px 12px; font-size: 13.5px; color: var(--color-text-muted); }
+
+/* Footer */
+.mr-rm-footer {
+  display: flex; gap: 12px; padding: 18px 28px 24px;
+  border-top: 1px solid var(--color-border); margin-top: 8px;
+}
+.mr-rm-btn-cancel, .mr-rm-btn-save {
+  flex: 1; height: 44px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .14s, opacity .14s;
+}
+.mr-rm-btn-cancel { background: var(--color-level2); color: var(--color-text); border: 1px solid var(--color-border-strong); }
+.mr-rm-btn-cancel:hover { background: var(--color-level3); }
+.mr-rm-btn-save { background: var(--brand-500); color: #fff; border: none; }
+.mr-rm-btn-save:hover:not(:disabled) { background: var(--brand-700); }
+.mr-rm-btn-save:disabled { opacity: .45; cursor: default; }
