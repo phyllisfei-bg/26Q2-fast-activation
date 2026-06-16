@@ -461,6 +461,27 @@ const _memberNames = [
 ];
 const _avatarColors = ['av-blue', 'av-teal', 'av-purple', 'av-amber'];
 
+// Role assignments spread across members so every role has both assigned and available members.
+// org_admin: Leclerc, Joseph, Fernando (3)
+// ent_admin: Leclerc, Joseph, Ami, Max (4)
+// wallet_admin: Leclerc, Joseph, Norris, Fernando (4)
+// wallet_spender: Norris, Oscar, Max (3)
+// wallet_viewer: Joseph, Norris, Ami, Albon (4)
+// auditor: Ami, Albon (2)
+// trader: Oscar, Fernando (2)
+// video_id_user: Max (1)
+// external_auditor: Albon (1)
+const _memberRoles: string[][] = [
+  ['org_admin', 'ent_admin', 'wallet_admin'],                         // Charles Leclerc
+  ['org_admin', 'ent_admin', 'wallet_admin', 'wallet_viewer'],        // Joseph (You)
+  ['wallet_admin', 'wallet_viewer', 'wallet_spender'],                // Lando Norris
+  ['ent_admin', 'wallet_viewer', 'auditor'],                          // Ami Schmitt
+  ['wallet_spender', 'trader'],                                       // Oscar Piastri
+  ['wallet_viewer', 'auditor', 'external_auditor'],                   // Alexander Albon
+  ['org_admin', 'wallet_admin', 'trader'],                            // Fernando Alonso
+  ['ent_admin', 'wallet_spender', 'video_id_user'],                   // Max Verstappen
+];
+
 export const SAMPLE_MEMBERS: Member[] = _memberNames.map((name, i) => {
   const handle = name.replace(/\s*\(.*\)/, '').toLowerCase().replace(/\s+/g, '');
   const base: Member = {
@@ -470,14 +491,10 @@ export const SAMPLE_MEMBERS: Member[] = _memberNames.map((name, i) => {
     status: i === 2 ? 'pending' : 'active',
     joinedAt: 'Mar 11, 2024, 11:34 AM',
     userId: 'e2f422…e2f422',
-    roleIds: ['org_admin', 'ent_admin', 'wallet_admin', 'wallet_viewer'],
+    roleIds: _memberRoles[i],
     avatarColor: _avatarColors[i % _avatarColors.length],
   };
-  // Charles Leclerc → match the Member Details reference exactly
-  if (i === 0) {
-    base.roleIds = ['org_admin', 'ent_admin', 'wallet_admin'];
-    base.roleStatuses = { ent_admin: 'pending' };
-  }
+  if (i === 0) base.roleStatuses = { ent_admin: 'pending' };
   return base;
 });
 
