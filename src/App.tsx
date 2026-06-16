@@ -94,6 +94,9 @@ export default function App() {
   // Members & Roles — shared state across the page and the invite flow
   const membersRoles = useMembersRoles();
   const [inviteOpen, setInviteOpen] = React.useState(false);
+  // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
+  const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
+  const goToRoles = (from: TopPage) => { setRolesReturn(from); navigateTo('roles'); };
   const handleSendInvites = (invites: InvitePayload[]) => {
     invites.forEach(inv => {
       const roleIds = inv.roleNames
@@ -248,7 +251,7 @@ export default function App() {
         activeSecurity="destinations"
         onSearchOpen={() => setSearchOpen(true)}
         onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
-        onNavigateSecurity={(sub) => { if (sub === 'roles') { navigateTo('roles'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
@@ -270,11 +273,10 @@ export default function App() {
     return (
       <div className="app">
         <Sidebar
-          activeItem="security"
-          activeSecurity="roles"
+          variant="admin"
+          activeAdmin="members"
           onSearchOpen={() => setSearchOpen(true)}
-          onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
-          onNavigateSecurity={(sub) => { if (sub === 'destinations') { navigateTo('destinations'); } else if (sub !== 'roles') { navigateTo('dashboard'); } }}
+          onReturnToEnterprise={() => navigateTo(rolesReturn)}
         />
         <div className="workspace">
           <MembersRolesPage
@@ -299,7 +301,7 @@ export default function App() {
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); if (item === 'trade') navigateTo('trade'); }}
           onNavigateSecurity={(sub) => {
             if (sub === 'destinations') { navigateTo('destinations'); }
-            else if (sub === 'roles') { navigateTo('roles'); }
+            else if (sub === 'roles') { goToRoles('dashboard'); }
             else setSecurityPage(sub);
           }}
         />

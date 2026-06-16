@@ -9,6 +9,7 @@ import { RolesTable } from '../components/membersRoles/RolesTable';
 import { MemberDrawer } from '../components/membersRoles/MemberDrawer';
 import { RoleDrawer } from '../components/membersRoles/RoleDrawer';
 import { ManageRolesModal } from '../components/membersRoles/ManageRolesModal';
+import { ManageMembersModal } from '../components/membersRoles/ManageMembersModal';
 import { SearchField } from '../components/SearchField';
 
 type Tab = 'members' | 'roles';
@@ -26,6 +27,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [manageMember, setManageMember] = useState<Member | null>(null);
+  const [manageMembersRole, setManageMembersRole] = useState<Role | null>(null);
   const snackRef = useRef<SnackbarHandle>(null);
 
   const q = search.trim().toLowerCase();
@@ -42,7 +44,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--color-level1)]">
-      <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
+      <Topbar isLight={isLight} onThemeToggle={onThemeToggle} admin />
 
       <div className="flex-1 overflow-y-auto px-7 py-7">
         {/* Page header */}
@@ -112,7 +114,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
           <RolesTable
             roles={roles}
             onRowClick={setSelectedRole}
-            onManageMembers={(r) => { setSelectedRole(r); snackRef.current?.show('Manage Members Assigned — coming soon.', false); }}
+            onManageMembers={(r) => setManageMembersRole(r)}
             onDelete={(r) => snackRef.current?.show(`Delete "${r.name}" — coming soon.`, false)}
           />
         )}
@@ -129,13 +131,19 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
         role={selectedRole}
         api={api}
         onClose={() => setSelectedRole(null)}
-        onManageMembers={() => snackRef.current?.show('Manage Members Assigned — coming soon.', false)}
+        onManageMembers={(r) => setManageMembersRole(r)}
       />
 
       <ManageRolesModal
         member={manageMember}
         api={api}
         onClose={() => setManageMember(null)}
+        onSaved={(msg) => snackRef.current?.show(msg, false)}
+      />
+      <ManageMembersModal
+        role={manageMembersRole}
+        api={api}
+        onClose={() => setManageMembersRole(null)}
         onSaved={(msg) => snackRef.current?.show(msg, false)}
       />
 

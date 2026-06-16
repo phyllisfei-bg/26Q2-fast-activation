@@ -111,6 +111,17 @@ export function useMembersRoles() {
     setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, roleIds } : m)));
   }, []);
 
+  /** Set the exact set of members that hold a given role. */
+  const setRoleMembers = useCallback((roleId: string, memberIds: string[]) => {
+    setMembers(prev => prev.map(m => {
+      const should = memberIds.includes(m.id);
+      const has = m.roleIds.includes(roleId);
+      if (should && !has) return { ...m, roleIds: [...m.roleIds, roleId] };
+      if (!should && has) return { ...m, roleIds: m.roleIds.filter(r => r !== roleId) };
+      return m;
+    }));
+  }, []);
+
   return {
     members,
     roles,
@@ -122,6 +133,7 @@ export function useMembersRoles() {
     inviteMember,
     removeMember,
     assignRoles,
+    setRoleMembers,
   };
 }
 

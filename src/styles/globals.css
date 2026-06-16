@@ -32,6 +32,7 @@ body {
   border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .sidebar-logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.sidebar-logo-text--admin { font-size: 13px; white-space: nowrap; }   /* fit "Admin Console" on one line */
 .sidebar-toggle {
   width: 28px; height: 28px; border-radius: 7px; border: none;
   background: transparent; cursor: pointer;
@@ -2390,6 +2391,10 @@ body.light-mode .mr-btn-tonal:hover { background: #ECECEC; }
 .mr-rm-role-title { display: flex; align-items: center; gap: 8px; }
 .mr-rm-role-name { font-size: 15px; font-weight: 600; color: var(--color-text); }
 .mr-rm-role-meta { font-size: 13.5px; color: var(--color-text-secondary); margin-top: 3px; }
+/* member rows (Manage Members modal) — avatar + name + email */
+.mr-rm-member-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mr-rm-member-name { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--color-text); }
+.mr-rm-member-email { font-size: 13.5px; color: var(--color-text-secondary); margin-top: 1px; }
 
 /* hover icon CTAs — space is always reserved so the text never shifts */
 .mr-rm-role-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0; pointer-events: none; transition: opacity .12s; }
@@ -2408,6 +2413,9 @@ body.light-mode .mr-btn-tonal:hover { background: #ECECEC; }
 .mr-rm-role.removed:hover { background: transparent; }
 .mr-rm-role.removed .mr-rm-role-name,
 .mr-rm-role.removed .mr-rm-role-meta { text-decoration: line-through; color: var(--color-text-muted); }
+/* member rows (ManageMembersModal) — same visual treatment */
+.mr-rm-role.removed .mr-rm-member-name,
+.mr-rm-role.removed .mr-rm-member-email { text-decoration: line-through; color: var(--color-text-muted); }
 /* Added rows: no persistent background — only the "Added" badge + hover like any row */
 
 /* Dropdown */
