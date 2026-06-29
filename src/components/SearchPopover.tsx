@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SAMPLE_PROMPTS } from './aiChatResponses';
+import { AiShield } from './AiShield';
+import { useSpinGlow, CometRing } from './cometRing';
 
 interface SearchPopoverProps {
   open: boolean;
@@ -40,6 +42,15 @@ const SMART_PROMPTS = [
 export const SearchPopover: React.FC<SearchPopoverProps> = ({ open, onClose, onOpenChat }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [aiMode, setAiMode] = useState(false);
+  const [chipHovered, setChipHovered] = useState(false);
+
+  const modalSpin = useSpinGlow();   // comet sweep around the modal on entering AI Mode
+  const chipSpin = useSpinGlow();    // comet sweep around the AI Mode chip on hover
+
+  const enterAiMode = () => {
+    setAiMode(true);
+    modalSpin.trigger(true, 1);
+  };
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 60);
@@ -57,21 +68,8 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({ open, onClose, onO
     <div className={`search-overlay${open ? ' open' : ''}`} onClick={onClose}>
       <div className={`search-popover${aiMode ? ' ai-mode' : ''}`} onClick={e => e.stopPropagation()}>
 
-        {/* Animated gradient outline — draws around on AI Mode hover */}
-        <svg className="search-border-anim" aria-hidden="true">
-          <defs>
-            <linearGradient id="searchBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%"   stopColor="#2859EA" />
-              <stop offset="40%"  stopColor="#3D65F0" />
-              <stop offset="75%"  stopColor="#5C84FC" />
-              <stop offset="100%" stopColor="#8FB0FF" />
-              {/* continuous flow so the gradient stays animated while visible */}
-              <animateTransform attributeName="gradientTransform" type="rotate"
-                from="0 0.5 0.5" to="360 0.5 0.5" dur="2.5s" repeatCount="indefinite" />
-            </linearGradient>
-          </defs>
-          <rect pathLength={100} />
-        </svg>
+        {/* Comet-ring outline — sweeps once around the modal on entering AI Mode */}
+        <CometRing {...modalSpin} br={16} />
 
         {/* Input row */}
         <div className="search-input-row">
@@ -88,12 +86,14 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({ open, onClose, onO
               </svg>
             </button>
           ) : (
-            <button className="search-ai-mode" onClick={() => setAiMode(true)}>
-              <svg className="search-ai-mode-border" aria-hidden="true"><rect pathLength={100} /></svg>
-              <svg className="search-ai-spark" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 3l1.7 5L18.6 9.6 13.7 11.3 12 16.2 10.3 11.3 5.4 9.6 10.3 8z"/>
-                <path d="M18.5 13.5l.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8z"/>
-              </svg>
+            <button
+              className="search-ai-mode"
+              onClick={enterAiMode}
+              onMouseEnter={() => { setChipHovered(true); if (!chipSpin.spinning) chipSpin.trigger(true, 1); }}
+              onMouseLeave={() => setChipHovered(false)}
+            >
+              <CometRing {...chipSpin} br={100} idleGlow={chipHovered && !chipSpin.spinning} />
+              <AiShield size={15} animated={false} className="search-ai-spark" />
               AI Mode
             </button>
           )}

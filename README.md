@@ -74,16 +74,11 @@ Open [http://localhost:5173](http://localhost:5173).
 | `/#flow` | Flow Overview | Flowchart linking all stages of the activation journey |
 | `/#kyb` | KYB Flow | Business / entity verification (multi-step) |
 | `/#kyc` | KYC Flow | Individual user verification |
-| `/` | Dashboard | Getting started tasks, For You recommendations, portfolio, balances |
+| `/` | Dashboard | Getting started actions, For You recommendations, portfolio, balances |
 
 ### Flows (launched from Dashboard)
 
-| Flow | Trigger | Description |
-|---|---|---|
-| Wallet Creation | Get Started → Create Wallet | Multi-step wallet setup |
-| Deposit | Deposit button | Cash or crypto deposit |
-| Policy Builder | Get Started → Configure Policy | Policy creation flow |
-| Walkthrough Stepper | In-context | Guided walkthrough overlay |
+Flows are launched contextually based on the user's role and Get Started action set. See [`get-started-aggregation-spec.md`](./get-started-aggregation-spec.md) for how actions map to roles.
 
 ---
 
@@ -91,6 +86,8 @@ Open [http://localhost:5173](http://localhost:5173).
 
 | Path | Description |
 |---|---|
+| `CLAUDE.md` | Project context and conventions for working with Claude |
+| `get-started-aggregation-spec.md` | Get Started role-based aggregation logic — canonical spec for action selection algorithm |
 | `src/pages/Dashboard.tsx` | Main dashboard |
 | `src/pages/WalletDetailPage.tsx` | Wallet detail view |
 | `src/flows/KYBFlow.tsx` | Business verification flow |
