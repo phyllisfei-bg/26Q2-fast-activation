@@ -35,8 +35,8 @@ export function useSpinGlow(opts?: { initialSpin?: boolean; initialRevs?: number
   const [animKey, setAnimKey] = useState(opts?.initialSpin ? 1 : 0);
   const [glowAngle, setGlowAngle] = useState(0);
   const [isHoverSpin, setIsHoverSpin] = useState(false);
-  const spinTimer = useRef<ReturnType<typeof setTimeout>>();
-  const rafRef = useRef<number>();
+  const spinTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const rafRef = useRef<number | undefined>(undefined);
   const startRef = useRef(0);
 
   const trigger = useCallback((withGlow: boolean, revolutions = 1) => {
