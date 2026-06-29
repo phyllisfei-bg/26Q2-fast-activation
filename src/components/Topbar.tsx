@@ -1,4 +1,5 @@
 import React from 'react';
+import { AiShield } from './AiShield';
 
 interface TopbarProps {
   isLight: boolean;
@@ -75,10 +76,7 @@ export const Topbar: React.FC<TopbarProps> = ({ isLight, onThemeToggle, onChatOp
     </button>
 
     <button className="topbar-icon-btn ai-chat-trigger-btn" title="AI Assistant" onClick={onChatOpen}>
-      {/* Placeholder icon — to be replaced */}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="3" y="3" width="18" height="18" rx="4" />
-      </svg>
+      <AiShield size={18} />
     </button>
 
     <button className="topbar-profile-btn" title="Profile">

@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")",
+      "mcp__7127e462-2cb9-4a32-ad6c-bf52cbe02536__get_design_context",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/664552b2-6889-45d9-8d93-0f9a38cd1642\" -o /tmp/ai-shield-asset)",
+      "Read(//tmp/**)",
+      "mcp__7127e462-2cb9-4a32-ad6c-bf52cbe02536__get_motion_context",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

@@ -97,6 +97,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const [headlineIdx, setHeadlineIdx] = useState(0);
   const [fading, setFading]           = useState(false);
   const [multiline, setMultiline]     = useState(false); // input wrapped past one line
+  const [agreed, setAgreed]           = useState(false); // dismissed the data-privacy agreement gate
   const [pending, setPending]         = useState<AIResponseData | null>(null); // response being "thought about"
   const turnRef                       = useRef(0);
   const textareaRef                   = useRef<HTMLTextAreaElement>(null);
@@ -192,6 +193,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   // Auto-send a prompt passed in when the chat is opened from the search modal.
   useEffect(() => {
     if (open && initialPrompt) {
+      setAgreed(true);                      // coming from search → skip the agreement gate
       generate(initialPrompt, []);          // start a fresh conversation with this prompt
       onInitialPromptConsumed?.();
     }
@@ -271,7 +273,38 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
 
         {/* ── Body ── */}
         <div className="ai-chat-body" ref={bodyRef} onScroll={onBodyScroll}>
-          {!isConversation ? (
+          {!agreed ? (
+            /* Agreement gate — shown once before the chat is usable */
+            <div className="ai-chat-agreement">
+              <div className="ai-chat-idle-hero">
+                <img className="ai-chat-hero-logo" src={`${import.meta.env.BASE_URL}bitgo-logo.svg`} alt="" aria-hidden="true" />
+                <p className={`ai-chat-headline${fading ? ' fading' : ''}`}>{HEADLINES[headlineIdx]}</p>
+              </div>
+              <div className="ai-chat-gate-bottom">
+              <div className="ai-chat-consent">
+                <div className="ai-chat-consent-row">
+                  <svg className="ai-chat-consent-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+                    <line x1="9" y1="9" x2="9" y2="9"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="9" y1="15" x2="9" y2="15"/>
+                  </svg>
+                  <div className="ai-chat-consent-text">
+                    Your organization's data is private and secure
+                    <div className="ai-chat-consent-desc">It is protected by BitGo enterprise-grade security and is not shared across organizations for model improvement.</div>
+                  </div>
+                </div>
+                <div className="ai-chat-consent-row">
+                  <svg className="ai-chat-consent-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
+                  </svg>
+                  <div className="ai-chat-consent-text">
+                    <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>BitGo Terms</a> and the <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>[AI Name] Privacy Notice</a> apply
+                  </div>
+                </div>
+              </div>
+              <button className="ai-chat-start-btn" onClick={() => setAgreed(true)}>Start Chat</button>
+              </div>{/* end ai-chat-gate-bottom */}
+            </div>
+          ) : !isConversation ? (
             /* Idle / default state */
             <div className="ai-chat-idle">
               {/* Headline centered in growing hero area */}
@@ -300,7 +333,11 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                   </button>
                 ))}
                 <button className="ai-chat-prompt-row ai-chat-prompt-more">
-                  <span className="ai-chat-prompt-glyph">↳</span>
+                  <span className="ai-chat-prompt-glyph">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 5v6a2 2 0 0 0 2 2h11"/><polyline points="14 9 18 13 14 17"/>
+                    </svg>
+                  </span>
                   View all suggestions
                 </button>
               </div>
@@ -330,7 +367,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
           )}
         </div>
 
-        {/* ── Input ── */}
+        {/* ── Input (hidden until the agreement gate is dismissed) ── */}
+        {agreed && (
         <div className="ai-chat-input-wrap">
           <div ref={measureRef} className="ai-chat-measure" aria-hidden="true" />
           <div className={`ai-chat-input-box${multiline ? ' multiline' : ''}`}>
@@ -393,6 +431,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             <a href="#" className="ai-chat-disclaimer-link" onClick={e => e.preventDefault()}>Learn More</a>
           </p>
         </div>
+        )}
 
       </div>
     </div>
