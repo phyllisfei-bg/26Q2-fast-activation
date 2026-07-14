@@ -1519,7 +1519,35 @@ body.light-mode .donut-ring-idle { stroke: #CDD1E8; }
 }
 
 /* ─── AI Shield logo (self-animating on hover — see AiShield.tsx) ─── */
+/* AI shield — exact Figma ANGULAR gradient ("Gradient 7", node 37767:29443).
+   4 stops: orange at the seam (0deg/360deg), light-blue at 108deg (30%),
+   deep-blue at 252deg (70%). Orange sits at the top, sweeping clockwise. */
+@property --ai-ang {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes ai-shield-spin {
+  to { --ai-ang: 360deg; }
+}
 .ai-shield { flex-shrink: 0; }
+/* Glow is scoped to the shield OUTLINE only — the centered star is never animated
+   (no rotation, no reveal, no glow), matching the exported reference.
+   Order matches the reference filter: blue on top (dy -), orange on bottom (dy +). */
+.ai-shield-outline {
+  transition: filter .6s ease-in-out;
+  filter: drop-shadow(0 0 0 rgba(22,71,219,0)) drop-shadow(0 0 0 rgba(255,139,102,0));
+}
+.ai-shield.is-glow .ai-shield-outline {
+  filter: drop-shadow(0 -1px 2px rgba(22,71,219,.85)) drop-shadow(0 1px 2px rgba(255,139,102,.85));
+}
+.ai-shield-grad {
+  background: conic-gradient(from var(--ai-ang) at 50% 50%,
+    #FF8B66 0deg, #93AEFF 108deg, #1647DB 252deg, #FF8B66 360deg);
+}
+.ai-shield-grad.spinning {
+  animation: ai-shield-spin 2.4s linear infinite;
+}
 
 /* ─── AI Chat Trigger Button ─────────────────────────────────────── */
 .ai-chat-trigger-btn { position: relative; transition: background .2s; }

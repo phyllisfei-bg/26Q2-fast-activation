@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 /**
- * BitGo AI shield — faithful port of the Figma Make "AI Icon Animation Final".
+ * BitGo AI shield — faithful port of the Figma "AI Icon Animation".
  * At rest: gradient shield outline + star. On hover: the shield wipes in with a
  * clockwise arc reveal (900ms), its gradient rotates (2.4s loop), and a dual-color
  * glow fades in. On leave the glow fades and it resets so the reveal replays.
  *
- * Exact paths/gradient/colors from the Make source.
+ * The fill is the exact Figma ANGULAR (conic) gradient — stops 30% #94AEFF,
+ * 70% #1647DB, 100% #FF8B66. SVG has no native conic gradient, so the shapes are
+ * painted by a CSS conic-gradient div (`.ai-shield-grad`) clipped to the shield /
+ * star paths via <foreignObject>. Rotation animates the conic `--ai-ang` angle
+ * (see globals.css: @property --ai-ang + @keyframes ai-shield-spin).
  */
 
 // Shield outline (left + right) and the centre star.
@@ -39,10 +43,16 @@ interface AiShieldProps {
   className?: string;
 }
 
+/** A conic-gradient fill clipped to an SVG path via <foreignObject>. */
+const GradFill: React.FC<{ clipId: string; spinning: boolean }> = ({ clipId, spinning }) => (
+  <foreignObject x={0} y={0} width={90} height={102} clipPath={`url(#${clipId})`}>
+    <div className={`ai-shield-grad${spinning ? ' spinning' : ''}`} style={{ width: '100%', height: '100%' }} />
+  </foreignObject>
+);
+
 export const AiShield: React.FC<AiShieldProps> = ({ size = 18, animated = true, className }) => {
   const uid = useId().replace(/[:]/g, '');
-  const shieldGradId = `sg-${uid}`, starGradId = `stg-${uid}`, glowGradId = `gg-${uid}`;
-  const filterId = `f-${uid}`, revealClipId = `rc-${uid}`;
+  const starClipId = `star-${uid}`, shieldClipId = `shield-${uid}`, revealClipId = `rc-${uid}`;
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [revealSweep, setRevealSweep] = useState(0);
@@ -103,12 +113,11 @@ export const AiShield: React.FC<AiShieldProps> = ({ size = 18, animated = true, 
   };
 
   const revealArcD = phase === 'idle' ? '' : sweepArc(45, 51, 80, 45, revealSweep);
-  const clip = revealArcD ? `url(#${revealClipId})` : undefined;
-  const isAnimating = phase === 'revealing' || phase === 'hovering';
+  const spinning = phase === 'revealing' || phase === 'hovering';
 
   return (
     <div
-      className={`ai-shield${className ? ` ${className}` : ''}`}
+      className={`ai-shield${glowVisible ? ' is-glow' : ''}${className ? ` ${className}` : ''}`}
       style={{ position: 'relative', width: size, height: size * 102 / 90 }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -116,42 +125,18 @@ export const AiShield: React.FC<AiShieldProps> = ({ size = 18, animated = true, 
       <svg className="ai-shield-svg" fill="none" viewBox="0 0 90 102" preserveAspectRatio="none" aria-hidden="true"
         style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }}>
         <defs>
-          <linearGradient gradientUnits="userSpaceOnUse" id={shieldGradId} x1="45" y1="0" x2="45" y2="102">
-            <stop offset="0" stopColor="#94AEFF" /><stop offset="0.5" stopColor="#1647DB" /><stop offset="1" stopColor="#FF8B66" />
-            {isAnimating && <animateTransform attributeName="gradientTransform" type="rotate" from="0 45 51" to="360 45 51" dur="2.4s" repeatCount="indefinite" />}
-          </linearGradient>
-          <linearGradient gradientUnits="userSpaceOnUse" id={starGradId} x1="45" y1="20" x2="45" y2="80">
-            <stop offset="0" stopColor="#94AEFF" /><stop offset="0.5" stopColor="#1647DB" /><stop offset="1" stopColor="#FF8B66" />
-          </linearGradient>
-          <linearGradient gradientUnits="userSpaceOnUse" id={glowGradId} x1="45" y1="0" x2="45" y2="102">
-            <stop offset="0" stopColor="#94AEFF" /><stop offset="0.5" stopColor="#1647DB" /><stop offset="1" stopColor="#FF8B66" />
-            {isAnimating && <animateTransform attributeName="gradientTransform" type="rotate" from="0 45 51" to="360 45 51" dur="2.4s" repeatCount="indefinite" />}
-          </linearGradient>
+          <clipPath id={starClipId}><path d={PATH_STAR} /></clipPath>
+          <clipPath id={shieldClipId}><path d={PATH_SHIELD_L} /><path d={PATH_SHIELD_R} /></clipPath>
           <clipPath id={revealClipId}>{revealArcD ? <path d={revealArcD} /> : null}</clipPath>
-          <filter colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse" id={filterId} x="-20%" y="-20%" width="140%" height="140%">
-            <feFlood floodOpacity="0" result="bg" />
-            <feColorMatrix in="SourceAlpha" result="a1" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" />
-            <feOffset dy="2" /><feGaussianBlur stdDeviation="4" /><feComposite in2="a1" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0.546  0 0 0 0 0.4  0 0 0 0.8 0" />
-            <feBlend in2="bg" mode="normal" result="s1" />
-            <feColorMatrix in="SourceAlpha" result="a2" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" />
-            <feOffset dy="-2" /><feGaussianBlur stdDeviation="4" /><feComposite in2="a2" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.086  0 0 0 0 0.28  0 0 0 0 0.86  0 0 0 0.8 0" />
-            <feBlend in2="s1" mode="normal" result="s2" />
-            <feBlend in="SourceGraphic" in2="s2" mode="normal" result="shape" />
-            <feGaussianBlur stdDeviation="4" />
-          </filter>
         </defs>
 
-        <g clipPath={clip}>
-          <path d={PATH_SHIELD_L} fill={`url(#${shieldGradId})`} />
-          <path d={PATH_SHIELD_R} fill={`url(#${shieldGradId})`} />
-        </g>
-        <path d={PATH_STAR} fill={`url(#${starGradId})`} />
-        <g clipPath={clip} filter={`url(#${filterId})`}
-          style={{ opacity: glowVisible ? 1 : 0, transition: 'opacity 600ms ease-in-out', pointerEvents: 'none' }}>
-          <path d={PATH_SHIELD_L} fill={`url(#${glowGradId})`} />
-          <path d={PATH_SHIELD_R} fill={`url(#${glowGradId})`} />
+        {/* Star — always fully painted; gradient is STATIC (never rotates) */}
+        <GradFill clipId={starClipId} spinning={false} />
+
+        {/* Shield outline — the ONLY animated element: wiped in by the reveal arc,
+            gradient rotates while hovering, and the glow is scoped here (not the star). */}
+        <g className="ai-shield-outline" clipPath={revealArcD ? `url(#${revealClipId})` : undefined}>
+          <GradFill clipId={shieldClipId} spinning={spinning} />
         </g>
       </svg>
     </div>
