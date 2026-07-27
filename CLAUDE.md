@@ -65,11 +65,10 @@ The sample below reflects the **sales-led super user (Platform Admin)** scenario
 - Never block the underlying UI; user can always interact around them
 
 **For You section** (`src/pages/Dashboard.tsx`):
-- `<ForYou />` is always visible — it does not wait for Get Started to be complete
-- Before completion, shows a maximum of 3 cards; once `allDone === true`, the full set is shown
+- `<ForYou />` is hidden until `allDone === true` (all Get Started actions complete)
+- Once visible, shows the full card set — cards are horizontally scrollable and dismissible individually
 - Card content and ordering are calculated based on the user's role(s) and BitGo product interest — detailed logic spec coming soon
-- Cards are horizontally scrollable, dismissible individually, and limited to 3 visible + 1 peeking
-- Once all actions are done, Get Started collapses and For You expands to its full set
+- Once all actions are done, Get Started collapses and For You takes its place
 
 **Snackbar** is used throughout for non-blocking confirmations — wallet created, order placed, deposit confirmed, policies published. Never blocking modals.
 

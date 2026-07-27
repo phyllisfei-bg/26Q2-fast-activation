@@ -158,7 +158,7 @@ const ROLE_POOLS: Record<UserRole, TaskId[]> = {
 | Role | Slot 1 | Slot 2 | Slot 3 |
 |---|---|---|---|
 | `super_user` | `fundGoAccount` | `firstTrade` | `createWallet` |
-| `org_admin` | `viewMembersRoles` | `understandTasksApprovals` | `viewEnterprisesWallets` |
+| `org_admin` | `viewMembersRoles` | `understandTasksApprovals` | ~~`viewEnterprisesWallets`~~ `exploreControls` |
 | `ent_admin` | `createWallet` | `addBankAccount` | `explorePolicies` |
 | `wallet_admin` | `fundGoAccount` | `explorePortfolio` | `explorePolicies` |
 | `wallet_spender` | `fundGoAccount` | `explorePortfolio` | `firstTrade` |
@@ -204,7 +204,8 @@ type Task = {
 | `viewReports` | "View reports" | `false` | Land on report page. | — |
 | `viewTrades` | "View trades" | `false` | Land on trade page. | — |
 | `viewMembersRoles` | "View members & roles" | `false` | Land on admin console.<br><br>Callout order: View current members → View current roles → Invite new member → Create custom role. | — |
-| `viewEnterprisesWallets` | "View enterprises & wallets" | `false` | TBD | — |
+| ~~`viewEnterprisesWallets`~~ | ~~"View enterprises & wallets"~~ | ~~`false`~~ | ~~TBD~~ | ~~**Archived**~~ |
+| `exploreControls` | "Explore Controls" | `false` | Land on UMS Controls page.<br><br>Callout order: Meet controls → See who can approve → Customize your approval rules. | — |
 | `understandTasksApprovals` | "Understand tasks & approvals" | `false` | Page routing:<br>`org_admin` → UMS tasks page<br>`ent_admin` / `wallet_admin` / `video_id_user` → enterprise-level tasks page<br>`org_admin` + `ent_admin` → both pages accessible; callout guides to enterprise-level tasks page first, then UMS tasks on the CTA. | Backfill eligible (role-restricted). |
 | `unlockPolicy` | "Learn about unlocking policies" | `false` | Land on policy page.<br><br>Callout order: Click here to unlock. | — |
 | `viewActivityLog` | "View activity log" | `false` | Land on activity log page. | — |
@@ -380,7 +381,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 - **Active** actions: fully interactive, CTA button shown
 - **Completed** actions: the "Start" button is replaced by a "Complete" badge with a checkmark; the action card remains visible in place until the user's next session or until dismissed. When all actions are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
 - Card shows a maximum of 3 actions — the set is computed once at load and does not change during the session; completion state (Active → Complete) updates in place as the user completes actions
-- For You section is always visible. Before Get Started is complete, it shows a maximum of 3 cards. Once all Get Started actions are completed (`allDone = true`), the full set is shown. Card ordering inside For You follows the same weighted slot scoring as the aggregation algorithm.
+- For You section is hidden until all Get Started actions are completed (`allDone = true`). Once visible, it shows the full card set. Card ordering inside For You follows the same weighted slot scoring as the aggregation algorithm.
 
 </details>
 
