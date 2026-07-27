@@ -367,7 +367,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 | `fundGoAccount`, no bank account, user without `ent_admin` or `super_user` | Action is always active; inside the deposit flow, cash tab shows a banner; crypto deposit is the default |
 | `fundGoAccount`, no bank account, user has `ent_admin` or `super_user` | Action is always active; inside the deposit flow, user can add a bank account from within the cash tab |
 | `wallet_trader` or `auditor` | No backfill applied; card shows 2 or 1 action respectively |
-| All actions completed | All actions are marked as complete; Get Started card becomes dismissable; For You section expands to full set |
+| All actions completed | All actions are marked as complete; Get Started card becomes dismissable; For You section appears for the first time |
 
 > ⚠️ **Open question — `bankAccountAdded` real-time reactivity:** If another user in the same enterprise adds a bank account mid-session, the action set will not update (computed once at load). Is a page refresh acceptable, or is real-time reactivity expected?
 
@@ -381,7 +381,7 @@ Return the resolved action list. Each item includes: `id`, `title`, `description
 - **Active** actions: fully interactive, CTA button shown
 - **Completed** actions: the "Start" button is replaced by a "Complete" badge with a checkmark; the action card remains visible in place until the user's next session or until dismissed. When all actions are done, the card title changes to "Setup Complete", a subtitle reads "All essentials are active — your enterprise is ready to go.", and a dismiss (×) button appears in the header.
 - Card shows a maximum of 3 actions — the set is computed once at load and does not change during the session; completion state (Active → Complete) updates in place as the user completes actions
-- For You section is hidden until all Get Started actions are completed (`allDone = true`). Once visible, it shows the full card set. Card ordering inside For You follows the same weighted slot scoring as the aggregation algorithm.
+- For You section is fully hidden until `allDone`. Once all Get Started actions are completed (`allDone = true`), For You section becomes visible. Card ordering inside For You follows the same weighted slot scoring as the aggregation algorithm.
 
 </details>
 
