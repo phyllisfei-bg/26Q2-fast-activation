@@ -34,8 +34,8 @@ interface ForYouProps {
 export const ForYou: React.FC<ForYouProps> = ({ allDone }) => {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
-  const filtered = CARDS.filter(c => !hiddenIds.has(c.id));
-  const visible = allDone ? filtered : filtered.slice(0, 3);
+  if (!allDone) return null;
+  const visible = CARDS.filter(c => !hiddenIds.has(c.id));
   if (visible.length === 0) return null;
 
   const dismiss = (id: string) => setHiddenIds(prev => new Set([...prev, id]));
