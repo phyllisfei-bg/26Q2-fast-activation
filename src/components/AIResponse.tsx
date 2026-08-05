@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { AIResponse as AIResponseData, Block, Span, ThoughtStep } from './aiChatResponses';
+import { AiStar } from './AiShield';
 
 const LOGO = `${import.meta.env.BASE_URL}bitgo-logo.svg`;
 
@@ -87,7 +88,7 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
   return (
     <div className="ai-thought">
       <button className="ai-thought-toggle" onClick={() => setOpen(o => !o)}>
-        {thinking && <span className="ai-chat-thinking-ring" />}
+        {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
         <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>
           {thinking ? 'Thinking...' : 'Thought process'}
         </span>

@@ -142,3 +142,33 @@ export const AiShield: React.FC<AiShieldProps> = ({ size = 18, animated = true, 
     </div>
   );
 };
+
+/**
+ * Just the centered star of the AI logo, painted with the same Figma angular
+ * gradient. Used as the "Thinking…" loader — the gradient rotates while `spinning`.
+ * viewBox is cropped to the star's bounding box so it fills a small square.
+ */
+export const AiStar: React.FC<{ size?: number; spinning?: boolean; className?: string }> = ({
+  size = 16,
+  spinning = true,
+  className,
+}) => {
+  const clipId = `aistar-${useId().replace(/[:]/g, '')}`;
+  return (
+    <span
+      className={`ai-star${className ? ` ${className}` : ''}`}
+      style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, lineHeight: 0 }}
+      aria-hidden="true"
+    >
+      <svg viewBox="18 21 54 54" fill="none" preserveAspectRatio="xMidYMid meet"
+        style={{ display: 'block', width: '100%', height: '100%' }}>
+        <defs>
+          <clipPath id={clipId}><path d={PATH_STAR} /></clipPath>
+        </defs>
+        <foreignObject x={18} y={21} width={54} height={54} clipPath={`url(#${clipId})`}>
+          <div className={`ai-shield-grad${spinning ? ' spinning' : ''}`} style={{ width: '100%', height: '100%' }} />
+        </foreignObject>
+      </svg>
+    </span>
+  );
+};
