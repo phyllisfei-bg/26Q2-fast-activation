@@ -59,14 +59,21 @@ const SkLine: React.FC<{ w: string; h?: number; mt?: number }> = ({ w, h = 12, m
   <div className="ai-sk" style={{ width: w, height: h, marginTop: mt }} />
 );
 
-// ─── Thought process (step-by-step, with skeletons while thinking) ──
-export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean }> = ({ steps, thinking = false }) => {
+// ─── Thought process ──
+// `variant` controls the in-progress ("thinking") animation only:
+//   'ideal'   → star + "Thinking…" + steps stream in below (skeleton → text)
+//   'current' → star + a single shimmering line that swaps to each step's name
+// Once done, both variants collapse to the same expandable "Thought process".
+export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean; variant?: 'ideal' | 'current' }> = ({ steps, thinking = false, variant = 'ideal' }) => {
   const [open, setOpen] = useState(thinking);            // collapsed once done; user expands via chevron
   const [shown, setShown] = useState(thinking ? 0 : steps.length);
   const [skeleton, setSkeleton] = useState(thinking);
+  const [activeStep, setActiveStep] = useState(0);       // 'current' variant: which step name is shown
 
+  // 'ideal': stream each step as skeleton → text
   useEffect(() => {
     if (!thinking) { setShown(steps.length); setSkeleton(false); return; }
+    if (variant !== 'ideal') return;
     setShown(0); setSkeleton(true);
     let cancelled = false;
     let i = 0;
@@ -83,7 +90,40 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
     };
     run();
     return () => { cancelled = true; };
-  }, [thinking, steps]);
+  }, [thinking, variant, steps]);
+
+  // 'current': advance the single live label through each step name
+  useEffect(() => {
+    if (!thinking || variant !== 'current') return;
+    setActiveStep(0);
+    let cancelled = false;
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      if (cancelled) return;
+      i += 1;
+      if (i >= steps.length) return;                      // hold on the last step until thinking ends
+      setActiveStep(i);
+      timer = setTimeout(tick, 1150);
+    };
+    timer = setTimeout(tick, 1150);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [thinking, variant, steps]);
+
+  // 'current' variant while thinking: reuse the ideal toggle row (identical alignment);
+  // the label is one shimmering line that swaps to each step name.
+  if (thinking && variant === 'current') {
+    return (
+      <div className="ai-thought">
+        <div className="ai-thought-toggle ai-thought-live">
+          <AiStar size={16} className="ai-chat-thinking-star" />
+          <span key={activeStep} className="ai-thought-label thinking ai-thought-live-step">
+            {steps[activeStep]?.header ?? 'Thinking...'}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ai-thought">
@@ -347,12 +387,12 @@ const ResponseActions: React.FC = () => (
 );
 
 // ─── Full response — streams blocks in sequence ─────────────────────
-export const AIResponse: React.FC<{ data: AIResponseData }> = ({ data }) => {
+export const AIResponse: React.FC<{ data: AIResponseData; showThought?: boolean }> = ({ data, showThought = true }) => {
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
   const advance = () => setDone(d => d + 1);
   return (
     <div className="ai-response">
-      <ThoughtProcess steps={data.thought} />
+      {showThought && <ThoughtProcess steps={data.thought} />}
       {data.blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed

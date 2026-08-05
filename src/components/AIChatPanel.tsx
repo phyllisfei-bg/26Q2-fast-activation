@@ -99,6 +99,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const [multiline, setMultiline]     = useState(false); // input wrapped past one line
   const [agreed, setAgreed]           = useState(false); // dismissed the data-privacy agreement gate
   const [pending, setPending]         = useState<AIResponseData | null>(null); // response being "thought about"
+  // Thinking-animation style: 'ideal' = star + streaming steps list; 'current' = star + a
+  // single shimmering line that swaps to each step name (no steps list). User-switchable.
+  const [thinkStyle, setThinkStyle]   = useState<'ideal' | 'current'>(
+    () => (typeof localStorage !== 'undefined' && localStorage.getItem('ai-think-style') as 'ideal' | 'current') || 'ideal'
+  );
+  useEffect(() => { try { localStorage.setItem('ai-think-style', thinkStyle); } catch { /* ignore */ } }, [thinkStyle]);
   const turnRef                       = useRef(0);
   const textareaRef                   = useRef<HTMLTextAreaElement>(null);
   const measureRef                    = useRef<HTMLDivElement>(null);   // hidden mirror for wrap detection
@@ -235,6 +241,20 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             </button>
             <span className="ai-chat-name">AI Name</span>
             <span className="ai-chat-beta-badge">Beta</span>
+            {/* Thinking-animation style switch */}
+            <div className="ai-think-switch" role="tablist" aria-label="Thinking style">
+              {(['ideal', 'current'] as const).map(s => (
+                <button
+                  key={s}
+                  role="tab"
+                  aria-selected={thinkStyle === s}
+                  className={`ai-think-switch-opt${thinkStyle === s ? ' active' : ''}`}
+                  onClick={() => setThinkStyle(s)}
+                >
+                  {s === 'ideal' ? 'Ideal' : 'Current'}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="ai-chat-header-right">
             <button className="ai-chat-hdr-btn" title="New chat"
@@ -354,13 +374,13 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onSave={(next) => editMessage(i, next)}
                     />
                   ) : (
-                    <AIResponse data={msg.response!} />
+                    <AIResponse data={msg.response!} showThought={thinkStyle !== 'current'} />
                   )}
                 </div>
               ))}
               {mode === 'thinking' && pending && (
                 <div className="ai-chat-msg-row assistant">
-                  <ThoughtProcess steps={pending.thought} thinking />
+                  <ThoughtProcess steps={pending.thought} thinking variant={thinkStyle} />
                 </div>
               )}
             </div>
@@ -381,25 +401,30 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <button className="ai-chat-tool-btn ai-chat-ib-plus" title="Attach">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5"  y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
-            <button className="ai-chat-tool-btn ai-chat-ib-sliders" title="Options">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="4" y1="21" x2="4" y2="14"/>
-                <line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/>
-                <line x1="12" y1="8"  x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/>
-                <line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1"  y1="14" x2="7"  y2="14"/>
-                <line x1="9"  y1="8"  x2="15" y2="8"/>
-                <line x1="17" y1="16" x2="23" y2="16"/>
-              </svg>
-            </button>
+            {/* Plus + controls hidden in the 'current' thinking style (minimal input) */}
+            {thinkStyle !== 'current' && (
+              <>
+                <button className="ai-chat-tool-btn ai-chat-ib-plus" title="Attach">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5"  y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+                <button className="ai-chat-tool-btn ai-chat-ib-sliders" title="Options">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="21" x2="4" y2="14"/>
+                    <line x1="4" y1="10" x2="4" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="12"/>
+                    <line x1="12" y1="8"  x2="12" y2="3"/>
+                    <line x1="20" y1="21" x2="20" y2="16"/>
+                    <line x1="20" y1="12" x2="20" y2="3"/>
+                    <line x1="1"  y1="14" x2="7"  y2="14"/>
+                    <line x1="9"  y1="8"  x2="15" y2="8"/>
+                    <line x1="17" y1="16" x2="23" y2="16"/>
+                  </svg>
+                </button>
+              </>
+            )}
             <button className="ai-chat-mode-pill">
               Mode Name
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
