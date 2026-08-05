@@ -1643,6 +1643,22 @@ body.light-mode .ai-chat-backdrop {
   background: transparent; border: 1px solid var(--color-border-strong);
   border-radius: 999px; padding: 1px 9px;
 }
+/* Thinking-style segmented switch (Ideal / Current) */
+.ai-think-switch {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 999px; background: var(--color-level2);
+}
+.ai-think-switch-opt {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 11px; font-weight: 500; color: var(--color-text-muted);
+  padding: 3px 10px; border-radius: 999px;
+  transition: background .14s, color .14s;
+}
+.ai-think-switch-opt:hover { color: var(--color-text-secondary); }
+.ai-think-switch-opt.active {
+  background: var(--color-level1); color: var(--color-text);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
 .ai-chat-hdr-btn {
   width: 30px; height: 30px; border-radius: 50%; border: none;
   background: transparent; color: var(--color-text-muted); cursor: pointer;
@@ -1896,6 +1912,16 @@ body.light-mode .ai-chat-bubble.user {
 @keyframes ai-think-shimmer {
   from { background-position: 120% 0; }
   to   { background-position: -120% 0; }
+}
+/* 'current' thinking variant: reuses the ideal .ai-thought-toggle row for identical
+   star+text alignment; just a non-interactive cursor + a slower shimmer here. */
+.ai-thought-live { cursor: default; }
+.ai-thought-label.thinking.ai-thought-live-step {
+  animation: ai-think-shimmer 2.6s linear infinite, ai-step-swap .34s ease;
+}
+@keyframes ai-step-swap {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
 }
 .ai-thought-steps {
   display: flex; flex-direction: column; gap: 14px;
