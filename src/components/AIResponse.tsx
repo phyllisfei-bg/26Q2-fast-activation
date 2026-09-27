@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { AIResponse as AIResponseData, Block, Span, ThoughtStep } from './aiChatResponses';
 import { AiStar } from './AiShield';
 
-const LOGO = `${import.meta.env.BASE_URL}bitgo-logo.svg`;
+const LOGO = `${import.meta.env.BASE_URL}bitgo-logo.png`;
 
 // ─── helpers ────────────────────────────────────────────────────────
 function spanText(s: Span): string {

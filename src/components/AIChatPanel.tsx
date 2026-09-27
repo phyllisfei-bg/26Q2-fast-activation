@@ -133,18 +133,24 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
     }
   }, []);
 
+  // 'Execute actions with full control' is an Ideal-only headline; drop it in Current mode.
+  const headlines = thinkStyle === 'current'
+    ? HEADLINES.filter(h => h !== 'Execute actions with full control')
+    : HEADLINES;
+
   // Cycle headlines in idle state
   useEffect(() => {
     if (!open || messages.length > 0) return;
+    setHeadlineIdx(i => i % headlines.length);   // keep index valid if the list shrank
     const id = setInterval(() => {
       setFading(true);
       setTimeout(() => {
-        setHeadlineIdx(i => (i + 1) % HEADLINES.length);
+        setHeadlineIdx(i => (i + 1) % headlines.length);
         setFading(false);
       }, 320);
     }, 3000);
     return () => clearInterval(id);
-  }, [open, messages.length]);
+  }, [open, messages.length, headlines.length]);
 
   // Collapse when closed
   useEffect(() => {
@@ -239,8 +245,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                 <line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
             </button>
-            <span className="ai-chat-name">AI Name</span>
-            <span className="ai-chat-beta-badge">Beta</span>
+            <span className="ai-chat-name">BitGo Assist</span>
             {/* Thinking-animation style switch */}
             <div className="ai-think-switch" role="tablist" aria-label="Thinking style">
               {(['ideal', 'current'] as const).map(s => (
@@ -297,8 +302,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             /* Agreement gate — shown once before the chat is usable */
             <div className="ai-chat-agreement">
               <div className="ai-chat-idle-hero">
-                <img className="ai-chat-hero-logo" src={`${import.meta.env.BASE_URL}bitgo-logo.svg`} alt="" aria-hidden="true" />
-                <p className={`ai-chat-headline${fading ? ' fading' : ''}`}>{HEADLINES[headlineIdx]}</p>
+                <img className="ai-chat-hero-logo" src={`${import.meta.env.BASE_URL}bitgo-logo.png`} alt="" aria-hidden="true" />
+                <p className={`ai-chat-headline${fading ? ' fading' : ''}`}>{headlines[headlineIdx % headlines.length]}</p>
               </div>
               <div className="ai-chat-gate-bottom">
               <div className="ai-chat-consent">
@@ -317,7 +322,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
                   </svg>
                   <div className="ai-chat-consent-text">
-                    <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>BitGo Terms</a> and the <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>[AI Name] Privacy Notice</a> apply
+                    <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>BitGo Terms</a> and the <a href="#" className="ai-chat-consent-link" onClick={e => e.preventDefault()}>BitGo Assist Privacy Notice</a> apply
                   </div>
                 </div>
               </div>
@@ -331,12 +336,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
               <div className="ai-chat-idle-hero">
                 <img
                   className="ai-chat-hero-logo"
-                  src={`${import.meta.env.BASE_URL}bitgo-logo.svg`}
+                  src={`${import.meta.env.BASE_URL}bitgo-logo.png`}
                   alt=""
                   aria-hidden="true"
                 />
                 <p className={`ai-chat-headline${fading ? ' fading' : ''}`}>
-                  {HEADLINES[headlineIdx]}
+                  {headlines[headlineIdx % headlines.length]}
                 </p>
               </div>
               {/* Prompts pinned to bottom, left-aligned */}
@@ -452,7 +457,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             )}
           </div>
           <p className="ai-chat-disclaimer">
-            [AI Name] can make mistakes. Secured by BitGo.{' '}
+            BitGo Assist can make mistakes. Secured by BitGo.{' '}
             <a href="#" className="ai-chat-disclaimer-link" onClick={e => e.preventDefault()}>Learn More</a>
           </p>
         </div>
