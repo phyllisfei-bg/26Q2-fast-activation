@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { AIResponse as AIResponseData, Block, Span, ThoughtStep } from './aiChatResponses';
+import { isInteractive } from './aiChatResponses';
 import { AiStar } from './AiShield';
 
 const LOGO = `${import.meta.env.BASE_URL}bitgo-logo.png`;
@@ -386,19 +387,146 @@ const ResponseActions: React.FC = () => (
   </div>
 );
 
+// ─── Interactive blocks (ideal mode only) ───────────────────────────
+// Small inline glyphs for action cards (this repo's feather-style, currentColor).
+function actionIcon(name?: string): React.ReactNode {
+  const p = (n: React.ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{n}</svg>;
+  switch (name) {
+    case 'wallet':  return p(<><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></>);
+    case 'deposit': return p(<><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></>);
+    case 'trade':   return p(<><line x1="9" y1="3" x2="9" y2="6"/><rect x="7" y="6" width="4" height="7" rx="1"/><line x1="9" y1="13" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="10"/><rect x="13" y="10" width="4" height="6" rx="1"/><line x1="15" y1="16" x2="15" y2="21"/></>);
+    case 'stake':   return p(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3"/><path d="M3 12c0 1.66 4 3 9 3"/></>);
+    case 'shield':  return p(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>);
+    case 'policy':
+    default:        return p(<><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></>);
+  }
+}
+const CheckIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+// One proposed action: approve → running → done (receipt) with Undo.
+const ActionCard: React.FC<{ item: Extract<Block, { kind: 'actions' }>['items'][number] }> = ({ item }) => {
+  const [state, setState] = useState<'idle' | 'running' | 'done'>('idle');
+  return (
+    <div className={`ai-resp-action-card ${state}`}>
+      <span className="ai-resp-action-icon">{state === 'done' ? CheckIcon : actionIcon(item.icon)}</span>
+      <div className="ai-resp-action-main">
+        <div className="ai-resp-action-title">{item.title}</div>
+        <div className="ai-resp-action-desc">{state === 'done' ? item.done : item.desc}</div>
+      </div>
+      {state === 'idle' && (
+        <button className="ai-resp-action-cta" onClick={() => { setState('running'); setTimeout(() => setState('done'), 1200); }}>{item.cta}</button>
+      )}
+      {state === 'running' && <span className="ai-resp-inline-spinner" aria-label="Running" />}
+      {state === 'done' && <button className="ai-resp-action-undo" onClick={() => setState('idle')}>Undo</button>}
+    </div>
+  );
+};
+
+const ActionsBlock: React.FC<{ block: Extract<Block, { kind: 'actions' }> }> = ({ block }) => (
+  <div className="ai-resp-actions-block">
+    {block.intro && <p className="ai-resp-paragraph">{block.intro}</p>}
+    <div className="ai-resp-action-list">
+      {block.items.map(it => <ActionCard key={it.id} item={it} />)}
+    </div>
+  </div>
+);
+
+// Selectable recommendation list with a batch apply.
+const OptionsBlock: React.FC<{ block: Extract<Block, { kind: 'options' }> }> = ({ block }) => {
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [applied, setApplied] = useState<'idle' | 'running' | 'done'>('idle');
+  const toggle = (id: string) => setSel(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const count = sel.size;
+  return (
+    <div className="ai-resp-options-block">
+      {block.intro && <div className="ai-resp-table-title">{block.intro}</div>}
+      <div className="ai-resp-option-list">
+        {block.options.map(o => {
+          const on = sel.has(o.id);
+          const locked = applied !== 'idle';
+          return (
+            <div key={o.id} role="button" tabIndex={locked ? -1 : 0} aria-pressed={on}
+              className={`ai-resp-option-card${on ? ' selected' : ''}${locked ? ' disabled' : ''}`}
+              onClick={() => !locked && toggle(o.id)}
+              onKeyDown={e => { if (!locked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(o.id); } }}>
+              <span className="ai-resp-option-check">{on ? CheckIcon : null}</span>
+              <span className="ai-resp-option-main">
+                <span className="ai-resp-option-title">{o.title}</span>
+                {o.desc && <span className="ai-resp-option-desc">{o.desc}</span>}
+                {o.rules && <ul className="ai-resp-option-rules">{o.rules.map((r, i) => <li key={i}>{r}</li>)}</ul>}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {applied === 'done' ? (
+        <div className="ai-resp-apply-receipt">{CheckIcon}<span>{(block.appliedText || 'Applied {n}.').replace('{n}', String(count))}</span></div>
+      ) : (
+        <button className="ai-resp-apply-btn" disabled={count === 0 || applied === 'running'}
+          onClick={() => { setApplied('running'); setTimeout(() => setApplied('done'), 1000); }}>
+          {applied === 'running' ? 'Applying…' : `${block.applyLabel || 'Apply selected'}${count ? ` (${count})` : ''}`}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const QuickReplies: React.FC<{ block: Extract<Block, { kind: 'quickReplies' }>; onQuickReply?: (t: string) => void }> = ({ block, onQuickReply }) => (
+  <div className="ai-resp-qr">
+    {block.replies.map((r, i) => (
+      <button key={i} className="ai-resp-qr-chip" onClick={() => onQuickReply?.(r)}>{r}</button>
+    ))}
+  </div>
+);
+
+// Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
+// stable component across the stream so selection/run state persists as later blocks arrive.
+const InteractiveBlock: React.FC<{ block: Block; onReveal: () => void; onQuickReply?: (t: string) => void }> = ({ block, onReveal, onQuickReply }) => {
+  const instant = block.kind === 'quickReplies';
+  const [shown, setShown] = useState(instant);
+  const doneRef = useRef(onReveal);
+  doneRef.current = onReveal;
+  useEffect(() => {
+    if (instant) { doneRef.current(); return; }
+    const id = setTimeout(() => { setShown(true); doneRef.current(); }, 700);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (!shown) {
+    return <div className="ai-resp-actions-block ai-stream-in"><SkLine w="45%" /><SkLine w="100%" h={46} mt={10} /><SkLine w="100%" h={46} mt={8} /></div>;
+  }
+  return (
+    <div className="ai-stream-in">
+      {block.kind === 'actions' && <ActionsBlock block={block} />}
+      {block.kind === 'options' && <OptionsBlock block={block} />}
+      {block.kind === 'quickReplies' && <QuickReplies block={block} onQuickReply={onQuickReply} />}
+    </div>
+  );
+};
+
 // ─── Full response — streams blocks in sequence ─────────────────────
-export const AIResponse: React.FC<{ data: AIResponseData; showThought?: boolean }> = ({ data, showThought = true }) => {
+export const AIResponse: React.FC<{
+  data: AIResponseData;
+  showThought?: boolean;
+  interactive?: boolean;                 // ideal mode → render interactive blocks
+  onQuickReply?: (text: string) => void; // quick-reply chip continues the conversation
+}> = ({ data, showThought = true, interactive = true, onQuickReply }) => {
+  // In non-ideal (current) mode, drop the interactive blocks entirely.
+  const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
   const advance = () => setDone(d => d + 1);
   return (
     <div className="ai-response">
       {showThought && <ThoughtProcess steps={data.thought} />}
-      {data.blocks.map((b, i) => {
+      {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}
-      {done >= data.blocks.length && <ResponseActions />}
+      {done >= blocks.length && <ResponseActions />}
     </div>
   );
 };

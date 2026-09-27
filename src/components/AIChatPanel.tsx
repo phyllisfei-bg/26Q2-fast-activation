@@ -379,7 +379,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onSave={(next) => editMessage(i, next)}
                     />
                   ) : (
-                    <AIResponse data={msg.response!} showThought={thinkStyle !== 'current'} />
+                    <AIResponse
+                      data={msg.response!}
+                      showThought={thinkStyle !== 'current'}
+                      interactive={thinkStyle === 'ideal'}
+                      onQuickReply={sendMessage}
+                    />
                   )}
                 </div>
               ))}

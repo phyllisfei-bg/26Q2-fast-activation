@@ -2051,6 +2051,90 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-action-btn:hover { background: var(--white-a50); color: var(--color-text); }
 
+/* ── Interactive response blocks (ideal mode): actions, options, quick replies ── */
+.ai-resp-actions-block { display: flex; flex-direction: column; gap: 8px; }
+.ai-resp-action-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-resp-action-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--color-border); background: var(--color-level1);
+  transition: border-color .15s, background .15s;
+}
+.ai-resp-action-card.done { border-color: rgba(74,222,128,.45); }
+.ai-resp-action-icon {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand-a100); color: var(--brand-500);
+}
+.ai-resp-action-card.done .ai-resp-action-icon { background: rgba(74,222,128,.14); color: var(--color-success); }
+.ai-resp-action-main { flex: 1; min-width: 0; }
+.ai-resp-action-title { font-size: 14px; font-weight: 500; color: var(--color-text); }
+.ai-resp-action-desc { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+.ai-resp-action-cta {
+  flex-shrink: 0; padding: 7px 14px; border-radius: 99px; border: none;
+  background: var(--brand-500); color: #fff; font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: background .14s;
+}
+.ai-resp-action-cta:hover { background: var(--brand-700); }
+.ai-resp-action-undo {
+  flex-shrink: 0; padding: 7px 12px; border-radius: 99px; background: transparent;
+  border: 1px solid var(--color-border-strong); color: var(--color-text-secondary);
+  font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.ai-resp-action-undo:hover { background: var(--white-a50); color: var(--color-text); }
+.ai-resp-inline-spinner {
+  width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%;
+  border: 2px solid var(--color-border); border-top-color: var(--brand-500);
+  animation: ai-inline-spin .7s linear infinite;
+}
+@keyframes ai-inline-spin { to { transform: rotate(360deg); } }
+
+/* Selectable recommendation options */
+.ai-resp-options-block { display: flex; flex-direction: column; gap: 12px; }
+.ai-resp-option-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-resp-option-card {
+  display: flex; align-items: flex-start; gap: 12px; text-align: left; width: 100%;
+  padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-level1);
+  font-family: inherit; transition: border-color .15s, background .15s;
+}
+.ai-resp-option-card:hover:not(.disabled) { border-color: var(--color-border-strong); }
+.ai-resp-option-card.selected { border-color: var(--brand-500); background: var(--brand-a100); }
+.ai-resp-option-card.disabled { cursor: default; }
+.ai-resp-option-check {
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  border: 1.5px solid var(--color-border-strong);
+}
+.ai-resp-option-card.selected .ai-resp-option-check { background: var(--brand-500); border-color: var(--brand-500); }
+.ai-resp-option-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ai-resp-option-title { font-size: 14px; font-weight: 500; color: var(--color-text); }
+.ai-resp-option-desc { font-size: 13px; color: var(--color-text-secondary); }
+.ai-resp-option-rules { margin: 4px 0 0; padding-left: 16px; display: flex; flex-direction: column; gap: 2px; }
+.ai-resp-option-rules li { font-size: 12px; color: var(--color-text-muted); list-style: disc; }
+.ai-resp-apply-btn {
+  align-self: flex-start; padding: 9px 18px; border-radius: 99px; border: none;
+  background: var(--brand-500); color: #fff; font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: background .14s, opacity .14s;
+}
+.ai-resp-apply-btn:hover:not(:disabled) { background: var(--brand-700); }
+.ai-resp-apply-btn:disabled { opacity: .5; cursor: not-allowed; }
+.ai-resp-apply-receipt {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  font-size: 13.5px; font-weight: 500; color: var(--color-success);
+}
+
+/* Quick-reply chips — clickable follow-ups */
+.ai-resp-qr { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.ai-resp-qr-chip {
+  padding: 7px 14px; border-radius: 99px; cursor: pointer; font-family: inherit;
+  border: 1px solid var(--color-border-strong); background: transparent;
+  color: var(--color-text-secondary); font-size: 13px; font-weight: 500;
+  transition: border-color .14s, color .14s, background .14s;
+}
+.ai-resp-qr-chip:hover { border-color: var(--brand-500); color: var(--brand-500); background: var(--brand-a100); }
+
 /* ── Input area ── */
 .ai-chat-input-wrap {
   flex-shrink: 0; padding: 10px 12px 12px;

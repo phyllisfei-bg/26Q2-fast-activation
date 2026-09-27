@@ -15,6 +15,27 @@ export type Span =
   | { mono: string }                        // monospace w/ background
   | { ref: string; href?: string };         // clickable reference chip e.g. "BitGo Docs +2"
 
+// Icon keyword for action cards → an inline glyph (see AIResponse `actionIcon`).
+export type ActionIcon = 'wallet' | 'deposit' | 'trade' | 'policy' | 'shield' | 'stake';
+
+// A single proposed agent action: user approves it, it "runs", then leaves a receipt.
+export interface ActionItem {
+  id: string;
+  icon?: ActionIcon;
+  title: string;
+  desc: string;
+  cta: string;     // button label, e.g. "Create wallet"
+  done: string;    // receipt line shown after it runs, e.g. "Hot wallet created"
+}
+
+// A selectable recommendation in an `options` block.
+export interface OptionItem {
+  id: string;
+  title: string;
+  desc?: string;
+  rules?: string[];   // optional bullet rules shown inside the card
+}
+
 export type Block =
   | { kind: 'heading'; text: string; underline?: boolean }
   | { kind: 'paragraph'; spans: Span[] }
@@ -22,7 +43,20 @@ export type Block =
   | { kind: 'dataCards'; cards: { label: string; value: string }[] }
   | { kind: 'table'; title?: string; columns: string[]; rows: string[][] }
   | { kind: 'chart'; title?: string; bars: { label: string; value: number }[] }
-  | { kind: 'followup'; text: string };
+  | { kind: 'followup'; text: string }
+  // ── Interactive (ideal mode only) ──
+  // Agent actions the assistant can run on the user's behalf (approve → run → receipt + undo).
+  | { kind: 'actions'; intro?: string; items: ActionItem[] }
+  // A selectable list of recommendations with a batch apply. `appliedText` may contain "{n}".
+  | { kind: 'options'; intro?: string; multi?: boolean; applyLabel?: string; appliedText?: string; options: OptionItem[] }
+  // Clickable follow-up prompts that continue the conversation.
+  | { kind: 'quickReplies'; replies: string[] };
+
+// Block kinds that are interactive — rendered only in ideal mode.
+export const INTERACTIVE_KINDS = ['actions', 'options', 'quickReplies'] as const;
+export function isInteractive(kind: Block['kind']): boolean {
+  return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
+}
 
 export interface AIResponse {
   thought: ThoughtStep[];
@@ -57,8 +91,8 @@ const RESPONSE_CAPABILITIES: AIResponse = {
       ],
     },
     { kind: 'heading', text: 'Try Asking' },
-    { kind: 'paragraph', spans: ['For example: ', { mono: 'Show me my recent transactions' }, ', ', { mono: 'How do I create a wallet?' }, ', or ', { mono: 'Summarize my key metrics' }, '.'] },
     { kind: 'followup', text: 'What would you like to start with?' },
+    { kind: 'quickReplies', replies: ['Show me my recent transactions', 'Recommend policies for my enterprise', 'Fund my Go Account', 'How do I create a wallet?'] },
   ],
 };
 
@@ -84,7 +118,61 @@ const RESPONSE_TEXT: AIResponse = {
         { bold: 'Spending policies', rest: ' — set approval thresholds before any funds can move.' },
       ],
     },
-    { kind: 'followup', text: 'Want me to start the wallet creation flow for you?' },
+    {
+      kind: 'actions',
+      intro: 'I can set these up for you:',
+      items: [
+        { id: 'create-hot', icon: 'wallet', title: 'Create a hot wallet', desc: 'Multi-signature, ready for everyday transfers.', cta: 'Create wallet', done: 'Hot wallet created and ready to fund.' },
+        { id: 'add-policy', icon: 'policy', title: 'Add a spending policy', desc: 'Require approvals above a threshold before funds move.', cta: 'Set policy', done: 'Spending policy added to the wallet.' },
+      ],
+    },
+    { kind: 'quickReplies', replies: ['Recommend policies for my enterprise', 'What assets are supported?', 'Fund my Go Account'] },
+  ],
+};
+
+// Variant: agent actions — "Fund my Go Account" / deposit
+const RESPONSE_DEPOSIT: AIResponse = {
+  thought: [
+    { header: 'Checking your Go Account', desc: 'Confirmed your account is verified and ready to receive funds.' },
+    { header: 'Preparing funding options', desc: 'Gathered the fastest cash and crypto deposit paths for your tier.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['You can fund your Go Account in a couple of minutes. I can start a deposit for you now.'] },
+    {
+      kind: 'actions',
+      items: [
+        { id: 'deposit-cash', icon: 'deposit', title: 'Deposit cash', desc: 'Wire USD to your Go Account.', cta: 'Start deposit', done: 'Wire instructions generated — check your email.' },
+        { id: 'deposit-crypto', icon: 'deposit', title: 'Deposit crypto', desc: 'Send BTC, ETH, or 700+ assets to a deposit address.', cta: 'Get address', done: 'Deposit address generated and copied.' },
+      ],
+    },
+    { kind: 'followup', text: 'Once funds land, I can help you place your first trade.' },
+    { kind: 'quickReplies', replies: ['What is the minimum deposit?', 'Show supported assets', 'Make my first trade'] },
+  ],
+};
+
+// Variant: selectable recommendations — "Recommend policies"
+const RESPONSE_POLICIES: AIResponse = {
+  thought: [
+    { header: 'Reviewing your activity', desc: 'Analyzed transfer patterns, counterparties, and approval history.' },
+    { header: 'Matching to policy templates', desc: 'Compared your profile against common enterprise controls.' },
+    { header: 'Ranking recommendations', desc: 'Prioritized the highest-impact policies for your enterprise.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['Based on your enterprise profile, here are three policies I recommend. Select the ones you want and I will apply them.'] },
+    {
+      kind: 'options',
+      intro: 'Recommended policies',
+      multi: true,
+      applyLabel: 'Apply selected policies',
+      appliedText: 'Applied {n} policies to your enterprise.',
+      options: [
+        { id: 'p1', title: 'Withdrawal approval threshold', desc: 'Require multiple approvals for large withdrawals.', rules: ['Trigger: Withdrawal over $50,000', 'Require: 2 of 3 approvers'] },
+        { id: 'p2', title: 'Daily velocity limit', desc: 'Cap total outbound value per day.', rules: ['Trigger: Daily outbound over $250,000', 'Action: Block and notify admins'] },
+        { id: 'p3', title: 'Whitelist-only withdrawals', desc: 'Allow withdrawals only to approved addresses.', rules: ['Trigger: Withdrawal to a new address', 'Action: Require whitelist first'] },
+      ],
+    },
+    { kind: 'followup', text: 'Want me to simulate their impact on last month of activity?' },
+    { kind: 'quickReplies', replies: ['Simulate the impact', 'Explain the velocity limit', 'Show my recent transactions'] },
   ],
 };
 
@@ -180,6 +268,8 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
+  if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
+  if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
   if (/\b(chart|trend|trends|graph|growth|over time)\b/.test(p)) return RESPONSE_CHART;
   if (/\b(transactions?|history|activity|recent|table|rows?)\b/.test(p)) return RESPONSE_TABLE;
   if (/\b(data|insights?|metrics?|summary|balance|balances|portfolio|total|how much)\b/.test(p)) return RESPONSE_DATA;
