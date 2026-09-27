@@ -181,7 +181,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
     setMessages([...baseMessages, { role: 'user', content: text }]);
     setPending(response);
     setMode('thinking');
-    const thinkMs = response.thought.length * 800 + 600;   // let thought steps stream first
+    const thinkMs = 15000;   // fixed 15s thinking window
     setTimeout(() => {
       setMessages(prev => [...prev, { role: 'assistant', response }]);
       setPending(null);

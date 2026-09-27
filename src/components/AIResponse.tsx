@@ -104,9 +104,9 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
       i += 1;
       if (i >= steps.length) return;                      // hold on the last step until thinking ends
       setActiveStep(i);
-      timer = setTimeout(tick, 1150);
+      timer = setTimeout(tick, 3000);
     };
-    timer = setTimeout(tick, 1150);
+    timer = setTimeout(tick, 3000);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [thinking, variant, steps]);
 
