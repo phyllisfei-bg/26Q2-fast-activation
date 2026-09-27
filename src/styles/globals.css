@@ -63,7 +63,7 @@ body {
 
 .nav-item {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
-  border-radius: 8px; cursor: pointer; font-size: 13.5px;
+  border-radius: 8px; cursor: pointer; font-size: 14px;
   color: var(--color-text-secondary); transition: background .12s, color .12s;
   user-select: none; text-decoration: none;
 }
@@ -93,7 +93,7 @@ body {
 .security-submenu-item {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
   border-radius: 8px; cursor: pointer; color: var(--color-text-secondary);
-  font-size: 13.5px; transition: background .12s, color .12s; user-select: none;
+  font-size: 14px; transition: background .12s, color .12s; user-select: none;
 }
 .security-submenu-item:hover { background: var(--color-level2); color: var(--color-text); }
 .security-submenu-item.active { background: var(--brand-a100); color: var(--brand-500); }
@@ -1852,11 +1852,15 @@ body.light-mode .ai-chat-bubble.user {
   0%, 100% { filter: drop-shadow(0 -1px 2px rgba(22,71,219,.45)) drop-shadow(0 1px 2px rgba(255,139,102,.45)); }
   50%      { filter: drop-shadow(0 -1px 5px rgba(22,71,219,.9))  drop-shadow(0 1px 5px rgba(255,139,102,.9)); }
 }
+/* Shared 3s beat: glow pulse, gradient rotation, and the text shimmer all run
+   on the same period so the loader and the text animate in sync. */
 .ai-chat-thinking-star {
   flex-shrink: 0;
   overflow: visible;
-  animation: ai-star-glow 1.6s ease-in-out infinite;
+  animation: ai-star-glow 3s ease-in-out infinite;
 }
+/* Sync the loader's gradient rotation to the beat (the shield hover stays 2.4s). */
+.ai-chat-thinking-star .ai-shield-grad.spinning { animation-duration: 3s; }
 
 /* ── Streaming + skeleton animations ── */
 @keyframes ai-stream-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -1907,7 +1911,7 @@ body.light-mode .ai-chat-bubble.user {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: ai-think-shimmer 1.8s linear infinite;
+  animation: ai-think-shimmer 3s linear infinite;
 }
 @keyframes ai-think-shimmer {
   from { background-position: 120% 0; }
@@ -1917,7 +1921,7 @@ body.light-mode .ai-chat-bubble.user {
    star+text alignment; just a non-interactive cursor + a slower shimmer here. */
 .ai-thought-live { cursor: default; }
 .ai-thought-label.thinking.ai-thought-live-step {
-  animation: ai-think-shimmer 2.6s linear infinite, ai-step-swap .34s ease;
+  animation: ai-think-shimmer 3s linear infinite, ai-step-swap .34s ease;
 }
 @keyframes ai-step-swap {
   from { opacity: 0; transform: translateY(3px); }
