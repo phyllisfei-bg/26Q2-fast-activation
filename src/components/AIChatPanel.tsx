@@ -99,6 +99,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const [multiline, setMultiline]     = useState(false); // input wrapped past one line
   const [agreed, setAgreed]           = useState(false); // dismissed the data-privacy agreement gate
   const [pending, setPending]         = useState<AIResponseData | null>(null); // response being "thought about"
+  const [notice, setNotice]           = useState<{ text: string; onUndo: () => void } | null>(null); // "policy applied" bar above input
   // Thinking-animation style: 'ideal' = star + streaming steps list; 'current' = star + a
   // single shimmering line that swaps to each step name (no steps list). User-switchable.
   const [thinkStyle, setThinkStyle]   = useState<'ideal' | 'current'>(
@@ -156,6 +157,15 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   useEffect(() => {
     if (!open) setExpanded(false);
   }, [open]);
+
+  // Auto-dismiss the "policy applied" notification after a few seconds.
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(id);
+  }, [notice]);
+  // Clear the notification when the chat closes or resets.
+  useEffect(() => { if (!open) setNotice(null); }, [open]);
 
   // Auto-grow the input; decide compact/expanded from a hidden mirror measured at a
   // FIXED compact width (so the layout switch can't change the wrap point and oscillate).
@@ -384,6 +394,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       showThought={thinkStyle !== 'current'}
                       interactive={thinkStyle === 'ideal'}
                       onQuickReply={sendMessage}
+                      onNotify={setNotice}
                     />
                   )}
                 </div>
@@ -396,6 +407,21 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             </div>
           )}
         </div>
+
+        {/* ── Inline notification (e.g. "policy applied") — sits just above the composer ── */}
+        {agreed && notice && (
+          <div className="ai-chat-notice">
+            <span className="ai-chat-notice-text">{notice.text}</span>
+            <div className="ai-chat-notice-actions">
+              <button className="ai-chat-notice-undo" onClick={() => { notice.onUndo(); setNotice(null); }}>Undo</button>
+              <button className="ai-chat-notice-close" aria-label="Dismiss" onClick={() => setNotice(null)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Input (hidden until the agreement gate is dismissed) ── */}
         {agreed && (

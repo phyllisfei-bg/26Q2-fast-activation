@@ -28,12 +28,14 @@ export interface ActionItem {
   done: string;    // receipt line shown after it runs, e.g. "Hot wallet created"
 }
 
-// A selectable recommendation in an `options` block.
-export interface OptionItem {
+// A recommended policy card. Each card supports Edit / Simulate / Preview / Apply.
+export interface PolicyCard {
   id: string;
-  title: string;
-  desc?: string;
-  rules?: string[];   // optional bullet rules shown inside the card
+  name: string;
+  desc: string;
+  rules: string[];                                       // rule lines shown in the card
+  detail?: { label: string; value: string }[];          // Preview: key/value policy detail
+  sim?: { impact: string; tiles: { label: string; value: string }[] };  // Simulate: impact summary
 }
 
 export type Block =
@@ -47,13 +49,13 @@ export type Block =
   // ── Interactive (ideal mode only) ──
   // Agent actions the assistant can run on the user's behalf (approve → run → receipt + undo).
   | { kind: 'actions'; intro?: string; items: ActionItem[] }
-  // A selectable list of recommendations with a batch apply. `appliedText` may contain "{n}".
-  | { kind: 'options'; intro?: string; multi?: boolean; applyLabel?: string; appliedText?: string; options: OptionItem[] }
+  // Recommended policy cards, each with Edit / Simulate / Preview / Apply.
+  | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
 
 // Block kinds that are interactive — rendered only in ideal mode.
-export const INTERACTIVE_KINDS = ['actions', 'options', 'quickReplies'] as const;
+export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'quickReplies'] as const;
 export function isInteractive(kind: Block['kind']): boolean {
   return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
 }
@@ -150,7 +152,7 @@ const RESPONSE_DEPOSIT: AIResponse = {
   ],
 };
 
-// Variant: selectable recommendations — "Recommend policies"
+// Variant: recommended policy cards — "Recommend policies"
 const RESPONSE_POLICIES: AIResponse = {
   thought: [
     { header: 'Reviewing your activity', desc: 'Analyzed transfer patterns, counterparties, and approval history.' },
@@ -158,17 +160,74 @@ const RESPONSE_POLICIES: AIResponse = {
     { header: 'Ranking recommendations', desc: 'Prioritized the highest-impact policies for your enterprise.' },
   ],
   blocks: [
-    { kind: 'paragraph', spans: ['Based on your enterprise profile, here are three policies I recommend. Select the ones you want and I will apply them.'] },
+    { kind: 'paragraph', spans: ['Based on your enterprise profile, here are three policies I recommend. You can edit, simulate, preview, or apply each one.'] },
     {
-      kind: 'options',
+      kind: 'policyCards',
       intro: 'Recommended policies',
-      multi: true,
-      applyLabel: 'Apply selected policies',
-      appliedText: 'Applied {n} policies to your enterprise.',
-      options: [
-        { id: 'p1', title: 'Withdrawal approval threshold', desc: 'Require multiple approvals for large withdrawals.', rules: ['Trigger: Withdrawal over $50,000', 'Require: 2 of 3 approvers'] },
-        { id: 'p2', title: 'Daily velocity limit', desc: 'Cap total outbound value per day.', rules: ['Trigger: Daily outbound over $250,000', 'Action: Block and notify admins'] },
-        { id: 'p3', title: 'Whitelist-only withdrawals', desc: 'Allow withdrawals only to approved addresses.', rules: ['Trigger: Withdrawal to a new address', 'Action: Require whitelist first'] },
+      cards: [
+        {
+          id: 'p1',
+          name: 'Withdrawal approval threshold',
+          desc: 'Require multiple approvals for large withdrawals.',
+          rules: ['Trigger: Withdrawal over $50,000', 'Require: 2 of 3 approvers'],
+          detail: [
+            { label: 'Trigger', value: 'Withdrawal over $50,000' },
+            { label: 'Condition', value: 'Any asset, any wallet' },
+            { label: 'Action', value: 'Require 2 of 3 approvers' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Adds an approval step to large withdrawals without blocking any legitimate transfers.',
+            tiles: [
+              { label: 'Transactions affected', value: '18' },
+              { label: 'Would block', value: '0' },
+              { label: 'Extra approvals', value: '18' },
+              { label: 'Auto-approved', value: '96%' },
+            ],
+          },
+        },
+        {
+          id: 'p2',
+          name: 'Daily velocity limit',
+          desc: 'Cap total outbound value per day.',
+          rules: ['Trigger: Daily outbound over $250,000', 'Action: Block and notify admins'],
+          detail: [
+            { label: 'Trigger', value: 'Daily outbound over $250,000' },
+            { label: 'Condition', value: 'Rolling 24-hour window' },
+            { label: 'Action', value: 'Block and notify admins' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Would have flagged 2 high-volume days last month for manual review.',
+            tiles: [
+              { label: 'Transactions affected', value: '41' },
+              { label: 'Would block', value: '3' },
+              { label: 'Would flag', value: '2 days' },
+              { label: 'Auto-approved', value: '92%' },
+            ],
+          },
+        },
+        {
+          id: 'p3',
+          name: 'Whitelist-only withdrawals',
+          desc: 'Allow withdrawals only to approved addresses.',
+          rules: ['Trigger: Withdrawal to a new address', 'Action: Require whitelist first'],
+          detail: [
+            { label: 'Trigger', value: 'Withdrawal to a new address' },
+            { label: 'Condition', value: 'Address not on allowlist' },
+            { label: 'Action', value: 'Require whitelist approval first' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Would have required whitelisting for 5 new destinations last month.',
+            tiles: [
+              { label: 'Transactions affected', value: '27' },
+              { label: 'Would block', value: '5' },
+              { label: 'New addresses', value: '5' },
+              { label: 'Auto-approved', value: '81%' },
+            ],
+          },
+        },
       ],
     },
     { kind: 'followup', text: 'Want me to simulate their impact on last month of activity?' },

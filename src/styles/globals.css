@@ -2135,6 +2135,102 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-qr-chip:hover { border-color: var(--brand-500); color: var(--brand-500); background: var(--brand-a100); }
 
+/* Policy cards — each supports Edit / Simulate / Preview / Apply */
+.ai-resp-policy-block { display: flex; flex-direction: column; gap: 12px; }
+.ai-resp-policy-list { display: flex; flex-direction: column; gap: 10px; }
+.ai-resp-policy-card {
+  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-level1);
+  padding: 14px; display: flex; flex-direction: column; gap: 12px; transition: border-color .15s;
+}
+.ai-resp-policy-card.applied { border-color: rgba(74,222,128,.45); }
+.ai-resp-policy-head { display: flex; align-items: flex-start; gap: 12px; }
+.ai-resp-policy-icon {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand-a100); color: var(--brand-500);
+}
+.ai-resp-policy-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ai-resp-policy-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; font-weight: 600; color: var(--color-text); }
+.ai-resp-policy-badge {
+  font-size: 10.5px; font-weight: 600; padding: 1px 8px; border-radius: 99px;
+  color: var(--color-text-muted); background: var(--color-level3); border: 1px solid var(--color-border);
+}
+.ai-resp-policy-badge.applied { color: var(--color-success); background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.4); }
+.ai-resp-policy-desc { font-size: 13px; color: var(--color-text-secondary); }
+/* Action button group at the bottom of the card */
+.ai-resp-policy-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.ai-resp-pill-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px;
+  cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary);
+  transition: background .14s, color .14s, border-color .14s;
+}
+.ai-resp-pill-btn:hover:not(:disabled) { background: var(--white-a50); color: var(--color-text); }
+.ai-resp-pill-btn.on { border-color: var(--brand-500); color: var(--brand-500); background: var(--brand-a100); }
+.ai-resp-pill-btn.primary { background: var(--brand-500); border-color: var(--brand-500); color: #fff; }
+.ai-resp-pill-btn.primary:hover:not(:disabled) { background: var(--brand-700); }
+.ai-resp-pill-btn:disabled { opacity: .55; cursor: default; }
+.ai-resp-pill-btn.primary:disabled { opacity: 1; background: rgba(74,222,128,.16); border-color: rgba(74,222,128,.4); color: var(--color-success); }
+
+/* Inline expandable panels: Simulate / Preview / Edit */
+.ai-resp-policy-panel {
+  border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-level2);
+  padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.ai-resp-policy-panel-title { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted); }
+.ai-resp-policy-panel-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+.ai-resp-sim-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.ai-resp-sim-tile { border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-level1); padding: 10px 12px; }
+.ai-resp-sim-tile-value { font-size: 18px; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+.ai-resp-sim-tile-label { font-size: 11.5px; color: var(--color-text-muted); margin-top: 2px; }
+.ai-resp-kv { display: flex; flex-direction: column; gap: 8px; }
+.ai-resp-kv-row { display: flex; gap: 12px; font-size: 13px; }
+.ai-resp-kv-label { flex: 0 0 92px; color: var(--color-text-muted); }
+.ai-resp-kv-value { flex: 1; min-width: 0; color: var(--color-text); }
+.ai-resp-edit-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+.ai-resp-edit-input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--color-border-strong); background: var(--color-level1);
+  color: var(--color-text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .14s;
+}
+.ai-resp-edit-input:focus { border-color: var(--brand-500); }
+.ai-resp-edit-rule { display: flex; align-items: center; gap: 8px; }
+.ai-resp-edit-rm {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--color-border);
+  background: transparent; color: var(--color-text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background .14s, color .14s;
+}
+.ai-resp-edit-rm:hover { background: var(--white-a50); color: var(--color-danger); }
+.ai-resp-edit-add {
+  align-self: flex-start; padding: 5px 10px; border-radius: 8px; border: 1px dashed var(--color-border-strong);
+  background: transparent; color: var(--color-text-secondary); font-size: 12.5px; font-family: inherit; cursor: pointer;
+  transition: border-color .14s, color .14s;
+}
+.ai-resp-edit-add:hover { border-color: var(--brand-500); color: var(--brand-500); }
+.ai-resp-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Inline notification above the composer (e.g. "policy applied") — Figma Platform-AI 6600:9714 */
+.ai-chat-notice {
+  flex-shrink: 0; margin: 8px 12px 0;
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 10px 9px 14px; border-radius: 10px;
+  background: var(--color-level2); border: 1px solid var(--color-border);
+  animation: ai-stream-in .26s ease both;
+}
+.ai-chat-notice-text { flex: 1; min-width: 0; font-size: 13px; color: var(--color-text-secondary); }
+.ai-chat-notice-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.ai-chat-notice-undo {
+  padding: 5px 12px; border-radius: 99px; border: none; background: transparent;
+  color: var(--brand-500); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background .14s;
+}
+.ai-chat-notice-undo:hover { background: var(--brand-a100); }
+.ai-chat-notice-close {
+  width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent;
+  color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .14s, color .14s;
+}
+.ai-chat-notice-close:hover { background: var(--white-a50); color: var(--color-text); }
+
 /* ── Input area ── */
 .ai-chat-input-wrap {
   flex-shrink: 0; padding: 10px 12px 12px;
