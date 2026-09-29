@@ -502,9 +502,10 @@ const PolicyCardItem: React.FC<{
       {showSim && card.sim && <PolicySim sim={card.sim} />}
 
       <div className="ai-resp-policy-actions">
-        <button className="ai-resp-pill-btn" onClick={() => onEditPolicy?.(toDraft(card))}>{iEdit} Edit</button>
+        {/* Icon-only utilities (tooltip via title), then the text decision CTAs */}
+        <button className="ai-resp-pill-btn icon" aria-label="Edit policy" title="Edit policy" onClick={() => onEditPolicy?.(toDraft(card))}>{iEdit}</button>
+        <button className="ai-resp-pill-btn icon" aria-label="Preview policy" title="Preview policy" onClick={() => onPreviewPolicy?.(toDraft(card))}>{iEye}</button>
         {card.sim && <button className={`ai-resp-pill-btn${showSim ? ' on' : ''}`} onClick={() => setShowSim(s => !s)}>{iSim} Simulate</button>}
-        <button className="ai-resp-pill-btn" onClick={() => onPreviewPolicy?.(toDraft(card))}>{iEye} Preview</button>
         <button className="ai-resp-pill-btn primary" onClick={apply} disabled={applied}>{iCheck2} {applied ? 'Applied' : 'Apply'}</button>
       </div>
     </div>

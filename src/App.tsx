@@ -16,6 +16,7 @@ import { FlowPage }           from './pages/FlowPage';
 import { WalletCreationFlow } from './flows/WalletCreationFlow';
 import { DepositModal }       from './flows/DepositModal';
 import { PolicyModal }        from './flows/PolicyModal';
+import { PolicyDrawer }       from './flows/PolicyDrawer';
 import { KYBFlow }            from './flows/KYBFlow';
 import { KYCFlow }            from './flows/KYCFlow';
 import { AIChatPanel }        from './components/AIChatPanel';
@@ -87,8 +88,9 @@ export default function App() {
   const [depositOpen,       setDepositOpen]       = React.useState(false);
   const [depositTab,        setDepositTab]        = React.useState<'cash' | 'crypto'>('cash');
   const [policyOpen,        setPolicyOpen]        = React.useState(false);
-  const [policyEntry,       setPolicyEntry]       = React.useState<'recommended' | 'manual' | 'preview'>('recommended');
-  const [policyTarget,      setPolicyTarget]      = React.useState<PolicyDraft | null>(null);
+  const [drawerOpen,        setDrawerOpen]        = React.useState(false);
+  const [drawerEntry,       setDrawerEntry]       = React.useState<'preview' | 'edit'>('preview');
+  const [drawerPolicy,      setDrawerPolicy]      = React.useState<PolicyDraft | null>(null);
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
@@ -231,11 +233,11 @@ export default function App() {
     snackRef.current?.show('Team management coming soon.', false);
   };
   const handleCalloutPolicies = () => {
-    setPolicyTarget(null); setPolicyEntry('recommended'); setPolicyOpen(true);
+    setPolicyOpen(true);
   };
-  // AI chat → product policy surfaces
-  const openPolicyPreview = (p: PolicyDraft) => { setPolicyTarget(p); setPolicyEntry('preview'); setPolicyOpen(true); };
-  const openPolicyEdit    = (p: PolicyDraft) => { setPolicyTarget(p); setPolicyEntry('manual');  setPolicyOpen(true); };
+  // AI chat → product policy detail drawer (mirrors the real app workflow)
+  const openPolicyPreview = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('preview'); setDrawerOpen(true); };
+  const openPolicyEdit    = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('edit');    setDrawerOpen(true); };
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
@@ -362,14 +364,19 @@ export default function App() {
 
       <PolicyModal
         open={policyOpen}
-        entry={policyEntry}
-        policy={policyTarget}
         onClose={() => setPolicyOpen(false)}
         onPublished={() => {
           setPolicyOpen(false);
           // markDone('firstPolicy');  // Not in spec — uncomment if firstPolicy flow returns.
-          snackRef.current?.show(policyTarget ? 'Policy updated.' : 'Policies published.', false);
+          snackRef.current?.show('Policies published.', false);
         }}
+      />
+
+      <PolicyDrawer
+        open={drawerOpen}
+        policy={drawerPolicy}
+        entry={drawerEntry}
+        onClose={() => setDrawerOpen(false)}
       />
 
       <GoAccountPage
