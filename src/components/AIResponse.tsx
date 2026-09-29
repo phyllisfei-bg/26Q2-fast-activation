@@ -536,88 +536,45 @@ const QuickReplies: React.FC<{ block: Extract<Block, { kind: 'quickReplies' }>; 
   </div>
 );
 
-// Step 1 of the whitelist flow: offer to open the page, then continue with `followup`.
-const WhitelistNav: React.FC<{
-  block: Extract<Block, { kind: 'whitelistNav' }>;
+// A decision action lifted to a pinned card above the composer (see AIChatPanel).
+export interface PinnedAction {
+  key: string;
+  title: string;
+  subtext?: string;
+  buttons: { label: string; onClick: () => void }[];
+}
+
+interface ActionCbs {
   onQuickReply?: (t: string) => void;
   onNavigateWhitelist?: () => void;
-}> = ({ block, onQuickReply, onNavigateWhitelist }) => {
-  const [done, setDone] = useState(false);
-  return (
-    <div className="ai-resp-nav-actions">
-      <button className="ai-resp-action-cta" disabled={done}
-        onClick={() => { setDone(true); onNavigateWhitelist?.(); onQuickReply?.(block.followup); }}>
-        {block.openLabel}
-      </button>
-      <button className="ai-resp-pill-btn" disabled={done}
-        onClick={() => { setDone(true); onQuickReply?.('Not right now.'); }}>
-        {block.dismissLabel}
-      </button>
-    </div>
-  );
-};
+  onConsolidate?: (mode: 'manual' | 'auto') => void;
+}
 
-// An action gated by a permission level the user picks from a dropdown
-// (Claude "take action" pattern: choose how much autonomy, then run).
-const PERM_OPTS = [
-  { id: 'manual' as const, label: 'Manual', sub: 'You approve every consolidation.' },
-  { id: 'auto' as const, label: 'Auto', sub: 'I consolidate all duplicates for you.' },
-];
-const PermissionAction: React.FC<{ block: Extract<Block, { kind: 'permissionAction' }>; onConsolidate?: (mode: 'manual' | 'auto') => void }> = ({ block, onConsolidate }) => {
-  const [mode, setMode] = useState<'manual' | 'auto'>('manual');
-  const [open, setOpen] = useState(false);
-  const [started, setStarted] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const cur = PERM_OPTS.find(o => o.id === mode)!;
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (!wrapRef.current?.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
-  return (
-    <div className="ai-resp-perm-card">
-      <div className="ai-resp-perm-head">
-        <span className="ai-resp-action-icon">{actionIcon('shield')}</span>
-        <div className="ai-resp-action-main">
-          <div className="ai-resp-action-title">{block.title}</div>
-          <div className="ai-resp-action-desc">{block.desc}</div>
-        </div>
-      </div>
-      <div className="ai-resp-perm-row">
-        <div className="ai-resp-perm-dd" ref={wrapRef}>
-          <span className="ai-resp-perm-dd-caption">Permission</span>
-          <button type="button" className="ai-resp-perm-dd-btn" aria-haspopup="listbox" aria-expanded={open}
-            disabled={started} onClick={() => setOpen(o => !o)}>
-            {cur.label}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
-              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .16s' }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          {open && (
-            <div className="ai-resp-perm-menu" role="listbox">
-              {PERM_OPTS.map(o => (
-                <button key={o.id} type="button" role="option" aria-selected={mode === o.id}
-                  className={`ai-resp-perm-menu-item${mode === o.id ? ' selected' : ''}`}
-                  onClick={() => { setMode(o.id); setOpen(false); }}>
-                  <span className="ai-resp-perm-menu-check">{mode === o.id ? CheckIcon : null}</span>
-                  <span className="ai-resp-perm-menu-main">
-                    <span className="ai-resp-perm-menu-label">{o.label}</span>
-                    <span className="ai-resp-perm-menu-sub">{o.sub}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <button className="ai-resp-action-cta" disabled={started}
-          onClick={() => { setStarted(true); onConsolidate?.(mode); }}>
-          {started ? 'Opening…' : block.cta}
-        </button>
-      </div>
-    </div>
-  );
+// Build the pinned-action descriptor for the whitelist decision blocks.
+function buildPinnedAction(block: Block, cbs: ActionCbs): PinnedAction | null {
+  if (block.kind === 'whitelistNav') {
+    return {
+      key: 'whitelist-open',
+      title: block.title,
+      subtext: block.subtext,
+      buttons: [
+        { label: 'Approve', onClick: () => { cbs.onNavigateWhitelist?.(); cbs.onQuickReply?.(block.followup); } },
+        { label: 'Deny', onClick: () => { /* dismiss only */ } },
+      ],
+    };
+  }
+  if (block.kind === 'permissionAction') {
+    return {
+      key: 'whitelist-consolidate',
+      title: block.title,
+      subtext: block.desc,
+      buttons: [
+        { label: 'Consolidate manually', onClick: () => cbs.onConsolidate?.('manual') },
+        { label: 'Consolidate automatically', onClick: () => cbs.onConsolidate?.('auto') },
+      ],
+    };
+  }
+  return null;
 };
 
 // Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
@@ -631,17 +588,29 @@ const InteractiveBlock: React.FC<{
   onPreviewPolicy?: (p: PolicyDraft) => void;
   onConsolidate?: (mode: 'manual' | 'auto') => void;
   onNavigateWhitelist?: () => void;
-}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
-  const instant = block.kind === 'quickReplies';
+  onPinAction?: (a: PinnedAction) => void;
+}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction }) => {
+  // Whitelist decision blocks are lifted to a pinned card above the composer, not inline.
+  const pinned = block.kind === 'whitelistNav' || block.kind === 'permissionAction';
+  const instant = block.kind === 'quickReplies' || pinned;
   const [shown, setShown] = useState(instant);
   const doneRef = useRef(onReveal);
   doneRef.current = onReveal;
+  const pinRef = useRef(onPinAction);
+  pinRef.current = onPinAction;
   useEffect(() => {
+    if (pinned) {
+      const a = buildPinnedAction(block, { onQuickReply, onNavigateWhitelist, onConsolidate });
+      if (a) pinRef.current?.(a);
+      doneRef.current();
+      return;
+    }
     if (instant) { doneRef.current(); return; }
     const id = setTimeout(() => { setShown(true); doneRef.current(); }, 700);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  if (pinned) return null;
   if (!shown) {
     return <div className="ai-resp-actions-block ai-stream-in"><SkLine w="45%" /><SkLine w="100%" h={46} mt={10} /><SkLine w="100%" h={46} mt={8} /></div>;
   }
@@ -649,8 +618,6 @@ const InteractiveBlock: React.FC<{
     <div className="ai-stream-in">
       {block.kind === 'actions' && <ActionsBlock block={block} />}
       {block.kind === 'policyCards' && <PolicyCards block={block} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />}
-      {block.kind === 'permissionAction' && <PermissionAction block={block} onConsolidate={onConsolidate} />}
-      {block.kind === 'whitelistNav' && <WhitelistNav block={block} onQuickReply={onQuickReply} onNavigateWhitelist={onNavigateWhitelist} />}
       {block.kind === 'quickReplies' && <QuickReplies block={block} onQuickReply={onQuickReply} />}
     </div>
   );
@@ -667,7 +634,8 @@ export const AIResponse: React.FC<{
   onPreviewPolicy?: (p: PolicyDraft) => void; // Preview → product policy detail
   onConsolidate?: (mode: 'manual' | 'auto') => void; // whitelist consolidation
   onNavigateWhitelist?: () => void;           // step 1 → open the Whitelist page
-}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
+  onPinAction?: (a: PinnedAction) => void;    // lift a decision action above the composer
+}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
@@ -677,7 +645,7 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} onNavigateWhitelist={onNavigateWhitelist} />;
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} onNavigateWhitelist={onNavigateWhitelist} onPinAction={onPinAction} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}

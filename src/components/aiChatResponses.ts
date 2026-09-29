@@ -53,8 +53,8 @@ export type Block =
   | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
   // An action gated by a permission level (manual vs auto) the user picks first.
   | { kind: 'permissionAction'; title: string; desc: string; cta: string }
-  // Step 1 of the whitelist flow: offer to open the page, then continue with `followup`.
-  | { kind: 'whitelistNav'; title: string; openLabel: string; dismissLabel: string; followup: string }
+  // Step 1 of the whitelist flow: offer to open the page (Approve/Deny), then continue with `followup`.
+  | { kind: 'whitelistNav'; title: string; subtext: string; followup: string }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
 
@@ -251,8 +251,7 @@ const RESPONSE_WHITELIST_NAV: AIResponse = {
     {
       kind: 'whitelistNav',
       title: 'Open Whitelist Destinations',
-      openLabel: 'Open the page',
-      dismissLabel: 'Not now',
+      subtext: 'I can open your Whitelist Destinations and review them with you.',
       followup: 'Show me the destinations overview',
     },
   ],
@@ -282,7 +281,7 @@ const RESPONSE_WHITELIST_INSIGHT: AIResponse = {
     {
       kind: 'permissionAction',
       title: 'Consolidate duplicate addresses',
-      desc: 'Merge each duplicated address down to one clear label. Choose how much you want me to handle.',
+      desc: 'Merge each duplicated address into one clear label. I can do it with your approval, or handle it end to end.',
       cta: 'Consolidate',
     },
     { kind: 'quickReplies', replies: ['Show all destinations', 'What counts as a duplicate?'] },
