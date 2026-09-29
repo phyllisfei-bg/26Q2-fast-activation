@@ -23,7 +23,7 @@ import { SearchPopover }      from './components/SearchPopover';
 import type { KYCScreen }     from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
-import type { TaskId, UserRole, WalletInfo } from './types';
+import type { TaskId, UserRole, WalletInfo, PolicyDraft } from './types';
 import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
@@ -87,6 +87,8 @@ export default function App() {
   const [depositOpen,       setDepositOpen]       = React.useState(false);
   const [depositTab,        setDepositTab]        = React.useState<'cash' | 'crypto'>('cash');
   const [policyOpen,        setPolicyOpen]        = React.useState(false);
+  const [policyEntry,       setPolicyEntry]       = React.useState<'recommended' | 'manual' | 'preview'>('recommended');
+  const [policyTarget,      setPolicyTarget]      = React.useState<PolicyDraft | null>(null);
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
@@ -229,8 +231,11 @@ export default function App() {
     snackRef.current?.show('Team management coming soon.', false);
   };
   const handleCalloutPolicies = () => {
-    setPolicyOpen(true);
+    setPolicyTarget(null); setPolicyEntry('recommended'); setPolicyOpen(true);
   };
+  // AI chat → product policy surfaces
+  const openPolicyPreview = (p: PolicyDraft) => { setPolicyTarget(p); setPolicyEntry('preview'); setPolicyOpen(true); };
+  const openPolicyEdit    = (p: PolicyDraft) => { setPolicyTarget(p); setPolicyEntry('manual');  setPolicyOpen(true); };
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
@@ -357,11 +362,13 @@ export default function App() {
 
       <PolicyModal
         open={policyOpen}
+        entry={policyEntry}
+        policy={policyTarget}
         onClose={() => setPolicyOpen(false)}
         onPublished={() => {
           setPolicyOpen(false);
           // markDone('firstPolicy');  // Not in spec — uncomment if firstPolicy flow returns.
-          snackRef.current?.show('Policies published.', false);
+          snackRef.current?.show(policyTarget ? 'Policy updated.' : 'Policies published.', false);
         }}
       />
 
@@ -379,6 +386,8 @@ export default function App() {
         onClose={() => setChatOpen(false)}
         initialPrompt={chatInitialPrompt}
         onInitialPromptConsumed={() => setChatInitialPrompt(null)}
+        onEditPolicy={openPolicyEdit}
+        onPreviewPolicy={openPolicyPreview}
       />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 

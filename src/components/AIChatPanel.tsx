@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AIResponse, ThoughtProcess } from './AIResponse';
 import { pickResponse, SAMPLE_PROMPTS } from './aiChatResponses';
 import type { AIResponse as AIResponseData } from './aiChatResponses';
+import type { PolicyDraft } from '../types';
 
 type ChatMode = 'idle' | 'thinking';
 
@@ -16,6 +17,8 @@ interface AIChatPanelProps {
   onClose: () => void;
   initialPrompt?: string | null;     // auto-sent when the chat opens from a search prompt
   onInitialPromptConsumed?: () => void;
+  onEditPolicy?: (p: PolicyDraft) => void;      // chat → product policy editor
+  onPreviewPolicy?: (p: PolicyDraft) => void;   // chat → product policy detail view
 }
 
 const HEADLINES = [
@@ -89,7 +92,7 @@ const UserMessage: React.FC<{
   );
 };
 
-export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed }) => {
+export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy }) => {
   const [expanded, setExpanded]       = useState(false);
   const [mode, setMode]               = useState<ChatMode>('idle');
   const [messages, setMessages]       = useState<Message[]>([]);
@@ -395,6 +398,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       interactive={thinkStyle === 'ideal'}
                       onQuickReply={sendMessage}
                       onNotify={setNotice}
+                      onEditPolicy={onEditPolicy}
+                      onPreviewPolicy={onPreviewPolicy}
                     />
                   )}
                 </div>

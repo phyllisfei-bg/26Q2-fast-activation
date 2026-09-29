@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { AIResponse as AIResponseData, Block, Span, ThoughtStep } from './aiChatResponses';
 import { isInteractive } from './aiChatResponses';
+import type { PolicyDraft } from '../types';
 import { AiStar } from './AiShield';
 
 const LOGO = `${import.meta.env.BASE_URL}bitgo-logo.png`;
@@ -441,9 +442,18 @@ const iEdit = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 const iSim  = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>;
 const iEye  = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const iCheck2 = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
-const iTrash = <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
-
 type PolicyCardData = Extract<Block, { kind: 'policyCards' }>['cards'][number];
+
+// Build the PolicyDraft handed to the product PolicyModal (preview / edit).
+function toDraft(card: PolicyCardData): PolicyDraft {
+  const detail = card.detail && card.detail.length
+    ? card.detail
+    : card.rules.map(r => {
+        const i = r.indexOf(':');
+        return i >= 0 ? { label: r.slice(0, i).trim(), value: r.slice(i + 1).trim() } : { label: 'Rule', value: r };
+      });
+  return { name: card.name, desc: card.desc, detail };
+}
 
 // Simulate → inline impact summary + metric tiles.
 const PolicySim: React.FC<{ sim: NonNullable<PolicyCardData['sim']> }> = ({ sim }) => (
@@ -461,63 +471,19 @@ const PolicySim: React.FC<{ sim: NonNullable<PolicyCardData['sim']> }> = ({ sim 
   </div>
 );
 
-// Preview → read-only key/value policy detail.
-const PolicyPreview: React.FC<{ detail?: { label: string; value: string }[]; rules: string[] }> = ({ detail, rules }) => {
-  const rows = detail && detail.length
-    ? detail
-    : rules.map(r => ({ label: r.split(':')[0], value: r.split(':').slice(1).join(':').trim() }));
-  return (
-    <div className="ai-resp-policy-panel ai-stream-in">
-      <div className="ai-resp-policy-panel-title">Policy detail</div>
-      <div className="ai-resp-kv">
-        {rows.map((d, i) => (
-          <div key={i} className="ai-resp-kv-row">
-            <span className="ai-resp-kv-label">{d.label}</span>
-            <span className="ai-resp-kv-value">{d.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Edit → inline form (name + rule list) with Save/Cancel.
-const PolicyEdit: React.FC<{ name: string; rules: string[]; onSave: (name: string, rules: string[]) => void; onCancel: () => void }> = ({ name, rules, onSave, onCancel }) => {
-  const [dName, setDName] = useState(name);
-  const [dRules, setDRules] = useState<string[]>(rules.length ? rules : ['']);
-  return (
-    <div className="ai-resp-policy-panel ai-stream-in">
-      <div className="ai-resp-policy-panel-title">Edit policy</div>
-      <div className="ai-resp-edit-label">Policy name</div>
-      <input className="ai-resp-edit-input" value={dName} onChange={e => setDName(e.target.value)} />
-      <div className="ai-resp-edit-label">Rules</div>
-      {dRules.map((r, i) => (
-        <div key={i} className="ai-resp-edit-rule">
-          <input className="ai-resp-edit-input" value={r} placeholder="Rule" onChange={e => setDRules(rs => rs.map((x, idx) => idx === i ? e.target.value : x))} />
-          <button className="ai-resp-edit-rm" aria-label="Remove rule" onClick={() => setDRules(rs => rs.filter((_, idx) => idx !== i))}>{iTrash}</button>
-        </div>
-      ))}
-      <button className="ai-resp-edit-add" onClick={() => setDRules(rs => [...rs, ''])}>+ Add rule</button>
-      <div className="ai-resp-edit-actions">
-        <button className="ai-resp-pill-btn" onClick={onCancel}>Cancel</button>
-        <button className="ai-resp-pill-btn primary" onClick={() => onSave(dName.trim() || name, dRules.map(r => r.trim()).filter(Boolean))}>Save</button>
-      </div>
-    </div>
-  );
-};
-
-// A single recommended policy card with an Edit / Simulate / Preview / Apply button group.
-const PolicyCardItem: React.FC<{ card: PolicyCardData; onNotify?: (n: NoticePayload) => void }> = ({ card, onNotify }) => {
-  const [panel, setPanel] = useState<'none' | 'sim' | 'preview' | 'edit'>('none');
+// A recommended policy card. Simulate is inline (AI impact preview); Edit and Preview
+// open the real product PolicyModal; Apply raises the "policy applied" notification.
+const PolicyCardItem: React.FC<{
+  card: PolicyCardData;
+  onNotify?: (n: NoticePayload) => void;
+  onEditPolicy?: (p: PolicyDraft) => void;
+  onPreviewPolicy?: (p: PolicyDraft) => void;
+}> = ({ card, onNotify, onEditPolicy, onPreviewPolicy }) => {
+  const [showSim, setShowSim] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [edited, setEdited] = useState(false);
-  const [name, setName] = useState(card.name);
-  const [rules, setRules] = useState<string[]>(card.rules);
-  const toggle = (p: 'sim' | 'preview' | 'edit') => setPanel(cur => cur === p ? 'none' : p);
   const apply = () => {
     setApplied(true);
-    setPanel('none');
-    onNotify?.({ text: `Applied "${name}" policy.`, onUndo: () => setApplied(false) });
+    onNotify?.({ text: `Applied "${card.name}" policy.`, onUndo: () => setApplied(false) });
   };
   return (
     <div className={`ai-resp-policy-card${applied ? ' applied' : ''}`}>
@@ -525,38 +491,38 @@ const PolicyCardItem: React.FC<{ card: PolicyCardData; onNotify?: (n: NoticePayl
         <span className="ai-resp-policy-icon">{actionIcon('policy')}</span>
         <div className="ai-resp-policy-main">
           <div className="ai-resp-policy-title">
-            <span>{name}</span>
-            {edited && <span className="ai-resp-policy-badge">Edited</span>}
+            <span>{card.name}</span>
             {applied && <span className="ai-resp-policy-badge applied">Applied</span>}
           </div>
           <div className="ai-resp-policy-desc">{card.desc}</div>
-          <ul className="ai-resp-option-rules">{rules.map((r, i) => <li key={i}>{r}</li>)}</ul>
+          <ul className="ai-resp-option-rules">{card.rules.map((r, i) => <li key={i}>{r}</li>)}</ul>
         </div>
       </div>
 
-      {panel === 'sim' && card.sim && <PolicySim sim={card.sim} />}
-      {panel === 'preview' && <PolicyPreview detail={card.detail} rules={rules} />}
-      {panel === 'edit' && (
-        <PolicyEdit name={name} rules={rules}
-          onCancel={() => setPanel('none')}
-          onSave={(n, rs) => { setName(n); setRules(rs); setEdited(true); setPanel('none'); }} />
-      )}
+      {showSim && card.sim && <PolicySim sim={card.sim} />}
 
       <div className="ai-resp-policy-actions">
-        <button className={`ai-resp-pill-btn${panel === 'edit' ? ' on' : ''}`} onClick={() => toggle('edit')}>{iEdit} Edit</button>
-        {card.sim && <button className={`ai-resp-pill-btn${panel === 'sim' ? ' on' : ''}`} onClick={() => toggle('sim')}>{iSim} Simulate</button>}
-        <button className={`ai-resp-pill-btn${panel === 'preview' ? ' on' : ''}`} onClick={() => toggle('preview')}>{iEye} Preview</button>
+        <button className="ai-resp-pill-btn" onClick={() => onEditPolicy?.(toDraft(card))}>{iEdit} Edit</button>
+        {card.sim && <button className={`ai-resp-pill-btn${showSim ? ' on' : ''}`} onClick={() => setShowSim(s => !s)}>{iSim} Simulate</button>}
+        <button className="ai-resp-pill-btn" onClick={() => onPreviewPolicy?.(toDraft(card))}>{iEye} Preview</button>
         <button className="ai-resp-pill-btn primary" onClick={apply} disabled={applied}>{iCheck2} {applied ? 'Applied' : 'Apply'}</button>
       </div>
     </div>
   );
 };
 
-const PolicyCards: React.FC<{ block: Extract<Block, { kind: 'policyCards' }>; onNotify?: (n: NoticePayload) => void }> = ({ block, onNotify }) => (
+const PolicyCards: React.FC<{
+  block: Extract<Block, { kind: 'policyCards' }>;
+  onNotify?: (n: NoticePayload) => void;
+  onEditPolicy?: (p: PolicyDraft) => void;
+  onPreviewPolicy?: (p: PolicyDraft) => void;
+}> = ({ block, onNotify, onEditPolicy, onPreviewPolicy }) => (
   <div className="ai-resp-policy-block">
     {block.intro && <div className="ai-resp-table-title">{block.intro}</div>}
     <div className="ai-resp-policy-list">
-      {block.cards.map(c => <PolicyCardItem key={c.id} card={c} onNotify={onNotify} />)}
+      {block.cards.map(c => (
+        <PolicyCardItem key={c.id} card={c} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />
+      ))}
     </div>
   </div>
 );
@@ -571,7 +537,14 @@ const QuickReplies: React.FC<{ block: Extract<Block, { kind: 'quickReplies' }>; 
 
 // Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
 // stable component across the stream so selection/run state persists as later blocks arrive.
-const InteractiveBlock: React.FC<{ block: Block; onReveal: () => void; onQuickReply?: (t: string) => void; onNotify?: (n: NoticePayload) => void }> = ({ block, onReveal, onQuickReply, onNotify }) => {
+const InteractiveBlock: React.FC<{
+  block: Block;
+  onReveal: () => void;
+  onQuickReply?: (t: string) => void;
+  onNotify?: (n: NoticePayload) => void;
+  onEditPolicy?: (p: PolicyDraft) => void;
+  onPreviewPolicy?: (p: PolicyDraft) => void;
+}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy }) => {
   const instant = block.kind === 'quickReplies';
   const [shown, setShown] = useState(instant);
   const doneRef = useRef(onReveal);
@@ -588,7 +561,7 @@ const InteractiveBlock: React.FC<{ block: Block; onReveal: () => void; onQuickRe
   return (
     <div className="ai-stream-in">
       {block.kind === 'actions' && <ActionsBlock block={block} />}
-      {block.kind === 'policyCards' && <PolicyCards block={block} onNotify={onNotify} />}
+      {block.kind === 'policyCards' && <PolicyCards block={block} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />}
       {block.kind === 'quickReplies' && <QuickReplies block={block} onQuickReply={onQuickReply} />}
     </div>
   );
@@ -601,7 +574,9 @@ export const AIResponse: React.FC<{
   interactive?: boolean;                 // ideal mode → render interactive blocks
   onQuickReply?: (text: string) => void; // quick-reply chip continues the conversation
   onNotify?: (n: NoticePayload) => void; // policy applied → notification above the composer
-}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify }) => {
+  onEditPolicy?: (p: PolicyDraft) => void;    // Edit → product policy editor
+  onPreviewPolicy?: (p: PolicyDraft) => void; // Preview → product policy detail
+}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
@@ -611,7 +586,7 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} />;
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import type { PolicyDraft } from '../types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onPublished: () => void;
+  entry?: PolicyView;         // which view to open (default 'recommended')
+  policy?: PolicyDraft | null; // policy to preview / edit (from the AI chat)
 }
 
-type PolicyView = 'recommended' | 'manual';
+type PolicyView = 'recommended' | 'manual' | 'preview';
 
 const POLICY_PREVIEWS: Record<string, string> = {
   spending: 'Cap the maximum amount that can be spent in a single day or per transaction. Exceeding the limit triggers an alert or blocks the transaction.',
@@ -68,16 +71,22 @@ const CheckIcon = () => (
   </svg>
 );
 
-export const PolicyModal: React.FC<Props> = ({ open, onClose, onPublished }) => {
+export const PolicyModal: React.FC<Props> = ({ open, onClose, onPublished, entry = 'recommended', policy }) => {
   const [view, setView]         = useState<PolicyView>('recommended');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [policyName, setPolicyName] = useState('');
   const [policyType, setPolicyType] = useState('spending');
+  const [editing, setEditing]   = useState(false);   // manual view opened to edit an existing policy
 
   useEffect(() => {
-    if (open) { setView('recommended'); setSelected(new Set()); setExpanded(new Set()); }
-  }, [open]);
+    if (!open) return;
+    setView(entry);
+    setSelected(new Set());
+    setExpanded(new Set());
+    if (entry === 'manual' && policy) { setEditing(true); setPolicyName(policy.name); }
+    else { setEditing(false); if (entry !== 'manual') setPolicyName(''); }
+  }, [open, entry, policy]);
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
@@ -233,12 +242,43 @@ export const PolicyModal: React.FC<Props> = ({ open, onClose, onPublished }) => 
         </div>
       )}
 
-      {/* Manual Policy Builder */}
+      {/* Policy detail (preview of a specific policy handed from the AI chat) */}
+      {view === 'preview' && policy && (
+        <div className="wf-overlay open" onClick={handleOverlayClick}>
+          <div className="wf-modal" style={{ maxWidth: 480 }}>
+            <div className="wf-modal-header">
+              <div className="wf-modal-title">{policy.name}</div>
+              <button className="wf-modal-close" onClick={onClose}>✕</button>
+            </div>
+            <div className="wf-modal-body">
+              {policy.desc && (
+                <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: '0 0 18px' }}>{policy.desc}</p>
+              )}
+              <div className="policy-rec-meta" style={{ marginTop: 0 }}>
+                {policy.detail.map(row => (
+                  <div key={row.label} className="policy-rec-meta-row">
+                    <span className="policy-rec-meta-label">{row.label}</span>
+                    {/scope/i.test(row.label)
+                      ? <span className="policy-rec-meta-pill">{row.value}</span>
+                      : <span className="policy-rec-meta-value">{row.value}</span>}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+                <button className="wf-btn-cancel" onClick={onClose}>Close</button>
+                <button className="wf-btn-primary" onClick={() => { setEditing(true); setPolicyName(policy.name); setView('manual'); }}>Edit Policy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Policy Builder / Editor */}
       {view === 'manual' && open && (
         <div className="wf-overlay open" onClick={handleOverlayClick}>
           <div className="wf-modal">
             <div className="wf-modal-header">
-              <div className="wf-modal-title">Create a Policy</div>
+              <div className="wf-modal-title">{editing ? 'Edit Policy' : 'Create a Policy'}</div>
               <button className="wf-modal-close" onClick={onClose}>✕</button>
             </div>
             <div className="wf-modal-body">
@@ -277,7 +317,7 @@ export const PolicyModal: React.FC<Props> = ({ open, onClose, onPublished }) => 
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 <button className="wf-btn-cancel" onClick={onClose}>Cancel</button>
-                <button className="wf-btn-primary" onClick={handleCreate}>Create Policy</button>
+                <button className="wf-btn-primary" onClick={handleCreate}>{editing ? 'Save Policy' : 'Create Policy'}</button>
               </div>
             </div>
           </div>
