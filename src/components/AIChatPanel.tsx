@@ -20,6 +20,7 @@ interface AIChatPanelProps {
   onEditPolicy?: (p: PolicyDraft) => void;      // chat → product policy editor
   onPreviewPolicy?: (p: PolicyDraft) => void;   // chat → product policy detail view
   onConsolidate?: (mode: 'manual' | 'auto') => void; // chat → whitelist consolidation
+  onNavigateWhitelist?: () => void;                  // chat → open the Whitelist page (chat stays)
 }
 
 const HEADLINES = [
@@ -93,7 +94,7 @@ const UserMessage: React.FC<{
   );
 };
 
-export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
+export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
   const [expanded, setExpanded]       = useState(false);
   const [mode, setMode]               = useState<ChatMode>('idle');
   const [messages, setMessages]       = useState<Message[]>([]);
@@ -201,7 +202,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
     setMessages([...baseMessages, { role: 'user', content: text }]);
     setPending(response);
     setMode('thinking');
-    const thinkMs = 15000;   // fixed 15s thinking window
+    const thinkMs = response.thinkMs ?? 15000;   // per-response window (default 15s)
     setTimeout(() => {
       setMessages(prev => [...prev, { role: 'assistant', response }]);
       setPending(null);
@@ -402,6 +403,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onEditPolicy={onEditPolicy}
                       onPreviewPolicy={onPreviewPolicy}
                       onConsolidate={onConsolidate}
+                      onNavigateWhitelist={onNavigateWhitelist}
                     />
                   )}
                 </div>

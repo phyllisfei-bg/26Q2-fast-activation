@@ -53,11 +53,13 @@ export type Block =
   | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
   // An action gated by a permission level (manual vs auto) the user picks first.
   | { kind: 'permissionAction'; title: string; desc: string; cta: string }
+  // Step 1 of the whitelist flow: offer to open the page, then continue with `followup`.
+  | { kind: 'whitelistNav'; title: string; openLabel: string; dismissLabel: string; followup: string }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
 
 // Block kinds that are interactive — rendered only in ideal mode.
-export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'permissionAction', 'quickReplies'] as const;
+export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'permissionAction', 'whitelistNav', 'quickReplies'] as const;
 export function isInteractive(kind: Block['kind']): boolean {
   return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
 }
@@ -65,6 +67,7 @@ export function isInteractive(kind: Block['kind']): boolean {
 export interface AIResponse {
   thought: ThoughtStep[];
   blocks: Block[];
+  thinkMs?: number;   // override the thinking-window duration (default 15000)
 }
 
 // Shared sample prompts — used by both the chat idle state and the search modal.
@@ -237,12 +240,30 @@ const RESPONSE_POLICIES: AIResponse = {
   ],
 };
 
-// Variant: whitelist destinations overview + consolidation offer
-const RESPONSE_WHITELIST: AIResponse = {
+// Whitelist flow — STEP 1: offer to open the page (no insight yet). Short think.
+const RESPONSE_WHITELIST_NAV: AIResponse = {
+  thinkMs: 1800,
   thought: [
-    { header: 'Scanning whitelist destinations', desc: 'Pulled every whitelisted withdrawal address across your wallets.' },
-    { header: 'Checking status and labels', desc: 'Grouped addresses by status and looked for repeated labels.' },
-    { header: 'Summarizing findings', desc: 'Highlighted what is healthy and what needs attention.' },
+    { header: 'Locating your whitelist destinations', desc: 'Finding the right page for you.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['Your whitelisted destinations live on the Whitelist Destinations page. Want me to open it and take a look?'] },
+    {
+      kind: 'whitelistNav',
+      title: 'Open Whitelist Destinations',
+      openLabel: 'Open the page',
+      dismissLabel: 'Not now',
+      followup: 'Show me the destinations overview',
+    },
+  ],
+};
+
+// Whitelist flow — STEP 2: the insight + consolidation offer. Short think, different content.
+const RESPONSE_WHITELIST_INSIGHT: AIResponse = {
+  thinkMs: 3200,
+  thought: [
+    { header: 'Reviewing statuses and labels', desc: 'Grouping addresses and spotting repeated labels.' },
+    { header: 'Summarizing what stands out', desc: 'Pulling together what needs your attention.' },
   ],
   blocks: [
     { kind: 'paragraph', spans: ['Here is an overview of your whitelisted withdrawal destinations.'] },
@@ -255,7 +276,7 @@ const RESPONSE_WHITELIST: AIResponse = {
       ],
     },
     { kind: 'heading', text: 'Status' },
-    { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' and none are pending or expired — every address is ready to receive withdrawals.'] },
+    { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' — every address is ready to receive withdrawals.'] },
     { kind: 'heading', text: 'Worth noticing', underline: true },
     { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one. Consolidating each address into a single, clear label removes that ambiguity and makes the right destination easy to find.'] },
     {
@@ -360,7 +381,8 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
-  if (/\bdestinations?\b|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST;
+  if (/destinations overview/.test(p)) return RESPONSE_WHITELIST_INSIGHT;
+  if (/\bdestinations?\b|whitelist|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST_NAV;
   if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
   if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
   if (/\b(chart|trend|trends|graph|growth|over time)\b/.test(p)) return RESPONSE_CHART;

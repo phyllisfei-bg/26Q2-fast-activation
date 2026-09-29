@@ -536,14 +536,45 @@ const QuickReplies: React.FC<{ block: Extract<Block, { kind: 'quickReplies' }>; 
   </div>
 );
 
-// An action gated by a permission level the user picks first (manual vs auto).
+// Step 1 of the whitelist flow: offer to open the page, then continue with `followup`.
+const WhitelistNav: React.FC<{
+  block: Extract<Block, { kind: 'whitelistNav' }>;
+  onQuickReply?: (t: string) => void;
+  onNavigateWhitelist?: () => void;
+}> = ({ block, onQuickReply, onNavigateWhitelist }) => {
+  const [done, setDone] = useState(false);
+  return (
+    <div className="ai-resp-nav-actions">
+      <button className="ai-resp-action-cta" disabled={done}
+        onClick={() => { setDone(true); onNavigateWhitelist?.(); onQuickReply?.(block.followup); }}>
+        {block.openLabel}
+      </button>
+      <button className="ai-resp-pill-btn" disabled={done}
+        onClick={() => { setDone(true); onQuickReply?.('Not right now.'); }}>
+        {block.dismissLabel}
+      </button>
+    </div>
+  );
+};
+
+// An action gated by a permission level the user picks from a dropdown
+// (Claude "take action" pattern: choose how much autonomy, then run).
+const PERM_OPTS = [
+  { id: 'manual' as const, label: 'Manual', sub: 'You approve every consolidation.' },
+  { id: 'auto' as const, label: 'Auto', sub: 'I consolidate all duplicates for you.' },
+];
 const PermissionAction: React.FC<{ block: Extract<Block, { kind: 'permissionAction' }>; onConsolidate?: (mode: 'manual' | 'auto') => void }> = ({ block, onConsolidate }) => {
   const [mode, setMode] = useState<'manual' | 'auto'>('manual');
+  const [open, setOpen] = useState(false);
   const [started, setStarted] = useState(false);
-  const OPTIONS = [
-    { id: 'manual' as const, label: 'Manual', sub: 'I prepare each change; you approve every consolidation.' },
-    { id: 'auto' as const, label: 'Auto', sub: 'I consolidate every duplicate for you, one after another.' },
-  ];
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const cur = PERM_OPTS.find(o => o.id === mode)!;
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => { if (!wrapRef.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
   return (
     <div className="ai-resp-perm-card">
       <div className="ai-resp-perm-head">
@@ -553,23 +584,38 @@ const PermissionAction: React.FC<{ block: Extract<Block, { kind: 'permissionActi
           <div className="ai-resp-action-desc">{block.desc}</div>
         </div>
       </div>
-      <div className="ai-resp-perm-label">Permission level</div>
-      <div className="ai-resp-perm-options">
-        {OPTIONS.map(o => (
-          <button key={o.id} type="button" className={`ai-resp-perm-opt${mode === o.id ? ' selected' : ''}`}
-            aria-pressed={mode === o.id} onClick={() => setMode(o.id)}>
-            <span className="ai-resp-perm-radio" />
-            <span className="ai-resp-perm-opt-main">
-              <span className="ai-resp-perm-opt-title">{o.label}</span>
-              <span className="ai-resp-perm-opt-sub">{o.sub}</span>
-            </span>
+      <div className="ai-resp-perm-row">
+        <div className="ai-resp-perm-dd" ref={wrapRef}>
+          <span className="ai-resp-perm-dd-caption">Permission</span>
+          <button type="button" className="ai-resp-perm-dd-btn" aria-haspopup="listbox" aria-expanded={open}
+            disabled={started} onClick={() => setOpen(o => !o)}>
+            {cur.label}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
+              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .16s' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
-        ))}
+          {open && (
+            <div className="ai-resp-perm-menu" role="listbox">
+              {PERM_OPTS.map(o => (
+                <button key={o.id} type="button" role="option" aria-selected={mode === o.id}
+                  className={`ai-resp-perm-menu-item${mode === o.id ? ' selected' : ''}`}
+                  onClick={() => { setMode(o.id); setOpen(false); }}>
+                  <span className="ai-resp-perm-menu-check">{mode === o.id ? CheckIcon : null}</span>
+                  <span className="ai-resp-perm-menu-main">
+                    <span className="ai-resp-perm-menu-label">{o.label}</span>
+                    <span className="ai-resp-perm-menu-sub">{o.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button className="ai-resp-action-cta" disabled={started}
+          onClick={() => { setStarted(true); onConsolidate?.(mode); }}>
+          {started ? 'Opening…' : block.cta}
+        </button>
       </div>
-      <button className="ai-resp-action-cta ai-resp-perm-cta" disabled={started}
-        onClick={() => { setStarted(true); onConsolidate?.(mode); }}>
-        {started ? 'Opening Whitelist Destinations…' : `${block.cta} · ${mode === 'auto' ? 'Auto' : 'Manual'}`}
-      </button>
     </div>
   );
 };
@@ -584,7 +630,8 @@ const InteractiveBlock: React.FC<{
   onEditPolicy?: (p: PolicyDraft) => void;
   onPreviewPolicy?: (p: PolicyDraft) => void;
   onConsolidate?: (mode: 'manual' | 'auto') => void;
-}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
+  onNavigateWhitelist?: () => void;
+}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
   const instant = block.kind === 'quickReplies';
   const [shown, setShown] = useState(instant);
   const doneRef = useRef(onReveal);
@@ -603,6 +650,7 @@ const InteractiveBlock: React.FC<{
       {block.kind === 'actions' && <ActionsBlock block={block} />}
       {block.kind === 'policyCards' && <PolicyCards block={block} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />}
       {block.kind === 'permissionAction' && <PermissionAction block={block} onConsolidate={onConsolidate} />}
+      {block.kind === 'whitelistNav' && <WhitelistNav block={block} onQuickReply={onQuickReply} onNavigateWhitelist={onNavigateWhitelist} />}
       {block.kind === 'quickReplies' && <QuickReplies block={block} onQuickReply={onQuickReply} />}
     </div>
   );
@@ -618,7 +666,8 @@ export const AIResponse: React.FC<{
   onEditPolicy?: (p: PolicyDraft) => void;    // Edit → product policy editor
   onPreviewPolicy?: (p: PolicyDraft) => void; // Preview → product policy detail
   onConsolidate?: (mode: 'manual' | 'auto') => void; // whitelist consolidation
-}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
+  onNavigateWhitelist?: () => void;           // step 1 → open the Whitelist page
+}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
@@ -628,7 +677,7 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} />;
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} onNavigateWhitelist={onNavigateWhitelist} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}

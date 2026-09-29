@@ -239,11 +239,12 @@ export default function App() {
   // AI chat → product policy detail drawer (mirrors the real app workflow)
   const openPolicyPreview = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('preview'); setDrawerOpen(true); };
   const openPolicyEdit    = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('edit');    setDrawerOpen(true); };
+  // AI chat → open the Whitelist page in-shell (chat stays mounted so the flow can continue)
+  const openWhitelist = () => { setSecurityPage('destinations'); };
   // AI chat → whitelist destinations consolidation (manual = interactive, auto = hands-off)
   const handleConsolidate = (mode: 'manual' | 'auto') => {
     setConsolidateReq({ mode, ver: Date.now() });
-    setChatOpen(false);
-    navigateTo('destinations');
+    setSecurityPage('destinations');
   };
 
   if (topPage === 'flow') return <FlowPage />;
@@ -321,7 +322,7 @@ export default function App() {
         />
         <div className="workspace">
           {securityPage === 'destinations' ? (
-            <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
+            <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} />
           ) : (
             <Dashboard
               isLight={isLight}
@@ -403,6 +404,7 @@ export default function App() {
         onEditPolicy={openPolicyEdit}
         onPreviewPolicy={openPolicyPreview}
         onConsolidate={handleConsolidate}
+        onNavigateWhitelist={openWhitelist}
       />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 
