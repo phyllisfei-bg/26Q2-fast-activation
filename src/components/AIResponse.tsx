@@ -505,7 +505,7 @@ const PolicyCardItem: React.FC<{
         {/* Icon-only utilities (tooltip via title), then the text decision CTAs */}
         <button className="ai-resp-pill-btn icon" aria-label="Edit policy" title="Edit policy" onClick={() => onEditPolicy?.(toDraft(card))}>{iEdit}</button>
         <button className="ai-resp-pill-btn icon" aria-label="Preview policy" title="Preview policy" onClick={() => onPreviewPolicy?.(toDraft(card))}>{iEye}</button>
-        {card.sim && <button className={`ai-resp-pill-btn${showSim ? ' on' : ''}`} onClick={() => setShowSim(s => !s)}>{iSim} Simulate</button>}
+        {card.sim && <button className={`ai-resp-pill-btn icon${showSim ? ' on' : ''}`} aria-label="Simulate impact" title="Simulate impact" onClick={() => setShowSim(s => !s)}>{iSim}</button>}
         <button className="ai-resp-pill-btn primary" onClick={apply} disabled={applied}>{iCheck2} {applied ? 'Applied' : 'Apply'}</button>
       </div>
     </div>
@@ -536,6 +536,44 @@ const QuickReplies: React.FC<{ block: Extract<Block, { kind: 'quickReplies' }>; 
   </div>
 );
 
+// An action gated by a permission level the user picks first (manual vs auto).
+const PermissionAction: React.FC<{ block: Extract<Block, { kind: 'permissionAction' }>; onConsolidate?: (mode: 'manual' | 'auto') => void }> = ({ block, onConsolidate }) => {
+  const [mode, setMode] = useState<'manual' | 'auto'>('manual');
+  const [started, setStarted] = useState(false);
+  const OPTIONS = [
+    { id: 'manual' as const, label: 'Manual', sub: 'I prepare each change; you approve every consolidation.' },
+    { id: 'auto' as const, label: 'Auto', sub: 'I consolidate every duplicate for you, one after another.' },
+  ];
+  return (
+    <div className="ai-resp-perm-card">
+      <div className="ai-resp-perm-head">
+        <span className="ai-resp-action-icon">{actionIcon('shield')}</span>
+        <div className="ai-resp-action-main">
+          <div className="ai-resp-action-title">{block.title}</div>
+          <div className="ai-resp-action-desc">{block.desc}</div>
+        </div>
+      </div>
+      <div className="ai-resp-perm-label">Permission level</div>
+      <div className="ai-resp-perm-options">
+        {OPTIONS.map(o => (
+          <button key={o.id} type="button" className={`ai-resp-perm-opt${mode === o.id ? ' selected' : ''}`}
+            aria-pressed={mode === o.id} onClick={() => setMode(o.id)}>
+            <span className="ai-resp-perm-radio" />
+            <span className="ai-resp-perm-opt-main">
+              <span className="ai-resp-perm-opt-title">{o.label}</span>
+              <span className="ai-resp-perm-opt-sub">{o.sub}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <button className="ai-resp-action-cta ai-resp-perm-cta" disabled={started}
+        onClick={() => { setStarted(true); onConsolidate?.(mode); }}>
+        {started ? 'Opening Whitelist Destinations…' : `${block.cta} · ${mode === 'auto' ? 'Auto' : 'Manual'}`}
+      </button>
+    </div>
+  );
+};
+
 // Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
 // stable component across the stream so selection/run state persists as later blocks arrive.
 const InteractiveBlock: React.FC<{
@@ -545,7 +583,8 @@ const InteractiveBlock: React.FC<{
   onNotify?: (n: NoticePayload) => void;
   onEditPolicy?: (p: PolicyDraft) => void;
   onPreviewPolicy?: (p: PolicyDraft) => void;
-}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy }) => {
+  onConsolidate?: (mode: 'manual' | 'auto') => void;
+}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
   const instant = block.kind === 'quickReplies';
   const [shown, setShown] = useState(instant);
   const doneRef = useRef(onReveal);
@@ -563,6 +602,7 @@ const InteractiveBlock: React.FC<{
     <div className="ai-stream-in">
       {block.kind === 'actions' && <ActionsBlock block={block} />}
       {block.kind === 'policyCards' && <PolicyCards block={block} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />}
+      {block.kind === 'permissionAction' && <PermissionAction block={block} onConsolidate={onConsolidate} />}
       {block.kind === 'quickReplies' && <QuickReplies block={block} onQuickReply={onQuickReply} />}
     </div>
   );
@@ -577,7 +617,8 @@ export const AIResponse: React.FC<{
   onNotify?: (n: NoticePayload) => void; // policy applied → notification above the composer
   onEditPolicy?: (p: PolicyDraft) => void;    // Edit → product policy editor
   onPreviewPolicy?: (p: PolicyDraft) => void; // Preview → product policy detail
-}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy }) => {
+  onConsolidate?: (mode: 'manual' | 'auto') => void; // whitelist consolidation
+}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
@@ -587,7 +628,7 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />;
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}

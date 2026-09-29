@@ -2062,7 +2062,7 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-action-card.done { border-color: rgba(74,222,128,.45); }
 .ai-resp-action-icon {
-  width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: var(--brand-a100); color: var(--brand-500);
 }
@@ -2135,6 +2135,33 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-qr-chip:hover { border-color: var(--brand-500); color: var(--brand-500); background: var(--brand-a100); }
 
+/* Permission-gated action (choose manual vs auto before running) */
+.ai-resp-perm-card {
+  display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-level1); padding: 14px;
+}
+.ai-resp-perm-head { display: flex; align-items: flex-start; gap: 12px; }
+.ai-resp-perm-label { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted); }
+.ai-resp-perm-options { display: flex; flex-direction: column; gap: 8px; }
+.ai-resp-perm-opt {
+  display: flex; align-items: flex-start; gap: 10px; text-align: left; width: 100%;
+  padding: 11px 12px; border-radius: 10px; cursor: pointer; font-family: inherit;
+  border: 1px solid var(--color-border); background: transparent; transition: border-color .15s, background .15s;
+}
+.ai-resp-perm-opt:hover { border-color: var(--color-border-strong); }
+.ai-resp-perm-opt.selected { border-color: var(--brand-500); background: var(--brand-a100); }
+.ai-resp-perm-radio {
+  width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong); position: relative; transition: border-color .15s;
+}
+.ai-resp-perm-opt.selected .ai-resp-perm-radio { border-color: var(--brand-500); }
+.ai-resp-perm-opt.selected .ai-resp-perm-radio::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--brand-500); }
+.ai-resp-perm-opt-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ai-resp-perm-opt-title { font-size: 13.5px; font-weight: 600; color: var(--color-text); }
+.ai-resp-perm-opt-sub { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.4; }
+.ai-resp-perm-cta { align-self: flex-start; }
+.ai-resp-perm-cta:disabled { opacity: .7; cursor: default; }
+
 /* Policy cards — each supports Edit / Simulate / Preview / Apply */
 .ai-resp-policy-block { display: flex; flex-direction: column; gap: 12px; }
 .ai-resp-policy-list { display: flex; flex-direction: column; gap: 10px; }
@@ -2145,7 +2172,7 @@ body.light-mode .ai-chat-bubble.user {
 .ai-resp-policy-card.applied { border-color: rgba(74,222,128,.45); }
 .ai-resp-policy-head { display: flex; align-items: flex-start; gap: 12px; }
 .ai-resp-policy-icon {
-  width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: var(--brand-a100); color: var(--brand-500);
 }
@@ -2727,7 +2754,7 @@ body.light-mode .mr-btn-tonal:hover { background: #ECECEC; }
 .policy-drawer-close:hover { background: var(--white-a50); color: var(--color-text); }
 .policy-drawer-subhead { display: flex; align-items: center; gap: 12px; padding: 4px 24px 18px; }
 .policy-drawer-badge-icon {
-  width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px;
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: var(--color-level3); color: var(--color-text-secondary);
 }

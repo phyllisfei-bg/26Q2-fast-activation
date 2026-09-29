@@ -220,14 +220,16 @@ const CoinIcon: React.FC<{ coin: string; color: string; bg: string }> = ({ coin,
 interface Props {
   isLight: boolean;
   onThemeToggle: () => void;
+  consolidate?: { mode: 'manual' | 'auto'; ver: number } | null;   // request from the AI chat
 }
 
 type ConsolPhase = 'idle' | 'labels' | 'collapse' | 'scope';
 
 const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
 
-export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) => {
+export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate }) => {
   const [tab, setTab] = useState<DestTab>('addresses');
+  const [autoMode, setAutoMode] = useState(false);   // AI-driven hands-off consolidation
   const [search, setSearch] = useState('');
 
   // Mutable local copy of destinations so consolidation edits are reflected live
@@ -451,6 +453,25 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
         }, 150);
       });
   };
+
+  // Start consolidation when the AI chat requests it (manual = interactive, auto = hands-off).
+  useEffect(() => {
+    if (!consolidate) return;
+    handleStartConsolidate();
+    setAutoMode(consolidate.mode === 'auto');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consolidate?.ver]);
+
+  // Auto mode: keep consolidating each remaining group, one after another, with no clicks.
+  useEffect(() => {
+    if (!autoMode || !consolidating || consolPhase !== 'idle' || !currentGroup) return;
+    const t = setTimeout(() => handleUpdateNext(), 850);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMode, consolidating, consolPhase, groupIdx]);
+
+  // Clear auto mode once consolidation finishes.
+  useEffect(() => { if (!consolidating) setAutoMode(false); }, [consolidating]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--color-level1)]">

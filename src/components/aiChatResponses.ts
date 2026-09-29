@@ -51,11 +51,13 @@ export type Block =
   | { kind: 'actions'; intro?: string; items: ActionItem[] }
   // Recommended policy cards, each with Edit / Simulate / Preview / Apply.
   | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
+  // An action gated by a permission level (manual vs auto) the user picks first.
+  | { kind: 'permissionAction'; title: string; desc: string; cta: string }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
 
 // Block kinds that are interactive — rendered only in ideal mode.
-export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'quickReplies'] as const;
+export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'permissionAction', 'quickReplies'] as const;
 export function isInteractive(kind: Block['kind']): boolean {
   return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
 }
@@ -235,6 +237,37 @@ const RESPONSE_POLICIES: AIResponse = {
   ],
 };
 
+// Variant: whitelist destinations overview + consolidation offer
+const RESPONSE_WHITELIST: AIResponse = {
+  thought: [
+    { header: 'Scanning whitelist destinations', desc: 'Pulled every whitelisted withdrawal address across your wallets.' },
+    { header: 'Checking status and labels', desc: 'Grouped addresses by status and looked for repeated labels.' },
+    { header: 'Summarizing findings', desc: 'Highlighted what is healthy and what needs attention.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['Here is an overview of your whitelisted withdrawal destinations.'] },
+    {
+      kind: 'dataCards',
+      cards: [
+        { label: 'Total destinations', value: '18' },
+        { label: 'Active', value: '18' },
+        { label: 'Duplicate addresses', value: '3' },
+      ],
+    },
+    { kind: 'heading', text: 'Status' },
+    { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' and none are pending or expired — every address is ready to receive withdrawals.'] },
+    { kind: 'heading', text: 'Worth noticing', underline: true },
+    { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one. Consolidating each address into a single, clear label removes that ambiguity and makes the right destination easy to find.'] },
+    {
+      kind: 'permissionAction',
+      title: 'Consolidate duplicate addresses',
+      desc: 'Merge each duplicated address down to one clear label. Choose how much you want me to handle.',
+      cta: 'Consolidate',
+    },
+    { kind: 'quickReplies', replies: ['Show all destinations', 'What counts as a duplicate?'] },
+  ],
+};
+
 // Variant: data-insight cards — "Summarize my key metrics"
 const RESPONSE_DATA: AIResponse = {
   thought: [
@@ -327,6 +360,7 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
+  if (/\bdestinations?\b|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST;
   if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
   if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
   if (/\b(chart|trend|trends|graph|growth|over time)\b/.test(p)) return RESPONSE_CHART;

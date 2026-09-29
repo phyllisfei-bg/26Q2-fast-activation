@@ -91,6 +91,7 @@ export default function App() {
   const [drawerOpen,        setDrawerOpen]        = React.useState(false);
   const [drawerEntry,       setDrawerEntry]       = React.useState<'preview' | 'edit'>('preview');
   const [drawerPolicy,      setDrawerPolicy]      = React.useState<PolicyDraft | null>(null);
+  const [consolidateReq,    setConsolidateReq]    = React.useState<{ mode: 'manual' | 'auto'; ver: number } | null>(null);
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
@@ -238,6 +239,12 @@ export default function App() {
   // AI chat → product policy detail drawer (mirrors the real app workflow)
   const openPolicyPreview = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('preview'); setDrawerOpen(true); };
   const openPolicyEdit    = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('edit');    setDrawerOpen(true); };
+  // AI chat → whitelist destinations consolidation (manual = interactive, auto = hands-off)
+  const handleConsolidate = (mode: 'manual' | 'auto') => {
+    setConsolidateReq({ mode, ver: Date.now() });
+    setChatOpen(false);
+    navigateTo('destinations');
+  };
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
@@ -261,7 +268,7 @@ export default function App() {
         onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
-        <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
+        <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} />
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
@@ -395,6 +402,7 @@ export default function App() {
         onInitialPromptConsumed={() => setChatInitialPrompt(null)}
         onEditPolicy={openPolicyEdit}
         onPreviewPolicy={openPolicyPreview}
+        onConsolidate={handleConsolidate}
       />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 

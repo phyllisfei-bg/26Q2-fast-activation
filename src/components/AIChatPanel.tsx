@@ -19,6 +19,7 @@ interface AIChatPanelProps {
   onInitialPromptConsumed?: () => void;
   onEditPolicy?: (p: PolicyDraft) => void;      // chat → product policy editor
   onPreviewPolicy?: (p: PolicyDraft) => void;   // chat → product policy detail view
+  onConsolidate?: (mode: 'manual' | 'auto') => void; // chat → whitelist consolidation
 }
 
 const HEADLINES = [
@@ -92,7 +93,7 @@ const UserMessage: React.FC<{
   );
 };
 
-export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy }) => {
+export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate }) => {
   const [expanded, setExpanded]       = useState(false);
   const [mode, setMode]               = useState<ChatMode>('idle');
   const [messages, setMessages]       = useState<Message[]>([]);
@@ -400,6 +401,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onNotify={setNotice}
                       onEditPolicy={onEditPolicy}
                       onPreviewPolicy={onPreviewPolicy}
+                      onConsolidate={onConsolidate}
                     />
                   )}
                 </div>
