@@ -51,15 +51,21 @@ export type Block =
   | { kind: 'actions'; intro?: string; items: ActionItem[] }
   // Recommended policy cards, each with Edit / Simulate / Preview / Apply.
   | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
-  // An action gated by a permission level (manual vs auto) the user picks first.
-  | { kind: 'permissionAction'; title: string; desc: string; cta: string }
-  // Step 1 of the whitelist flow: offer to open the page (Approve/Deny), then continue with `followup`.
-  | { kind: 'whitelistNav'; title: string; subtext: string; followup: string }
+  // An approval gate: pauses the response with a pinned decision card. On a
+  // positive choice it streams `approvedThought` and continues; a `stop` button ends it.
+  | {
+      kind: 'approvalGate';
+      title: string;
+      subtext: string;
+      buttons: { label: string; effect?: 'navigate' | 'consolidateManual' | 'consolidateAuto'; stop?: boolean }[];
+      approvedThought: ThoughtStep[];
+      notify?: string;   // notification to raise once the gate continues
+    }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
 
 // Block kinds that are interactive — rendered only in ideal mode.
-export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'permissionAction', 'whitelistNav', 'quickReplies'] as const;
+export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'approvalGate', 'quickReplies'] as const;
 export function isInteractive(kind: Block['kind']): boolean {
   return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
 }
@@ -240,32 +246,31 @@ const RESPONSE_POLICIES: AIResponse = {
   ],
 };
 
-// Whitelist flow — STEP 1: offer to open the page (no insight yet). Short think.
-const RESPONSE_WHITELIST_NAV: AIResponse = {
-  thinkMs: 1800,
+// Whitelist flow — one continuous turn with two approval gates: open the page,
+// then consolidate. Each gate pauses the response (inline "Thinking…" + pinned
+// Approve/Deny), and on approval streams a second thought and continues.
+const RESPONSE_WHITELIST: AIResponse = {
+  thinkMs: 2000,
   thought: [
-    { header: 'Locating your whitelist destinations', desc: 'Finding the right page for you.' },
+    { header: 'Locating your whitelist destinations', desc: 'Finding the right page for your request.' },
   ],
   blocks: [
-    { kind: 'paragraph', spans: ['Your whitelisted destinations live on the Whitelist Destinations page. Want me to open it and take a look?'] },
+    { kind: 'paragraph', spans: ['Your whitelisted withdrawal destinations live on the Whitelist Destinations page.'] },
+    { kind: 'paragraph', spans: ['Do you want me to open it and review them with you?'] },
     {
-      kind: 'whitelistNav',
+      kind: 'approvalGate',
       title: 'Open Whitelist Destinations',
-      subtext: 'I can open your Whitelist Destinations and review them with you.',
-      followup: 'Show me the destinations overview',
+      subtext: 'I can open your Whitelist Destinations and take a look with you.',
+      buttons: [
+        { label: 'Approve', effect: 'navigate' },
+        { label: 'Deny', stop: true },
+      ],
+      approvedThought: [
+        { header: 'Permission granted from user', desc: 'You approved me to open the page — continuing your original request.' },
+        { header: 'Opening Whitelist Destinations', desc: 'Loading your addresses and grouping them by label.' },
+      ],
     },
-  ],
-};
-
-// Whitelist flow — STEP 2: the insight + consolidation offer. Short think, different content.
-const RESPONSE_WHITELIST_INSIGHT: AIResponse = {
-  thinkMs: 3200,
-  thought: [
-    { header: 'Reviewing statuses and labels', desc: 'Grouping addresses and spotting repeated labels.' },
-    { header: 'Summarizing what stands out', desc: 'Pulling together what needs your attention.' },
-  ],
-  blocks: [
-    { kind: 'paragraph', spans: ['Here is an overview of your whitelisted withdrawal destinations.'] },
+    // ── after approval: the insight ──
     {
       kind: 'dataCards',
       cards: [
@@ -277,14 +282,32 @@ const RESPONSE_WHITELIST_INSIGHT: AIResponse = {
     { kind: 'heading', text: 'Status' },
     { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' — every address is ready to receive withdrawals.'] },
     { kind: 'heading', text: 'Worth noticing', underline: true },
-    { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one. Consolidating each address into a single, clear label removes that ambiguity and makes the right destination easy to find.'] },
+    { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one.'] },
+    { kind: 'paragraph', spans: ['Do you want me to consolidate each address to a single, clear label?'] },
     {
-      kind: 'permissionAction',
+      kind: 'approvalGate',
       title: 'Consolidate duplicate addresses',
-      desc: 'Merge each duplicated address into one clear label. I can do it with your approval, or handle it end to end.',
-      cta: 'Consolidate',
+      subtext: 'Merge each duplicated address into one clear label.',
+      buttons: [
+        { label: 'Consolidate manually', effect: 'consolidateManual' },
+        { label: 'Consolidate automatically', effect: 'consolidateAuto' },
+      ],
+      approvedThought: [
+        { header: 'Consolidating addresses', desc: 'Merging duplicate labels across your whitelist destinations.' },
+      ],
+      notify: 'Consolidation completed.',
     },
-    { kind: 'quickReplies', replies: ['Show all destinations', 'What counts as a duplicate?'] },
+    // ── after consolidation: summary ──
+    { kind: 'heading', text: 'Summary of this request' },
+    {
+      kind: 'bullets',
+      items: [
+        { bold: 'Opened Whitelist Destinations', rest: ' — reviewed 18 active addresses.' },
+        { bold: 'Flagged duplicates', rest: ' — found 3 addresses saved under multiple labels.' },
+        { bold: 'Consolidated labels', rest: ' — merged each address down to one clear label.' },
+      ],
+    },
+    { kind: 'followup', text: 'Is there anything else you need?' },
   ],
 };
 
@@ -380,8 +403,7 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
-  if (/destinations overview/.test(p)) return RESPONSE_WHITELIST_INSIGHT;
-  if (/\bdestinations?\b|whitelist|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST_NAV;
+  if (/\bdestinations?\b|whitelist|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST;
   if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
   if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
   if (/\b(chart|trend|trends|graph|growth|over time)\b/.test(p)) return RESPONSE_CHART;

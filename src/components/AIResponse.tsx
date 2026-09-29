@@ -434,8 +434,8 @@ const ActionsBlock: React.FC<{ block: Extract<Block, { kind: 'actions' }> }> = (
   </div>
 );
 
-// Payload for the "policy applied" notification shown above the composer.
-export interface NoticePayload { text: string; onUndo: () => void; }
+// Payload for a notification shown above the composer (Undo optional).
+export interface NoticePayload { text: string; onUndo?: () => void; }
 
 // Pill-button glyphs (14px, currentColor).
 const iEdit = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>;
@@ -544,37 +544,103 @@ export interface PinnedAction {
   buttons: { label: string; onClick: () => void }[];
 }
 
-interface ActionCbs {
-  onQuickReply?: (t: string) => void;
+const chevron = (open: boolean) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
+    style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+// An approval gate: pauses the response with a pinned Approve/Deny (or choose-mode)
+// card above the composer. While waiting it shows an inline "Thinking…"; on a positive
+// choice it streams `approvedThought` inline, raises `notify`, then continues the response.
+const ApprovalGate: React.FC<{
+  block: Extract<Block, { kind: 'approvalGate' }>;
+  active: boolean;                 // this is the gate the stream is currently paused on
+  onDone: () => void;              // continue streaming the rest of the response
+  onPinAction?: (a: PinnedAction | null) => void;
   onNavigateWhitelist?: () => void;
   onConsolidate?: (mode: 'manual' | 'auto') => void;
-}
+  onNotify?: (n: NoticePayload) => void;
+}> = ({ block, active, onDone, onPinAction, onNavigateWhitelist, onConsolidate, onNotify }) => {
+  const [phase, setPhase] = useState<'waiting' | 'approved' | 'denied'>('waiting');
+  const [shownSteps, setShownSteps] = useState(0);
+  const [open, setOpen] = useState(true);
+  const doneRef = useRef(onDone); doneRef.current = onDone;
+  const notifyRef = useRef(onNotify); notifyRef.current = onNotify;
+  const pinRef = useRef(onPinAction); pinRef.current = onPinAction;
+  const navRef = useRef(onNavigateWhitelist); navRef.current = onNavigateWhitelist;
+  const consRef = useRef(onConsolidate); consRef.current = onConsolidate;
 
-// Build the pinned-action descriptor for the whitelist decision blocks.
-function buildPinnedAction(block: Block, cbs: ActionCbs): PinnedAction | null {
-  if (block.kind === 'whitelistNav') {
-    return {
-      key: 'whitelist-open',
+  // Only the active gate manages the pinned Approve/Deny card.
+  useEffect(() => {
+    if (!active) return;
+    if (phase !== 'waiting') { pinRef.current?.(null); return; }
+    pinRef.current?.({
+      key: `gate-${block.title}`,
       title: block.title,
       subtext: block.subtext,
-      buttons: [
-        { label: 'Approve', onClick: () => { cbs.onNavigateWhitelist?.(); cbs.onQuickReply?.(block.followup); } },
-        { label: 'Deny', onClick: () => { /* dismiss only */ } },
-      ],
+      buttons: block.buttons.map(btn => ({
+        label: btn.label,
+        onClick: () => {
+          if (btn.stop) { setPhase('denied'); return; }
+          if (btn.effect === 'navigate') navRef.current?.();
+          else if (btn.effect === 'consolidateManual') consRef.current?.('manual');
+          else if (btn.effect === 'consolidateAuto') consRef.current?.('auto');
+          setPhase('approved');
+        },
+      })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, phase]);
+
+  // On a positive choice, stream the second thought, then raise notify + continue.
+  useEffect(() => {
+    if (phase !== 'approved') return;
+    setShownSteps(0);
+    let n = 0;
+    let t: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      n += 1;
+      setShownSteps(n);
+      if (n < block.approvedThought.length) { t = setTimeout(tick, 950); }
+      else {
+        t = setTimeout(() => {
+          if (block.notify) notifyRef.current?.({ text: block.notify });
+          doneRef.current();
+        }, 800);
+      }
     };
+    t = setTimeout(tick, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  if (phase === 'denied') {
+    return <p className="ai-resp-paragraph ai-stream-in"><em>No problem — let me know if you change your mind.</em></p>;
   }
-  if (block.kind === 'permissionAction') {
-    return {
-      key: 'whitelist-consolidate',
-      title: block.title,
-      subtext: block.desc,
-      buttons: [
-        { label: 'Consolidate manually', onClick: () => cbs.onConsolidate?.('manual') },
-        { label: 'Consolidate automatically', onClick: () => cbs.onConsolidate?.('auto') },
-      ],
-    };
-  }
-  return null;
+  const streaming = phase === 'approved' && shownSteps < block.approvedThought.length;
+  const thinking = phase === 'waiting' || streaming;
+  return (
+    <div className="ai-thought">
+      <button className="ai-thought-toggle" onClick={() => setOpen(o => !o)}>
+        {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
+        <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>{thinking ? 'Thinking...' : 'Thought process'}</span>
+        {chevron(open)}
+      </button>
+      {open && phase === 'approved' && (
+        <div className="ai-thought-steps">
+          {block.approvedThought.slice(0, shownSteps).map((s, i) => (
+            <div key={i} className="ai-thought-step ai-stream-in">
+              <div className="ai-thought-step-header">{s.header}</div>
+              <div className="ai-thought-step-desc">{s.desc}</div>
+            </div>
+          ))}
+          {streaming && <div className="ai-thought-step"><SkLine w="42%" /><SkLine w="72%" mt={7} /></div>}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
@@ -586,31 +652,17 @@ const InteractiveBlock: React.FC<{
   onNotify?: (n: NoticePayload) => void;
   onEditPolicy?: (p: PolicyDraft) => void;
   onPreviewPolicy?: (p: PolicyDraft) => void;
-  onConsolidate?: (mode: 'manual' | 'auto') => void;
-  onNavigateWhitelist?: () => void;
-  onPinAction?: (a: PinnedAction) => void;
-}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction }) => {
-  // Whitelist decision blocks are lifted to a pinned card above the composer, not inline.
-  const pinned = block.kind === 'whitelistNav' || block.kind === 'permissionAction';
-  const instant = block.kind === 'quickReplies' || pinned;
+}> = ({ block, onReveal, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy }) => {
+  const instant = block.kind === 'quickReplies';
   const [shown, setShown] = useState(instant);
   const doneRef = useRef(onReveal);
   doneRef.current = onReveal;
-  const pinRef = useRef(onPinAction);
-  pinRef.current = onPinAction;
   useEffect(() => {
-    if (pinned) {
-      const a = buildPinnedAction(block, { onQuickReply, onNavigateWhitelist, onConsolidate });
-      if (a) pinRef.current?.(a);
-      doneRef.current();
-      return;
-    }
     if (instant) { doneRef.current(); return; }
     const id = setTimeout(() => { setShown(true); doneRef.current(); }, 700);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  if (pinned) return null;
   if (!shown) {
     return <div className="ai-resp-actions-block ai-stream-in"><SkLine w="45%" /><SkLine w="100%" h={46} mt={10} /><SkLine w="100%" h={46} mt={8} /></div>;
   }
@@ -633,8 +685,8 @@ export const AIResponse: React.FC<{
   onEditPolicy?: (p: PolicyDraft) => void;    // Edit → product policy editor
   onPreviewPolicy?: (p: PolicyDraft) => void; // Preview → product policy detail
   onConsolidate?: (mode: 'manual' | 'auto') => void; // whitelist consolidation
-  onNavigateWhitelist?: () => void;           // step 1 → open the Whitelist page
-  onPinAction?: (a: PinnedAction) => void;    // lift a decision action above the composer
+  onNavigateWhitelist?: () => void;           // approval gate → open the Whitelist page
+  onPinAction?: (a: PinnedAction | null) => void; // lift a decision action above the composer
 }> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
@@ -645,7 +697,8 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} onConsolidate={onConsolidate} onNavigateWhitelist={onNavigateWhitelist} onPinAction={onPinAction} />;
+        if (b.kind === 'approvalGate') return <ApprovalGate key={i} block={b} active={i === done} onDone={advance} onPinAction={onPinAction} onNavigateWhitelist={onNavigateWhitelist} onConsolidate={onConsolidate} onNotify={onNotify} />;
+        if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}
