@@ -2157,8 +2157,10 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-policy-badge.applied { color: var(--color-success); background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.4); }
 .ai-resp-policy-desc { font-size: 13px; color: var(--color-text-secondary); }
-/* Action button group at the bottom of the card */
-.ai-resp-policy-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+/* Action button group at the bottom of the card: three exploratory actions grouped
+   left, Apply (the only committing action) pushed to the far right. */
+.ai-resp-policy-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.ai-resp-policy-actions .ai-resp-pill-btn.primary { margin-left: auto; }
 .ai-resp-pill-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px;
   cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500;
