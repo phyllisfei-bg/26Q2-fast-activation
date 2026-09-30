@@ -16,6 +16,7 @@ import { FlowPage }           from './pages/FlowPage';
 import { WalletCreationFlow } from './flows/WalletCreationFlow';
 import { DepositModal }       from './flows/DepositModal';
 import { PolicyModal }        from './flows/PolicyModal';
+import { PolicyDrawer }       from './flows/PolicyDrawer';
 import { KYBFlow }            from './flows/KYBFlow';
 import { KYCFlow }            from './flows/KYCFlow';
 import { AIChatPanel }        from './components/AIChatPanel';
@@ -23,7 +24,7 @@ import { SearchPopover }      from './components/SearchPopover';
 import type { KYCScreen }     from './flows/KYCFlow';
 import { useGetStarted }      from './hooks/useGetStarted';
 import { useTheme }           from './hooks/useTheme';
-import type { TaskId, UserRole, WalletInfo } from './types';
+import type { TaskId, UserRole, WalletInfo, PolicyDraft } from './types';
 import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
@@ -87,6 +88,11 @@ export default function App() {
   const [depositOpen,       setDepositOpen]       = React.useState(false);
   const [depositTab,        setDepositTab]        = React.useState<'cash' | 'crypto'>('cash');
   const [policyOpen,        setPolicyOpen]        = React.useState(false);
+  const [drawerOpen,        setDrawerOpen]        = React.useState(false);
+  const [drawerEntry,       setDrawerEntry]       = React.useState<'preview' | 'edit'>('preview');
+  const [drawerPolicy,      setDrawerPolicy]      = React.useState<PolicyDraft | null>(null);
+  const [consolidateReq,    setConsolidateReq]    = React.useState<{ mode: 'manual' | 'auto'; ver: number } | null>(null);
+  const [consolidateDone,   setConsolidateDone]   = React.useState<{ mode: 'manual' | 'auto'; ver: number } | null>(null);
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
@@ -96,6 +102,7 @@ export default function App() {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
   const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
+  const [adminTab, setAdminTab] = React.useState<'members' | 'roles'>('members');
   const goToRoles = (from: TopPage) => { setRolesReturn(from); navigateTo('roles'); };
   const handleSendInvites = (invites: InvitePayload[]) => {
     invites.forEach(inv => {
@@ -231,6 +238,17 @@ export default function App() {
   const handleCalloutPolicies = () => {
     setPolicyOpen(true);
   };
+  // AI chat → product policy detail drawer (mirrors the real app workflow)
+  const openPolicyPreview = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('preview'); setDrawerOpen(true); };
+  const openPolicyEdit    = (p: PolicyDraft) => { setDrawerPolicy(p); setDrawerEntry('edit');    setDrawerOpen(true); };
+  // AI chat → open the Whitelist page in-shell (chat stays mounted so the flow can continue)
+  const openWhitelist = () => { setSecurityPage('destinations'); };
+  // AI chat → whitelist destinations consolidation (manual = interactive, auto = hands-off)
+  const handleConsolidate = (mode: 'manual' | 'auto') => {
+    setConsolidateReq({ mode, ver: Date.now() });
+    setSecurityPage('destinations');
+  };
+  const handleConsolidateComplete = (mode: 'manual' | 'auto') => { setConsolidateDone({ mode, ver: Date.now() }); };
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
@@ -254,7 +272,7 @@ export default function App() {
         onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
-        <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
+        <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
@@ -274,7 +292,8 @@ export default function App() {
       <div className="app">
         <Sidebar
           variant="admin"
-          activeAdmin="members"
+          activeAdmin={adminTab}
+          onNavigateAdmin={setAdminTab}
           onSearchOpen={() => setSearchOpen(true)}
           onReturnToEnterprise={() => navigateTo(rolesReturn)}
         />
@@ -284,6 +303,7 @@ export default function App() {
             onThemeToggle={toggle}
             api={membersRoles}
             onInviteMember={() => setInviteOpen(true)}
+            tab={adminTab}
           />
         </div>
         <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
@@ -307,7 +327,7 @@ export default function App() {
         />
         <div className="workspace">
           {securityPage === 'destinations' ? (
-            <DestinationsPage isLight={isLight} onThemeToggle={toggle} />
+            <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
           ) : (
             <Dashboard
               isLight={isLight}
@@ -365,6 +385,13 @@ export default function App() {
         }}
       />
 
+      <PolicyDrawer
+        open={drawerOpen}
+        policy={drawerPolicy}
+        entry={drawerEntry}
+        onClose={() => setDrawerOpen(false)}
+      />
+
       <GoAccountPage
         open={goAccountOpen}
         depositedAmount={goAccountDepositAmt}
@@ -379,6 +406,11 @@ export default function App() {
         onClose={() => setChatOpen(false)}
         initialPrompt={chatInitialPrompt}
         onInitialPromptConsumed={() => setChatInitialPrompt(null)}
+        onEditPolicy={openPolicyEdit}
+        onPreviewPolicy={openPolicyPreview}
+        onConsolidate={handleConsolidate}
+        onNavigateWhitelist={openWhitelist}
+        consolidateDoneVer={consolidateDone?.ver}
       />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 

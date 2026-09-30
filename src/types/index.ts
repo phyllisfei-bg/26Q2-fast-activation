@@ -622,3 +622,10 @@ export const WALKTHROUGHS = {
 } as const;
 
 export type WalkthroughKey = keyof typeof WALKTHROUGHS;
+
+// A policy handed from the AI chat to the product PolicyModal (preview / edit).
+export interface PolicyDraft {
+  name: string;
+  desc: string;
+  detail: { label: string; value: string }[];
+}

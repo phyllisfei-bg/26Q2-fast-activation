@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom';
 import { Topbar } from '../components/Topbar';
 import { Snackbar } from '../components/Snackbar';
 import type { SnackbarHandle } from '../components/Snackbar';
+import { FilterChips } from '../components/FilterChips';
+import { Menu, TrashIcon } from '../components/membersRoles/shared';
 
-type DestTab = 'addresses' | 'wallets' | 'enterprise';
+// Consolidate action card is hidden for now — keep the code, flip to true to re-enable.
+const SHOW_CONSOLIDATE_CARD = false;
 
 interface Destination {
   id: string;
@@ -220,14 +223,21 @@ const CoinIcon: React.FC<{ coin: string; color: string; bg: string }> = ({ coin,
 interface Props {
   isLight: boolean;
   onThemeToggle: () => void;
+  consolidate?: { mode: 'manual' | 'auto'; ver: number } | null;   // request from the AI chat
+  onConsolidateComplete?: (mode: 'manual' | 'auto') => void;        // fired when consolidation finishes
 }
 
 type ConsolPhase = 'idle' | 'labels' | 'collapse' | 'scope';
 
 const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
+// Sticky header — pins just below the sticky filter row (h-14 = 56px) while rows scroll.
+const STICKY_TH = 'sticky top-14 z-10';
 
-export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) => {
-  const [tab, setTab] = useState<DestTab>('addresses');
+export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate, onConsolidateComplete }) => {
+  const [autoMode, setAutoMode] = useState(false);   // AI-driven hands-off consolidation
+  const modeRef = useRef<'manual' | 'auto'>('manual');           // mode of the current consolidation run
+  const completeCbRef = useRef(onConsolidateComplete);
+  completeCbRef.current = onConsolidateComplete;
   const [search, setSearch] = useState('');
 
   // Mutable local copy of destinations so consolidation edits are reflected live
@@ -439,10 +449,11 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
                   setGroupIdx(0);
                   setCustomLabel('');
                   setSelectedChip('');
-                  snackbarRef.current?.show(
-                    'Addresses with multiple labels are all consolidated.',
-                    false
-                  );
+                  completeCbRef.current?.(modeRef.current);
+                  // Auto consolidation reports completion into the AI chat, not a page snackbar.
+                  if (modeRef.current !== 'auto') {
+                    snackbarRef.current?.show('Addresses with multiple labels are all consolidated.', false);
+                  }
                 }
                 return next;
               });
@@ -452,18 +463,38 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
       });
   };
 
+  // Start consolidation when the AI chat requests it (manual = interactive, auto = hands-off).
+  useEffect(() => {
+    if (!consolidate) return;
+    modeRef.current = consolidate.mode;
+    handleStartConsolidate();
+    setAutoMode(consolidate.mode === 'auto');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consolidate?.ver]);
+
+  // Auto mode: keep consolidating each remaining group, one after another, with no clicks.
+  useEffect(() => {
+    if (!autoMode || !consolidating || consolPhase !== 'idle' || !currentGroup) return;
+    const t = setTimeout(() => handleUpdateNext(), 850);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMode, consolidating, consolPhase, groupIdx]);
+
+  // Clear auto mode once consolidation finishes.
+  useEffect(() => { if (!consolidating) setAutoMode(false); }, [consolidating]);
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--color-level1)]">
       <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
 
-      <div className="flex-1 overflow-y-auto px-7 py-7" ref={contentRef}>
+      <div className="flex-1 overflow-y-auto px-7 pb-7" ref={contentRef}>
         {/* Page header */}
-        <div className={`flex items-start justify-between mb-6${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+        <div className={`flex items-start justify-between mb-6 pt-7${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
           <div>
-            <h1 className="text-[22px] font-semibold text-[var(--color-text)]">Whitelist Destinations</h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
+            <h1 className="text-[30px] font-normal text-[var(--color-text)]">Whitelist Destinations</h1>
+            <p className="text-[16px] font-normal text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
           </div>
-          <button className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
+          <button className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -474,8 +505,8 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
           </button>
         </div>
 
-        {/* Action card — consolidate nudge (hidden when all groups are done) */}
-        {doneGroups.size < MULTI_LABEL_GROUPS.length && (
+        {/* Action card — consolidate nudge. Hidden for now (kept for later; flip SHOW_CONSOLIDATE_CARD). */}
+        {SHOW_CONSOLIDATE_CARD && doneGroups.size < MULTI_LABEL_GROUPS.length && (
           <div className={`flex items-center gap-3.5 py-3.5 px-[18px] mb-5 rounded-xl bg-white${consolidating ? ' opacity-25 pointer-events-none' : ''}`} style={{ border: '1px solid #EAECED' }}>
             <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--brand-a100)] text-[var(--brand-500)] shrink-0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
@@ -497,54 +528,33 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
           </div>
         )}
 
-        {/* Tabs + search row */}
-        <div className={`flex items-center justify-between gap-4 border-b border-[var(--color-border)] mb-4${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
-          <div className="flex">
-            {(['addresses', 'wallets', 'enterprise'] as DestTab[]).map(t => (
-              <button
-                key={t}
-                className={`h-9 px-4 text-sm font-medium cursor-pointer bg-transparent border-0 border-b-2 -mb-px transition-colors ${tab === t ? 'border-[var(--brand-500)] text-[var(--color-text)]' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'}`}
-                onClick={() => setTab(t)}
-              >
-                {t === 'addresses' ? 'Addresses' : t === 'wallets' ? 'Wallets' : 'Enterprise Whitelist'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="dest-search-wrap flex items-center gap-2 h-9 px-4 rounded-full bg-white min-w-[180px]" style={{ border: '1px solid #E5E7EB' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--color-text-muted)] shrink-0">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                className="bg-transparent border-none outline-none text-sm text-[var(--color-text)] flex-1 w-36 placeholder:text-[var(--color-text-muted)]"
-                placeholder="Search"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                disabled={consolidating}
-              />
-            </div>
-            <button
-              className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--brand-a100)] text-[var(--brand-500)] border-none text-sm font-medium cursor-pointer hover:bg-[var(--brand-a200)] transition-colors"
+        {/* Filter chips + search row — sticky while rows scroll */}
+        <div className={`sticky top-0 z-20 bg-[var(--color-level1)] flex items-center justify-between gap-4 h-14${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+          <FilterChips filters={[{ label: 'Type', options: ['Addresses', 'Wallets', 'Enterprise Whitelist'] }, 'Network', 'Scope', 'Status']} />
+          <div className="dest-search-wrap flex items-center gap-2 h-9 px-4 rounded-full bg-white min-w-[180px] shrink-0" style={{ border: '1px solid #E5E7EB' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--color-text-muted)] shrink-0">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              className="bg-transparent border-none outline-none text-sm text-[var(--color-text)] flex-1 w-36 placeholder:text-[var(--color-text-muted)]"
+              placeholder="Search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               disabled={consolidating}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-              </svg>
-              Filter
-            </button>
+            />
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-auto rounded-xl border border-[var(--color-border)]">
-          <table className="dest-cols w-full table-fixed border-collapse">
+        <div className="rounded-xl border border-[var(--color-border)]">
+          <table className="dest-cols w-full table-fixed border-separate border-spacing-0">
             <thead className={consolidating ? 'opacity-40' : ''}>
               <tr>
-                <th className={TH}>Destination</th>
-                <th className={TH}>Network</th>
-                <th className={TH}>Scope (Whitelisted On)</th>
-                <th className={TH}>Status</th>
-                <th className="px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)]"></th>
+                <th className={`${TH} ${STICKY_TH} rounded-l-[11px]`}>Destination</th>
+                <th className={`${TH} ${STICKY_TH}`}>Network</th>
+                <th className={`${TH} ${STICKY_TH}`}>Scope (Whitelisted On)</th>
+                <th className={`${TH} ${STICKY_TH}`}>Status</th>
+                <th className={`px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)] rounded-r-[11px] ${STICKY_TH}`}></th>
               </tr>
             </thead>
             <tbody>
@@ -556,6 +566,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
                   && (!nextRow || nextRow.groupId !== currentGroup!.groupId || collapsingIds.has(nextRow.id));
                 const rowClass = [
                   'dest-row',
+                  !consolidating ? 'tbl-row-hover' : '',
                   consolidating && !isActive ? 'opacity-40' : '',
                   isCollapsing ? 'dest-row-collapsing' : '',
                 ].filter(Boolean).join(' ');
@@ -570,17 +581,17 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
                   >
                     <td className="px-4 py-[14px] align-middle">
                       {isActive ? (
-                        <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5 flex items-baseline gap-px">
+                        <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5 flex items-baseline gap-px">
                           <mark className="label-mark">{animatingLabels.get(d.id) ?? d.label}</mark>
                           {animatingLabels.has(d.id) && (
                             <span style={{ opacity: cursorVisible ? 1 : 0, transition: 'opacity 0.1s', color: 'var(--color-text)', fontWeight: 300 }}>|</span>
                           )}
                         </div>
                       ) : (
-                        <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5">{d.label}</div>
+                        <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5">{d.label}</div>
                       )}
                       <div className="flex items-center gap-[8px] mt-0.5">
-                        <span className="text-[14px] text-[var(--color-text-secondary)] font-mono">{truncateAddr(d.address)}</span>
+                        <span className="text-[14px] text-[var(--color-text-secondary)]">{truncateAddr(d.address)}</span>
                         {hoveredId === d.id && (
                           <button
                             className="p-0 bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] flex items-center shrink-0"
@@ -606,33 +617,30 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle }) =>
                         {d.scopes.slice(0, 3).map(s => (
                           <span
                             key={s}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-[#EBEBEB] text-[var(--color-text)] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
+                            className={`mr-badge neutral${animatingScopes.has(s) ? ' chip-appear' : ''}`}
                           >{s}</span>
                         ))}
                         {d.scopes.length > 3 && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-[#EBEBEB] text-[var(--color-text)] whitespace-nowrap">+{d.scopes.length - 3}</span>
+                          <span className="mr-badge neutral">+{d.scopes.length - 3}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-[14px] align-middle">
                       {d.status === 'pending' ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-semibold text-[var(--color-gold)]">Pending Approval</span>
+                        <span className="mr-badge warning">Pending Approval</span>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-medium bg-[var(--color-level2)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">Active</span>
+                        <span className="mr-badge success">Active</span>
                       )}
                     </td>
-                    <td className="px-4 py-[14px] align-middle">
-                      <button
-                        className="w-7 h-7 flex items-center justify-center rounded-md bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level3)] hover:text-[var(--color-text)] transition-colors"
-                        title="Delete"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/>
-                          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-                        </svg>
-                      </button>
+                    <td className="px-4 py-[14px] align-middle text-right">
+                      <Menu
+                        variant="kebab"
+                        items={[
+                          { label: 'Edit Label', onClick: () => {} },
+                          { label: 'Edit Scope', onClick: () => {} },
+                          { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => {} },
+                        ]}
+                      />
                     </td>
                   </tr>
                 );

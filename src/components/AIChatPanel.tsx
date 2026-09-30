@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AIResponse, ThoughtProcess } from './AIResponse';
+import type { PinnedAction } from './AIResponse';
 import { pickResponse, SAMPLE_PROMPTS } from './aiChatResponses';
 import type { AIResponse as AIResponseData } from './aiChatResponses';
+import type { PolicyDraft } from '../types';
 
 type ChatMode = 'idle' | 'thinking';
 
@@ -16,6 +18,11 @@ interface AIChatPanelProps {
   onClose: () => void;
   initialPrompt?: string | null;     // auto-sent when the chat opens from a search prompt
   onInitialPromptConsumed?: () => void;
+  onEditPolicy?: (p: PolicyDraft) => void;      // chat → product policy editor
+  onPreviewPolicy?: (p: PolicyDraft) => void;   // chat → product policy detail view
+  onConsolidate?: (mode: 'manual' | 'auto') => void; // chat → whitelist consolidation
+  onNavigateWhitelist?: () => void;                  // chat → open the Whitelist page (chat stays)
+  consolidateDoneVer?: number;                       // page reported consolidation complete
 }
 
 const HEADLINES = [
@@ -89,7 +96,7 @@ const UserMessage: React.FC<{
   );
 };
 
-export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed }) => {
+export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, consolidateDoneVer }) => {
   const [expanded, setExpanded]       = useState(false);
   const [mode, setMode]               = useState<ChatMode>('idle');
   const [messages, setMessages]       = useState<Message[]>([]);
@@ -99,6 +106,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const [multiline, setMultiline]     = useState(false); // input wrapped past one line
   const [agreed, setAgreed]           = useState(false); // dismissed the data-privacy agreement gate
   const [pending, setPending]         = useState<AIResponseData | null>(null); // response being "thought about"
+  const [notice, setNotice]           = useState<{ text: string; onUndo?: () => void } | null>(null); // notification bar above input
+  const [pinned, setPinned]           = useState<PinnedAction | null>(null); // decision action card above the composer
   // Thinking-animation style: 'ideal' = star + streaming steps list; 'current' = star + a
   // single shimmering line that swaps to each step name (no steps list). User-switchable.
   const [thinkStyle, setThinkStyle]   = useState<'ideal' | 'current'>(
@@ -157,6 +166,15 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
     if (!open) setExpanded(false);
   }, [open]);
 
+  // Auto-dismiss the "policy applied" notification after a few seconds.
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(id);
+  }, [notice]);
+  // Clear the notification when the chat closes or resets.
+  useEffect(() => { if (!open) setNotice(null); }, [open]);
+
   // Auto-grow the input; decide compact/expanded from a hidden mirror measured at a
   // FIXED compact width (so the layout switch can't change the wrap point and oscillate).
   // Hysteresis: once expanded, stay expanded until the content is fully cleared.
@@ -184,10 +202,11 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
   const generate = (text: string, baseMessages: Message[]) => {
     const response = pickResponse(text, turnRef.current++);
     stickToBottom.current = true;   // follow the new response as it streams
+    setPinned(null);                // clear any pending action from the previous turn
     setMessages([...baseMessages, { role: 'user', content: text }]);
     setPending(response);
     setMode('thinking');
-    const thinkMs = 15000;   // fixed 15s thinking window
+    const thinkMs = response.thinkMs ?? 15000;   // per-response window (default 15s)
     setTimeout(() => {
       setMessages(prev => [...prev, { role: 'assistant', response }]);
       setPending(null);
@@ -379,7 +398,19 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onSave={(next) => editMessage(i, next)}
                     />
                   ) : (
-                    <AIResponse data={msg.response!} showThought={thinkStyle !== 'current'} />
+                    <AIResponse
+                      data={msg.response!}
+                      showThought={thinkStyle !== 'current'}
+                      interactive={thinkStyle === 'ideal'}
+                      onQuickReply={sendMessage}
+                      onNotify={setNotice}
+                      onEditPolicy={onEditPolicy}
+                      onPreviewPolicy={onPreviewPolicy}
+                      onConsolidate={onConsolidate}
+                      onNavigateWhitelist={onNavigateWhitelist}
+                      onPinAction={setPinned}
+                      consolidateDoneVer={consolidateDoneVer}
+                    />
                   )}
                 </div>
               ))}
@@ -392,6 +423,34 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
           )}
         </div>
 
+        {/* ── Pinned decision action (e.g. open page / consolidate) — sits just above the composer ── */}
+        {agreed && pinned && (
+          <div className="ai-chat-action-card">
+            <div className="ai-chat-action-title">{pinned.title}</div>
+            {pinned.subtext && <div className="ai-chat-action-sub">{pinned.subtext}</div>}
+            <div className="ai-chat-action-btns">
+              {pinned.buttons.map((b, i) => (
+                <button key={i} className="ai-chat-action-btn" onClick={() => { setPinned(null); b.onClick(); }}>{b.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Inline notification (e.g. "policy applied") — sits just above the composer ── */}
+        {agreed && notice && (
+          <div className="ai-chat-notice">
+            <span className="ai-chat-notice-text">{notice.text}</span>
+            <div className="ai-chat-notice-actions">
+              {notice.onUndo && <button className="ai-chat-notice-undo" onClick={() => { notice.onUndo!(); setNotice(null); }}>Undo</button>}
+              <button className="ai-chat-notice-close" aria-label="Dismiss" onClick={() => setNotice(null)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Input (hidden until the agreement gate is dismissed) ── */}
         {agreed && (
         <div className="ai-chat-input-wrap">
@@ -400,7 +459,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             <textarea
               ref={textareaRef}
               className="ai-chat-textarea"
-              placeholder="Placeholder"
+              placeholder={thinkStyle === 'ideal' ? 'How can I help you today?' : 'Ask anything'}
               value={input}
               rows={1}
               onChange={e => setInput(e.target.value)}

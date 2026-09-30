@@ -15,6 +15,29 @@ export type Span =
   | { mono: string }                        // monospace w/ background
   | { ref: string; href?: string };         // clickable reference chip e.g. "BitGo Docs +2"
 
+// Icon keyword for action cards → an inline glyph (see AIResponse `actionIcon`).
+export type ActionIcon = 'wallet' | 'deposit' | 'trade' | 'policy' | 'shield' | 'stake';
+
+// A single proposed agent action: user approves it, it "runs", then leaves a receipt.
+export interface ActionItem {
+  id: string;
+  icon?: ActionIcon;
+  title: string;
+  desc: string;
+  cta: string;     // button label, e.g. "Create wallet"
+  done: string;    // receipt line shown after it runs, e.g. "Hot wallet created"
+}
+
+// A recommended policy card. Each card supports Edit / Simulate / Preview / Apply.
+export interface PolicyCard {
+  id: string;
+  name: string;
+  desc: string;
+  rules: string[];                                       // rule lines shown in the card
+  detail?: { label: string; value: string }[];          // Preview: key/value policy detail
+  sim?: { impact: string; tiles: { label: string; value: string }[] };  // Simulate: impact summary
+}
+
 export type Block =
   | { kind: 'heading'; text: string; underline?: boolean }
   | { kind: 'paragraph'; spans: Span[] }
@@ -22,11 +45,35 @@ export type Block =
   | { kind: 'dataCards'; cards: { label: string; value: string }[] }
   | { kind: 'table'; title?: string; columns: string[]; rows: string[][] }
   | { kind: 'chart'; title?: string; bars: { label: string; value: number }[] }
-  | { kind: 'followup'; text: string };
+  | { kind: 'followup'; text: string }
+  // ── Interactive (ideal mode only) ──
+  // Agent actions the assistant can run on the user's behalf (approve → run → receipt + undo).
+  | { kind: 'actions'; intro?: string; items: ActionItem[] }
+  // Recommended policy cards, each with Edit / Simulate / Preview / Apply.
+  | { kind: 'policyCards'; intro?: string; cards: PolicyCard[] }
+  // An approval gate: pauses the response with a pinned decision card. On a
+  // positive choice it streams `approvedThought` and continues; a `stop` button ends it.
+  | {
+      kind: 'approvalGate';
+      title: string;
+      subtext: string;
+      buttons: { label: string; effect?: 'navigate' | 'consolidateManual' | 'consolidateAuto'; stop?: boolean }[];
+      approvedThought: ThoughtStep[];
+      notify?: string;   // notification to raise once the gate continues
+    }
+  // Clickable follow-up prompts that continue the conversation.
+  | { kind: 'quickReplies'; replies: string[] };
+
+// Block kinds that are interactive — rendered only in ideal mode.
+export const INTERACTIVE_KINDS = ['actions', 'policyCards', 'approvalGate', 'quickReplies'] as const;
+export function isInteractive(kind: Block['kind']): boolean {
+  return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
+}
 
 export interface AIResponse {
   thought: ThoughtStep[];
   blocks: Block[];
+  thinkMs?: number;   // override the thinking-window duration (default 15000)
 }
 
 // Shared sample prompts — used by both the chat idle state and the search modal.
@@ -57,8 +104,8 @@ const RESPONSE_CAPABILITIES: AIResponse = {
       ],
     },
     { kind: 'heading', text: 'Try Asking' },
-    { kind: 'paragraph', spans: ['For example: ', { mono: 'Show me my recent transactions' }, ', ', { mono: 'How do I create a wallet?' }, ', or ', { mono: 'Summarize my key metrics' }, '.'] },
     { kind: 'followup', text: 'What would you like to start with?' },
+    { kind: 'quickReplies', replies: ['Show me my recent transactions', 'Recommend policies for my enterprise', 'Fund my Go Account', 'How do I create a wallet?'] },
   ],
 };
 
@@ -84,7 +131,183 @@ const RESPONSE_TEXT: AIResponse = {
         { bold: 'Spending policies', rest: ' — set approval thresholds before any funds can move.' },
       ],
     },
-    { kind: 'followup', text: 'Want me to start the wallet creation flow for you?' },
+    {
+      kind: 'actions',
+      intro: 'I can set these up for you:',
+      items: [
+        { id: 'create-hot', icon: 'wallet', title: 'Create a hot wallet', desc: 'Multi-signature, ready for everyday transfers.', cta: 'Create wallet', done: 'Hot wallet created and ready to fund.' },
+        { id: 'add-policy', icon: 'policy', title: 'Add a spending policy', desc: 'Require approvals above a threshold before funds move.', cta: 'Set policy', done: 'Spending policy added to the wallet.' },
+      ],
+    },
+    { kind: 'quickReplies', replies: ['Recommend policies for my enterprise', 'What assets are supported?', 'Fund my Go Account'] },
+  ],
+};
+
+// Variant: agent actions — "Fund my Go Account" / deposit
+const RESPONSE_DEPOSIT: AIResponse = {
+  thought: [
+    { header: 'Checking your Go Account', desc: 'Confirmed your account is verified and ready to receive funds.' },
+    { header: 'Preparing funding options', desc: 'Gathered the fastest cash and crypto deposit paths for your tier.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['You can fund your Go Account in a couple of minutes. I can start a deposit for you now.'] },
+    {
+      kind: 'actions',
+      items: [
+        { id: 'deposit-cash', icon: 'deposit', title: 'Deposit cash', desc: 'Wire USD to your Go Account.', cta: 'Start deposit', done: 'Wire instructions generated — check your email.' },
+        { id: 'deposit-crypto', icon: 'deposit', title: 'Deposit crypto', desc: 'Send BTC, ETH, or 700+ assets to a deposit address.', cta: 'Get address', done: 'Deposit address generated and copied.' },
+      ],
+    },
+    { kind: 'followup', text: 'Once funds land, I can help you place your first trade.' },
+    { kind: 'quickReplies', replies: ['What is the minimum deposit?', 'Show supported assets', 'Make my first trade'] },
+  ],
+};
+
+// Variant: recommended policy cards — "Recommend policies"
+const RESPONSE_POLICIES: AIResponse = {
+  thought: [
+    { header: 'Reviewing your activity', desc: 'Analyzed transfer patterns, counterparties, and approval history.' },
+    { header: 'Matching to policy templates', desc: 'Compared your profile against common enterprise controls.' },
+    { header: 'Ranking recommendations', desc: 'Prioritized the highest-impact policies for your enterprise.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['Based on your enterprise profile, here are three policies I recommend. You can edit, simulate, preview, or apply each one.'] },
+    {
+      kind: 'policyCards',
+      intro: 'Recommended policies',
+      cards: [
+        {
+          id: 'p1',
+          name: 'Withdrawal approval threshold',
+          desc: 'Require multiple approvals for large withdrawals.',
+          rules: ['Trigger: Withdrawal over $50,000', 'Require: 2 of 3 approvers'],
+          detail: [
+            { label: 'Trigger', value: 'Withdrawal over $50,000' },
+            { label: 'Condition', value: 'Any asset, any wallet' },
+            { label: 'Action', value: 'Require 2 of 3 approvers' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Adds an approval step to large withdrawals without blocking any legitimate transfers.',
+            tiles: [
+              { label: 'Transactions affected', value: '18' },
+              { label: 'Would block', value: '0' },
+              { label: 'Extra approvals', value: '18' },
+              { label: 'Auto-approved', value: '96%' },
+            ],
+          },
+        },
+        {
+          id: 'p2',
+          name: 'Daily velocity limit',
+          desc: 'Cap total outbound value per day.',
+          rules: ['Trigger: Daily outbound over $250,000', 'Action: Block and notify admins'],
+          detail: [
+            { label: 'Trigger', value: 'Daily outbound over $250,000' },
+            { label: 'Condition', value: 'Rolling 24-hour window' },
+            { label: 'Action', value: 'Block and notify admins' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Would have flagged 2 high-volume days last month for manual review.',
+            tiles: [
+              { label: 'Transactions affected', value: '41' },
+              { label: 'Would block', value: '3' },
+              { label: 'Would flag', value: '2 days' },
+              { label: 'Auto-approved', value: '92%' },
+            ],
+          },
+        },
+        {
+          id: 'p3',
+          name: 'Whitelist-only withdrawals',
+          desc: 'Allow withdrawals only to approved addresses.',
+          rules: ['Trigger: Withdrawal to a new address', 'Action: Require whitelist first'],
+          detail: [
+            { label: 'Trigger', value: 'Withdrawal to a new address' },
+            { label: 'Condition', value: 'Address not on allowlist' },
+            { label: 'Action', value: 'Require whitelist approval first' },
+            { label: 'Scope', value: 'All enterprise wallets' },
+          ],
+          sim: {
+            impact: 'Would have required whitelisting for 5 new destinations last month.',
+            tiles: [
+              { label: 'Transactions affected', value: '27' },
+              { label: 'Would block', value: '5' },
+              { label: 'New addresses', value: '5' },
+              { label: 'Auto-approved', value: '81%' },
+            ],
+          },
+        },
+      ],
+    },
+    { kind: 'followup', text: 'Want me to simulate their impact on last month of activity?' },
+    { kind: 'quickReplies', replies: ['Simulate the impact', 'Explain the velocity limit', 'Show my recent transactions'] },
+  ],
+};
+
+// Whitelist flow — one continuous turn with two approval gates: open the page,
+// then consolidate. Each gate pauses the response (inline "Thinking…" + pinned
+// Approve/Deny), and on approval streams a second thought and continues.
+const RESPONSE_WHITELIST: AIResponse = {
+  thinkMs: 2000,
+  thought: [
+    { header: 'Locating your whitelist destinations', desc: 'Finding the right page for your request.' },
+  ],
+  blocks: [
+    { kind: 'paragraph', spans: ['Your whitelisted withdrawal destinations live on the Whitelist Destinations page.'] },
+    { kind: 'paragraph', spans: ['Do you want me to open it and review them with you?'] },
+    {
+      kind: 'approvalGate',
+      title: 'Open Whitelist Destinations',
+      subtext: 'I can open your Whitelist Destinations and take a look with you.',
+      buttons: [
+        { label: 'Approve', effect: 'navigate' },
+        { label: 'Deny', stop: true },
+      ],
+      approvedThought: [
+        { header: 'Permission granted from user', desc: 'You approved me to open the page — continuing your original request.' },
+        { header: 'Opening Whitelist Destinations', desc: 'Loading your addresses and grouping them by label.' },
+      ],
+    },
+    // ── after approval: the insight ──
+    {
+      kind: 'dataCards',
+      cards: [
+        { label: 'Total destinations', value: '18' },
+        { label: 'Active', value: '18' },
+        { label: 'Duplicate addresses', value: '3' },
+      ],
+    },
+    { kind: 'heading', text: 'Status' },
+    { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' — every address is ready to receive withdrawals.'] },
+    { kind: 'heading', text: 'Worth noticing', underline: true },
+    { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one.'] },
+    { kind: 'paragraph', spans: ['Do you want me to consolidate each address to a single, clear label?'] },
+    {
+      kind: 'approvalGate',
+      title: 'Consolidate duplicate addresses',
+      subtext: 'Merge each duplicated address into one clear label.',
+      buttons: [
+        { label: 'Consolidate manually', effect: 'consolidateManual' },
+        { label: 'Consolidate automatically', effect: 'consolidateAuto' },
+      ],
+      approvedThought: [
+        { header: 'Consolidating addresses', desc: 'Merging duplicate labels across your whitelist destinations.' },
+      ],
+      notify: 'Consolidation completed.',
+    },
+    // ── after consolidation: summary ──
+    { kind: 'heading', text: 'Summary of this request' },
+    {
+      kind: 'bullets',
+      items: [
+        { bold: 'Opened Whitelist Destinations', rest: ' — reviewed 18 active addresses.' },
+        { bold: 'Flagged duplicates', rest: ' — found 3 addresses saved under multiple labels.' },
+        { bold: 'Consolidated labels', rest: ' — merged each address down to one clear label.' },
+      ],
+    },
+    { kind: 'followup', text: 'Is there anything else you need?' },
   ],
 };
 
@@ -180,6 +403,9 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
+  if (/\bdestinations?\b|whitelist|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST;
+  if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
+  if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
   if (/\b(chart|trend|trends|graph|growth|over time)\b/.test(p)) return RESPONSE_CHART;
   if (/\b(transactions?|history|activity|recent|table|rows?)\b/.test(p)) return RESPONSE_TABLE;
   if (/\b(data|insights?|metrics?|summary|balance|balances|portfolio|total|how much)\b/.test(p)) return RESPONSE_DATA;

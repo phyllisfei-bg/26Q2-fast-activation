@@ -3,3 +3,6 @@
 *.swo
 node_modules/
 dist/
+
+# Local screen recordings / scratch media
+*.gif

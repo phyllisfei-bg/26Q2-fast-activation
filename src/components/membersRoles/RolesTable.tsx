@@ -3,8 +3,10 @@ import type { Role } from '../../types';
 import { StatusBadge, PillRow, Menu, ManageRolesIcon, TrashIcon } from './shared';
 
 // Matches DestinationsPage table chrome verbatim.
-const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
-const THBLANK = 'px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)]';
+// STICKY pins the header just below the sticky filter row (h-14 = 56px) while rows scroll.
+const STICKY = 'sticky top-14 z-10';
+const TH = `px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
+const THBLANK = `px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
 const TD = 'px-4 h-16 align-middle';
 
 interface Props {
@@ -15,7 +17,7 @@ interface Props {
 }
 
 export const RolesTable: React.FC<Props> = ({ roles, onRowClick, onManageMembers, onDelete }) => (
-  <div className="overflow-auto rounded-xl border border-[var(--color-border)]">
+  <div className="rounded-xl border border-[var(--color-border)]">
     <table className="mr-roles-cols w-full table-fixed border-separate border-spacing-0">
       <thead>
         <tr>
@@ -30,12 +32,12 @@ export const RolesTable: React.FC<Props> = ({ roles, onRowClick, onManageMembers
       </thead>
       <tbody>
         {roles.map(r => (
-          <tr key={r.id} className="cursor-pointer hover:bg-[#F9FAFB] transition-colors" onClick={() => onRowClick(r)}>
+          <tr key={r.id} className="cursor-pointer tbl-row-hover" onClick={() => onRowClick(r)}>
             <td className={TD} onClick={e => e.stopPropagation()}>
               <input type="checkbox" className="mr-check" />
             </td>
             <td className={TD}>
-              <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5">{r.name}</div>
+              <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5">{r.name}</div>
               <div className="text-[14px] text-[var(--color-text-secondary)]">{r.kind}</div>
             </td>
             <td className={TD}><PillRow items={r.categories} max={2} /></td>
