@@ -67,7 +67,7 @@ const SkLine: React.FC<{ w: string; h?: number; mt?: number }> = ({ w, h = 12, m
 //   'current' → star + a single shimmering line that swaps to each step's name
 // Once done, both variants collapse to the same expandable "Thought process".
 export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean; variant?: 'ideal' | 'current' }> = ({ steps, thinking = false, variant = 'ideal' }) => {
-  const [open, setOpen] = useState(thinking);            // collapsed once done; user expands via chevron
+  const [open, setOpen] = useState(false);               // always collapsed by default; user expands via chevron
   const [shown, setShown] = useState(thinking ? 0 : steps.length);
   const [skeleton, setSkeleton] = useState(thinking);
   const [activeStep, setActiveStep] = useState(0);       // 'current' variant: which step name is shown
@@ -134,10 +134,15 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
         <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>
           {thinking ? 'Thinking...' : 'Thought process'}
         </span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-          strokeLinecap="round" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        {open ? (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        ) : (
+          <svg className={thinking ? 'ai-thought-chevron-pending' : undefined} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        )}
       </button>
       {open && (
         <div className="ai-thought-steps">
