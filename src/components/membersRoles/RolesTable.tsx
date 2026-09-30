@@ -30,7 +30,7 @@ export const RolesTable: React.FC<Props> = ({ roles, onRowClick, onManageMembers
       </thead>
       <tbody>
         {roles.map(r => (
-          <tr key={r.id} className="cursor-pointer hover:bg-[#F9FAFB] transition-colors" onClick={() => onRowClick(r)}>
+          <tr key={r.id} className="cursor-pointer tbl-row-hover" onClick={() => onRowClick(r)}>
             <td className={TD} onClick={e => e.stopPropagation()}>
               <input type="checkbox" className="mr-check" />
             </td>

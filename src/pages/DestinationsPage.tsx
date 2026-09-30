@@ -562,6 +562,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                   && (!nextRow || nextRow.groupId !== currentGroup!.groupId || collapsingIds.has(nextRow.id));
                 const rowClass = [
                   'dest-row',
+                  !consolidating ? 'tbl-row-hover' : '',
                   consolidating && !isActive ? 'opacity-40' : '',
                   isCollapsing ? 'dest-row-collapsing' : '',
                 ].filter(Boolean).join(' ');

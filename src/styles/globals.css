@@ -23,7 +23,7 @@ body {
   display: flex; flex-direction: column; overflow: visible; position: relative; z-index: 10;
 }
 .sidebar-top {
-  padding: 14px 12px 10px;
+  padding: 20px 12px 10px;
   display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 .sidebar-logo { display: flex; align-items: center; gap: 8px; flex: 1; }
@@ -102,8 +102,12 @@ body {
 
 /* ─── Destinations page — minimal CSS Tailwind can't express ─────── */
 /* Row collapse: dual-duration transition + transform-origin */
-.dest-row { transition: transform 600ms ease, opacity 480ms ease; transform-origin: top center; }
+.dest-row { transition: transform 600ms ease, opacity 480ms ease, background-color .13s ease; transform-origin: top center; }
 .dest-row-collapsing { transform: scaleY(0); opacity: 0 !important; pointer-events: none; }
+/* Shared table row hover — identical on Whitelist Destinations + Admin Console tables */
+.tbl-row-hover { transition: background-color .13s ease; }
+.dest-row:hover, .tbl-row-hover:hover { background: var(--color-level2); }
+body.light-mode .dest-row:hover, body.light-mode .tbl-row-hover:hover { background: #F9FAFB; }
 /* Amber Find-and-Replace highlight on mark element */
 .label-mark { background: rgba(251,191,36,.35); border-radius: 3px; padding: 1px 2px; margin: 0 -2px; color: inherit; font-weight: inherit; }
 /* Spring animation for new scope chips */
@@ -122,7 +126,7 @@ body {
 
 /* ─── Topbar ─────────────────────────────────────────────────────── */
 .topbar {
-  height: 52px; display: flex; align-items: center; padding: 0 24px;
+  min-height: 52px; display: flex; align-items: center; padding: 20px 24px 0;
   gap: 10px; flex-shrink: 0; background: var(--color-level1);
 }
 .topbar-enterprise {

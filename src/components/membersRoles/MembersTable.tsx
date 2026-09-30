@@ -33,7 +33,7 @@ export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onMana
         {members.map(m => {
           const roleNames = api.rolesForMember(m.id).map(r => r.role.name);
           return (
-            <tr key={m.id} className="cursor-pointer hover:bg-[#F9FAFB] transition-colors" onClick={() => onRowClick(m)}>
+            <tr key={m.id} className="cursor-pointer tbl-row-hover" onClick={() => onRowClick(m)}>
               <td className={TD} onClick={e => e.stopPropagation()}>
                 <input type="checkbox" className="mr-check" />
               </td>
