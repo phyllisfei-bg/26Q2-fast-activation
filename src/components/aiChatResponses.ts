@@ -60,6 +60,7 @@ export type Block =
       buttons: { label: string; effect?: 'navigate' | 'consolidateManual' | 'consolidateAuto'; stop?: boolean }[];
       approvedThought: ThoughtStep[];
       notify?: string;   // notification to raise once the gate continues
+      auto?: boolean;    // no pinned card — run `buttons[0].effect` immediately (the user's prompt was the approval)
     }
   // Clickable follow-up prompts that continue the conversation.
   | { kind: 'quickReplies'; replies: string[] };
@@ -70,9 +71,18 @@ export function isInteractive(kind: Block['kind']): boolean {
   return (INTERACTIVE_KINDS as readonly string[]).includes(kind);
 }
 
+// A decision card shown once a response has concluded. Clicking a button
+// auto-sends `prompt` as the user's next message.
+export interface NextAction {
+  title: string;
+  subtext: string;
+  buttons: { label: string; prompt: string }[];
+}
+
 export interface AIResponse {
   thought: ThoughtStep[];
   blocks: Block[];
+  nextAction?: NextAction;   // pinned above the composer after the response concludes
   thinkMs?: number;   // override the thinking-window duration (default 15000)
 }
 
@@ -246,21 +256,22 @@ const RESPONSE_POLICIES: AIResponse = {
   ],
 };
 
-// Whitelist flow — one continuous turn with two approval gates: open the page,
-// then consolidate. Each gate pauses the response (inline "Thinking…" + pinned
-// Approve/Deny), and on approval streams a second thought and continues.
+// Whitelist flow — two turns.
+// Turn 1: the permission ask is part of the AI's reasoning; approving opens the
+// page, the AI continues thinking, shares the analysis and concludes with a
+// "next action" card. Turn 2: clicking that card auto-sends a prompt and the AI
+// runs the consolidation.
 const RESPONSE_WHITELIST: AIResponse = {
   thinkMs: 2000,
   thought: [
-    { header: 'Locating your whitelist destinations', desc: 'Finding the right page for your request.' },
+    { header: 'Locating your whitelist destinations', desc: 'Your whitelisted withdrawal destinations live on the Whitelist Destinations page.' },
+    { header: 'Requesting access to the page', desc: 'I need your approval to open it and review them with you.' },
   ],
   blocks: [
-    { kind: 'paragraph', spans: ['Your whitelisted withdrawal destinations live on the Whitelist Destinations page.'] },
-    { kind: 'paragraph', spans: ['Do you want me to open it and review them with you?'] },
     {
       kind: 'approvalGate',
-      title: 'Open Whitelist Destinations',
-      subtext: 'I can open your Whitelist Destinations and take a look with you.',
+      title: 'Navigate to page: Whitelist Destinations',
+      subtext: 'I need your approval to go to the target page. If you deny, I can still continue the analysis here in chat whenever you wish.',
       buttons: [
         { label: 'Approve', effect: 'navigate' },
         { label: 'Deny', stop: true },
@@ -268,9 +279,9 @@ const RESPONSE_WHITELIST: AIResponse = {
       approvedThought: [
         { header: 'Permission granted from user', desc: 'You approved me to open the page — continuing your original request.' },
         { header: 'Opening Whitelist Destinations', desc: 'Loading your addresses and grouping them by label.' },
+        { header: 'Analyzing destinations', desc: 'Checking status and comparing labels across all 18 addresses.' },
       ],
     },
-    // ── after approval: the insight ──
     {
       kind: 'dataCards',
       cards: [
@@ -283,21 +294,34 @@ const RESPONSE_WHITELIST: AIResponse = {
     { kind: 'paragraph', spans: ['All 18 destinations are ', { mono: 'Active' }, ' — every address is ready to receive withdrawals.'] },
     { kind: 'heading', text: 'Worth noticing', underline: true },
     { kind: 'paragraph', spans: ['3 addresses are each saved under several different labels — for example, one USDC treasury address appears under 11 labels. During a withdrawal these show up as separate entries, so it is easy to pick the wrong one.'] },
-    { kind: 'paragraph', spans: ['Do you want me to consolidate each address to a single, clear label?'] },
+  ],
+  nextAction: {
+    title: 'Consolidate duplicate addresses',
+    subtext: 'Merge each duplicated address into one clear label.',
+    buttons: [
+      { label: 'Consolidate manually', prompt: 'Consolidate manually' },
+      { label: 'Consolidate automatically', prompt: 'Consolidate automatically' },
+    ],
+  },
+};
+
+const consolidateResponse = (mode: 'manual' | 'auto'): AIResponse => ({
+  thinkMs: 1500,
+  thought: [
+    { header: 'Reading your choice', desc: mode === 'auto' ? 'You asked me to consolidate the duplicate addresses automatically.' : 'You asked to consolidate the duplicate addresses manually.' },
+  ],
+  blocks: [
     {
       kind: 'approvalGate',
+      auto: true,
       title: 'Consolidate duplicate addresses',
-      subtext: 'Merge each duplicated address into one clear label.',
-      buttons: [
-        { label: 'Consolidate manually', effect: 'consolidateManual' },
-        { label: 'Consolidate automatically', effect: 'consolidateAuto' },
-      ],
+      subtext: '',
+      buttons: [{ label: 'Consolidate', effect: mode === 'auto' ? 'consolidateAuto' : 'consolidateManual' }],
       approvedThought: [
         { header: 'Consolidating addresses', desc: 'Merging duplicate labels across your whitelist destinations.' },
       ],
       notify: 'Consolidation completed.',
     },
-    // ── after consolidation: summary ──
     { kind: 'heading', text: 'Summary of this request' },
     {
       kind: 'bullets',
@@ -309,7 +333,9 @@ const RESPONSE_WHITELIST: AIResponse = {
     },
     { kind: 'followup', text: 'Is there anything else you need?' },
   ],
-};
+});
+const RESPONSE_CONSOLIDATE_MANUAL = consolidateResponse('manual');
+const RESPONSE_CONSOLIDATE_AUTO = consolidateResponse('auto');
 
 // Variant: data-insight cards — "Summarize my key metrics"
 const RESPONSE_DATA: AIResponse = {
@@ -403,6 +429,8 @@ const VARIANTS: AIResponse[] = [RESPONSE_TEXT, RESPONSE_DATA, RESPONSE_TABLE, RE
 export function pickResponse(prompt: string, turn: number): AIResponse {
   const p = prompt.toLowerCase();
   if (/what can you do|what do you do|capabilities|what can this|how can you help/.test(p)) return RESPONSE_CAPABILITIES;
+  if (/^consolidate manually$/.test(p.trim())) return RESPONSE_CONSOLIDATE_MANUAL;
+  if (/^consolidate automatically$/.test(p.trim())) return RESPONSE_CONSOLIDATE_AUTO;
   if (/\bdestinations?\b|whitelist|consolidat|duplicate address/.test(p)) return RESPONSE_WHITELIST;
   if (/\b(deposit|deposits|fund|funding|add funds)\b/.test(p)) return RESPONSE_DEPOSIT;
   if (/\b(polic(y|ies)|recommend|recommendation|compliance|approval|whitelist|controls?)\b/.test(p)) return RESPONSE_POLICIES;
