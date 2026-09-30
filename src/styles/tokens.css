@@ -45,6 +45,7 @@
   --color-border:           var(--dg-600);
   --color-border-strong:    var(--dg-500);
   --color-border-selected:  var(--brand-500);
+  --scope-badge-border:     rgba(255,255,255,0.8);
   --color-backdrop:         var(--black-a600);
   --color-overlay:          var(--black-a400);
 
@@ -99,6 +100,7 @@ body.light-mode {
   --color-border:           #DFE2F2;
   --color-border-strong:    #CDD1E8;
   --color-border-selected:  var(--brand-500);
+  --scope-badge-border:     #D3D6D9;
   --color-backdrop:         rgba(13,14,28,.45);
   --color-overlay:          rgba(13,14,28,.25);
   --color-primary-light:    rgba(61,101,240,.12);
