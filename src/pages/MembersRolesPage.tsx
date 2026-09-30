@@ -49,9 +49,9 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
     <div className="flex flex-col h-full overflow-hidden bg-[var(--color-level1)]">
       <Topbar isLight={isLight} onThemeToggle={onThemeToggle} admin />
 
-      <div className="flex-1 overflow-y-auto px-7 py-7">
+      <div className="flex-1 overflow-y-auto px-7 pb-7">
         {/* Page header */}
-        <div className="flex items-start justify-between mb-6 gap-4">
+        <div className="flex items-start justify-between mb-6 gap-4 pt-7">
           <div>
             <h1 className="text-[22px] font-semibold text-[var(--color-text)]">{tab === 'members' ? 'Members' : 'Roles'}</h1>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">
@@ -86,8 +86,8 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
           </div>
         </div>
 
-        {/* Filter chips + search row */}
-        <div className="flex items-center justify-between gap-4 mb-4">
+        {/* Filter chips + search row — sticky while rows scroll */}
+        <div className="sticky top-0 z-20 bg-[var(--color-level1)] flex items-center justify-between gap-4 h-14">
           <FilterChips filters={tab === 'members' ? ['Roles', 'Status'] : ['Category', 'Members']} />
           <div className="w-[220px] shrink-0">
             <SearchField value={search} onChange={setSearch} placeholder="Search" />

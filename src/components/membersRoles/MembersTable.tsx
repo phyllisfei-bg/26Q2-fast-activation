@@ -4,8 +4,10 @@ import type { MembersRolesApi } from '../../hooks/useMembersRoles';
 import { StatusBadge, PillRow, Avatar, Menu, ManageRolesIcon, TrashIcon } from './shared';
 
 // Matches DestinationsPage table chrome verbatim.
-const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
-const THBLANK = 'px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)]';
+// STICKY pins the header just below the sticky filter row (h-14 = 56px) while rows scroll.
+const STICKY = 'sticky top-14 z-10';
+const TH = `px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
+const THBLANK = `px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
 const TD = 'px-4 h-16 align-middle';
 
 interface Props {
@@ -17,7 +19,7 @@ interface Props {
 }
 
 export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onManageRoles, onRemove }) => (
-  <div className="overflow-auto rounded-xl border border-[var(--color-border)]">
+  <div className="rounded-xl border border-[var(--color-border)]">
     <table className="mr-members-cols w-full table-fixed border-separate border-spacing-0">
       <thead>
         <tr>

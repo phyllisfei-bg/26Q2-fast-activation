@@ -32,7 +32,7 @@ body {
   border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .sidebar-logo-text { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
-.sidebar-logo-text--admin { font-size: 16px; white-space: nowrap; }   /* fit "Admin Console" on one line */
+.sidebar-logo-text--admin { font-size: 14px; white-space: nowrap; }   /* fit "Admin Console" without crowding the collapse icon */
 .sidebar-toggle {
   width: 28px; height: 28px; border-radius: 7px; border: none;
   background: transparent; cursor: pointer;
@@ -2505,7 +2505,7 @@ body.light-mode .mr-btn-tonal:hover { background: #ECECEC; }
 
 /* ── Kebab + actions trigger ── */
 .mr-kebab-btn {
-  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; border: none; cursor: pointer;
   background: transparent; color: var(--color-text-secondary);
   display: inline-flex; align-items: center; justify-content: center;
   transition: background .13s, color .13s;
