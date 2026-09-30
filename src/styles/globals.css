@@ -1917,6 +1917,15 @@ body.light-mode .ai-chat-bubble.user {
   from { background-position: 120% 0; }
   to   { background-position: -120% 0; }
 }
+/* Pending user response: right-pointing chevron that nudges to signal a waiting/expandable state. */
+.ai-thought-chevron-pending {
+  color: var(--color-text-muted);
+  animation: ai-chevron-nudge 1.1s ease-in-out infinite;
+}
+@keyframes ai-chevron-nudge {
+  0%, 100% { transform: translateX(0); opacity: .5; }
+  50%      { transform: translateX(2px); opacity: 1; }
+}
 /* 'current' thinking variant: reuses the ideal .ai-thought-toggle row for identical
    star+text alignment; just a non-interactive cursor + a slower shimmer here. */
 .ai-thought-live { cursor: default; }

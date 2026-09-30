@@ -646,10 +646,14 @@ const ApprovalGate: React.FC<{
   const thinking = phase === 'waiting' || streaming || awaiting;
   return (
     <div className="ai-thought ai-thought-gate">
-      <button className="ai-thought-toggle" onClick={() => setOpen(o => !o)}>
+      <button className="ai-thought-toggle" onClick={() => { if (phase !== 'waiting') setOpen(o => !o); }}>
         {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
         <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>{thinking ? 'Thinking...' : 'Thought process'}</span>
-        {chevron(open)}
+        {phase === 'waiting' ? (
+          <svg className="ai-thought-chevron-pending" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        ) : chevron(open)}
       </button>
       {open && phase === 'approved' && (
         <div className="ai-thought-steps">
