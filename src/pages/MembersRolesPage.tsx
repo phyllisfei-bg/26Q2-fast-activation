@@ -11,6 +11,7 @@ import { RoleDrawer } from '../components/membersRoles/RoleDrawer';
 import { ManageRolesModal } from '../components/membersRoles/ManageRolesModal';
 import { ManageMembersModal } from '../components/membersRoles/ManageMembersModal';
 import { SearchField } from '../components/SearchField';
+import { FilterChips } from '../components/FilterChips';
 
 type Tab = 'members' | 'roles';
 
@@ -19,10 +20,12 @@ interface Props {
   onThemeToggle: () => void;
   api: MembersRolesApi;
   onInviteMember: () => void;
+  tab?: Tab;
 }
 
-export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api, onInviteMember }) => {
-  const [tab, setTab] = useState<Tab>('members');
+export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api, onInviteMember, tab: tabProp }) => {
+  const [tabState] = useState<Tab>('members');
+  const tab = tabProp ?? tabState;
   const [search, setSearch] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -50,54 +53,44 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
         {/* Page header */}
         <div className="flex items-start justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-[22px] font-semibold text-[var(--color-text)]">Members &amp; Roles</h1>
+            <h1 className="text-[22px] font-semibold text-[var(--color-text)]">{tab === 'members' ? 'Members' : 'Roles'}</h1>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-              Manage member access and roles in your organization. For detailed role permissions, visit{' '}
+              {tab === 'members'
+                ? 'Manage member access in your organization.'
+                : 'Manage roles and their permissions.'} For detailed role permissions, visit{' '}
               <a className="text-[var(--brand-500)] hover:underline cursor-pointer">Resource Center</a>.
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
-              onClick={onInviteMember}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Invite Member
-            </button>
-            <button
-              className="mr-btn-tonal flex items-center h-9 px-4 rounded-full text-sm font-semibold border-none cursor-pointer transition-colors shrink-0"
-              onClick={() => snackRef.current?.show('Create Role flow coming soon.', false)}
-            >
-              Create Role
-            </button>
+            {tab === 'members' ? (
+              <button
+                className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
+                onClick={onInviteMember}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Invite Member
+              </button>
+            ) : (
+              <button
+                className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
+                onClick={() => snackRef.current?.show('Create Role flow coming soon.', false)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Create Role
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tabs + search row */}
-        <div className="flex items-center justify-between gap-4 border-b border-[var(--color-border)] mb-4">
-          <div className="flex">
-            {(['members', 'roles'] as Tab[]).map(t => (
-              <button
-                key={t}
-                className={`h-9 px-4 text-sm font-medium cursor-pointer bg-transparent border-0 border-b-2 -mb-px transition-colors ${tab === t ? 'border-[var(--brand-500)] text-[var(--color-text)]' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'}`}
-                onClick={() => setTab(t)}
-              >
-                {t === 'members' ? 'Members' : 'Roles'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-[220px]">
-              <SearchField value={search} onChange={setSearch} placeholder="Search" />
-            </div>
-            <button className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--brand-a100)] text-[var(--brand-500)] border-none text-sm font-medium cursor-pointer hover:bg-[var(--brand-a200)] transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" />
-              </svg>
-              Filter
-            </button>
+        {/* Filter chips + search row */}
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <FilterChips filters={tab === 'members' ? ['Roles', 'Status'] : ['Category', 'Members']} />
+          <div className="w-[220px] shrink-0">
+            <SearchField value={search} onChange={setSearch} placeholder="Search" />
           </div>
         </div>
 

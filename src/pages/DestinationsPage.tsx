@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Topbar } from '../components/Topbar';
 import { Snackbar } from '../components/Snackbar';
 import type { SnackbarHandle } from '../components/Snackbar';
+import { FilterChips } from '../components/FilterChips';
 
 type DestTab = 'addresses' | 'wallets' | 'enterprise';
 
@@ -558,15 +559,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                 disabled={consolidating}
               />
             </div>
-            <button
-              className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--brand-a100)] text-[var(--brand-500)] border-none text-sm font-medium cursor-pointer hover:bg-[var(--brand-a200)] transition-colors"
-              disabled={consolidating}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-              </svg>
-              Filter
-            </button>
+            <FilterChips filters={['Network', 'Scope', 'Status']} />
           </div>
         </div>
 
@@ -641,30 +634,29 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                         {d.scopes.slice(0, 3).map(s => (
                           <span
                             key={s}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
-                            style={{ border: '1px solid var(--scope-badge-border)' }}
+                            className={`inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] font-medium bg-[#d3d6d9] text-[#161720] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
                           >{s}</span>
                         ))}
                         {d.scopes.length > 3 && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap" style={{ border: '1px solid var(--scope-badge-border)' }}>+{d.scopes.length - 3}</span>
+                          <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] font-medium bg-[#d3d6d9] text-[#161720] whitespace-nowrap">+{d.scopes.length - 3}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-[14px] align-middle">
                       {d.status === 'pending' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(235,197,94,0.1)] text-[#ff9c11] whitespace-nowrap">Pending Approval</span>
+                        <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(235,197,94,0.1)] text-[#ff9c11] whitespace-nowrap">Pending Approval</span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(27,154,50,0.15)] text-[#2ebc48] whitespace-nowrap">Active</span>
+                        <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(27,154,50,0.15)] text-[#2ebc48] whitespace-nowrap">Active</span>
                       )}
                     </td>
                     <td className="px-4 py-[14px] align-middle">
                       <div className="relative flex justify-end">
                         <button
-                          className="w-7 h-7 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level3)] hover:text-[var(--color-text)] transition-colors"
+                          className="mr-kebab-btn"
                           title="More options"
                           onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === d.id ? null : d.id); }}
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>
                           </svg>
                         </button>

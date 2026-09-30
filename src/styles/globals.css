@@ -31,8 +31,8 @@ body {
   width: 28px; height: 28px; background: var(--brand-500);
   border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.sidebar-logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-.sidebar-logo-text--admin { font-size: 13px; white-space: nowrap; }   /* fit "Admin Console" on one line */
+.sidebar-logo-text { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.sidebar-logo-text--admin { font-size: 16px; white-space: nowrap; }   /* fit "Admin Console" on one line */
 .sidebar-toggle {
   width: 28px; height: 28px; border-radius: 7px; border: none;
   background: transparent; cursor: pointer;
@@ -129,7 +129,7 @@ body {
   display: flex; align-items: center; gap: 8px;
   background: var(--color-level2); border: 1px solid var(--color-border);
   border-radius: 9px; padding: 7px 12px; cursor: pointer;
-  font-size: 13.5px; font-weight: 500; transition: border-color .15s; min-width: 170px;
+  font-size: 14px; font-weight: 500; transition: border-color .15s; min-width: 170px;
 }
 .topbar-enterprise:hover { border-color: var(--color-border-strong); }
 .topbar-enterprise-chevron { color: var(--color-text-muted); margin-left: auto; }
@@ -137,7 +137,7 @@ body {
 .btn-move-funds {
   display: flex; align-items: center; gap: 8px;
   background: var(--color-level2); border: 1px solid var(--color-border); border-radius: 99px;
-  cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--color-text);
+  cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-text);
   padding: 8px 16px; transition: background .15s, border-color .15s;
 }
 .btn-move-funds:hover { background: var(--color-level3); border-color: var(--color-border-strong); }
@@ -2373,13 +2373,35 @@ body.light-mode .mr-chip { border-color: #D3D6D9; color: #242531; }
   height: 21px; padding: 0 9px; border-radius: 99px; box-sizing: border-box;
   font-size: 12px; font-weight: 500; line-height: 1; border: 1px solid; background: transparent;
 }
-.mr-badge.success { color: var(--color-success); border-color: rgba(74,222,128,.45); }
-.mr-badge.warning { color: var(--color-gold);    border-color: rgba(245,158,11,.45); }
+/* success / warning use the filled style shared with the Whitelist Destinations table */
+.mr-badge.success { color: #2ebc48; background: rgba(27,154,50,.15);  border-color: transparent; }
+.mr-badge.warning { color: #ff9c11; background: rgba(235,197,94,.10); border-color: transparent; }
+body.light-mode .mr-badge.success { color: #2ebc28; }
+body.light-mode .mr-badge.warning { color: #f47f2b; }
 .mr-badge.danger  { color: var(--color-danger);  border-color: rgba(248,113,113,.45); }
 .mr-badge.invited { color: #8B5CF6;              border-color: rgba(139,92,246,.45); }
 .mr-badge.neutral { color: #FFFFFF; border-color: #41485C; }                 /* dark mode */
 body.light-mode .mr-badge.neutral { color: #161720; border-color: #D3D6D9; } /* light mode */
 .mr-badge.brand { color: var(--brand-500); border-color: var(--brand-500); } /* outlined blue, no fill */
+
+/* ── Exposed filter chips (label + chevron) — Figma Addresses 6011:205487 ──
+      Row of pill triggers that replaces the single "Filter" button. */
+.filter-chips { display: flex; align-items: center; gap: 8px; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box;
+  height: 30px; padding: 0 8px 0 12px; border-radius: 999px; cursor: pointer;
+  background: transparent; border: 0.5px solid var(--color-border-strong);
+  color: var(--color-text); font-family: inherit; font-size: 14px; font-weight: 500;
+  letter-spacing: 0.2px; white-space: nowrap; transition: background .13s, border-color .13s;
+}
+body.light-mode .filter-chip { border-color: #D3D6D9; }
+.filter-chip:hover { border-color: var(--color-text-muted); }
+.filter-chip-chevron { color: var(--color-text-muted); display: inline-flex; }
+.filter-chip.active {
+  background: var(--brand-a200); border-color: var(--brand-500); color: var(--color-text);
+}
+body.light-mode .filter-chip.active { background: #CBD8FF; border-color: #5C84FC; color: #2E303F; }
+.filter-chip.active .filter-chip-chevron { color: inherit; }
 
 /* ── Search field — the single search component used everywhere
       (the original page search: pill, subtle surface, magnifier) ── */

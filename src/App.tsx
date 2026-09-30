@@ -102,6 +102,7 @@ export default function App() {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
   const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
+  const [adminTab, setAdminTab] = React.useState<'members' | 'roles'>('members');
   const goToRoles = (from: TopPage) => { setRolesReturn(from); navigateTo('roles'); };
   const handleSendInvites = (invites: InvitePayload[]) => {
     invites.forEach(inv => {
@@ -291,7 +292,8 @@ export default function App() {
       <div className="app">
         <Sidebar
           variant="admin"
-          activeAdmin="members"
+          activeAdmin={adminTab}
+          onNavigateAdmin={setAdminTab}
           onSearchOpen={() => setSearchOpen(true)}
           onReturnToEnterprise={() => navigateTo(rolesReturn)}
         />
@@ -301,6 +303,7 @@ export default function App() {
             onThemeToggle={toggle}
             api={membersRoles}
             onInviteMember={() => setInviteOpen(true)}
+            tab={adminTab}
           />
         </div>
         <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
