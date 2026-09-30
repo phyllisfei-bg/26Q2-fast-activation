@@ -641,11 +641,12 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                         {d.scopes.slice(0, 3).map(s => (
                           <span
                             key={s}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap border border-[var(--scope-badge-border)]${animatingScopes.has(s) ? ' chip-appear' : ''}`}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
+                            style={{ border: '1px solid var(--scope-badge-border)' }}
                           >{s}</span>
                         ))}
                         {d.scopes.length > 3 && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap border border-[var(--scope-badge-border)]">+{d.scopes.length - 3}</span>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap" style={{ border: '1px solid var(--scope-badge-border)' }}>+{d.scopes.length - 3}</span>
                         )}
                       </div>
                     </td>
