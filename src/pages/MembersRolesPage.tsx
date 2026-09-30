@@ -70,7 +70,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Invite Member
+                Invite
               </button>
             ) : (
               <button
@@ -80,7 +80,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Create Role
+                Create New
               </button>
             )}
           </div>
@@ -88,7 +88,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
 
         {/* Filter chips + search row — sticky while rows scroll */}
         <div className="sticky top-0 z-20 bg-[var(--color-level1)] flex items-center justify-between gap-4 h-14">
-          <FilterChips filters={tab === 'members' ? ['Roles', 'Status'] : ['Category', 'Members']} />
+          <FilterChips filters={tab === 'members' ? ['Role Assigned', 'Status'] : ['Permissions', 'Enterprise Access', 'Member Assigned', 'Status']} />
           <div className="w-[220px] shrink-0">
             <SearchField value={search} onChange={setSearch} placeholder="Search" />
           </div>
