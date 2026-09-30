@@ -562,17 +562,29 @@ const ApprovalGate: React.FC<{
   onNavigateWhitelist?: () => void;
   onConsolidate?: (mode: 'manual' | 'auto') => void;
   onNotify?: (n: NoticePayload) => void;
-}> = ({ block, active, onDone, onPinAction, onNavigateWhitelist, onConsolidate, onNotify }) => {
+  consolidateDoneVer?: number;     // increments when the page consolidation finishes
+}> = ({ block, active, onDone, onPinAction, onNavigateWhitelist, onConsolidate, onNotify, consolidateDoneVer }) => {
   const [phase, setPhase] = useState<'waiting' | 'approved' | 'denied'>('waiting');
   const [shownSteps, setShownSteps] = useState(0);
+  const [awaiting, setAwaiting] = useState(false);   // waiting for the page consolidation to finish
   const [open, setOpen] = useState(true);
   const doneRef = useRef(onDone); doneRef.current = onDone;
   const notifyRef = useRef(onNotify); notifyRef.current = onNotify;
   const pinRef = useRef(onPinAction); pinRef.current = onPinAction;
   const navRef = useRef(onNavigateWhitelist); navRef.current = onNavigateWhitelist;
   const consRef = useRef(onConsolidate); consRef.current = onConsolidate;
+  const chosenRef = useRef<string | undefined>(undefined);   // effect of the clicked button
+  const baseVerRef = useRef<number | undefined>(undefined);
 
-  // Only the active gate manages the pinned Approve/Deny card.
+  // Does resolving this gate depend on external work (the page consolidation) finishing?
+  const awaitsCompletion = block.buttons.some(b => b.effect === 'consolidateManual' || b.effect === 'consolidateAuto');
+
+  const finish = () => {
+    if (chosenRef.current === 'consolidateAuto' && block.notify) notifyRef.current?.({ text: block.notify });
+    doneRef.current();
+  };
+
+  // Only the active gate manages the pinned decision card.
   useEffect(() => {
     if (!active) return;
     if (phase !== 'waiting') { pinRef.current?.(null); return; }
@@ -584,6 +596,7 @@ const ApprovalGate: React.FC<{
         label: btn.label,
         onClick: () => {
           if (btn.stop) { setPhase('denied'); return; }
+          chosenRef.current = btn.effect;
           if (btn.effect === 'navigate') navRef.current?.();
           else if (btn.effect === 'consolidateManual') consRef.current?.('manual');
           else if (btn.effect === 'consolidateAuto') consRef.current?.('auto');
@@ -594,7 +607,8 @@ const ApprovalGate: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, phase]);
 
-  // On a positive choice, stream the second thought, then raise notify + continue.
+  // On a positive choice, stream the second thought. Then either continue, or (for
+  // consolidation) hold on "Thinking…" until the page reports completion.
   useEffect(() => {
     if (phase !== 'approved') return;
     setShownSteps(0);
@@ -604,11 +618,10 @@ const ApprovalGate: React.FC<{
       n += 1;
       setShownSteps(n);
       if (n < block.approvedThought.length) { t = setTimeout(tick, 950); }
-      else {
-        t = setTimeout(() => {
-          if (block.notify) notifyRef.current?.({ text: block.notify });
-          doneRef.current();
-        }, 800);
+      else if (awaitsCompletion) {
+        t = setTimeout(() => { baseVerRef.current = consolidateDoneVer; setAwaiting(true); }, 400);
+      } else {
+        t = setTimeout(finish, 800);
       }
     };
     t = setTimeout(tick, 500);
@@ -616,13 +629,23 @@ const ApprovalGate: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  // While awaiting completion, resolve once the page bumps consolidateDoneVer.
+  useEffect(() => {
+    if (!awaiting) return;
+    if (consolidateDoneVer !== undefined && consolidateDoneVer !== baseVerRef.current) {
+      setAwaiting(false);
+      finish();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaiting, consolidateDoneVer]);
+
   if (phase === 'denied') {
     return <p className="ai-resp-paragraph ai-stream-in"><em>No problem — let me know if you change your mind.</em></p>;
   }
   const streaming = phase === 'approved' && shownSteps < block.approvedThought.length;
-  const thinking = phase === 'waiting' || streaming;
+  const thinking = phase === 'waiting' || streaming || awaiting;
   return (
-    <div className="ai-thought">
+    <div className="ai-thought ai-thought-gate">
       <button className="ai-thought-toggle" onClick={() => setOpen(o => !o)}>
         {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
         <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>{thinking ? 'Thinking...' : 'Thought process'}</span>
@@ -687,7 +710,8 @@ export const AIResponse: React.FC<{
   onConsolidate?: (mode: 'manual' | 'auto') => void; // whitelist consolidation
   onNavigateWhitelist?: () => void;           // approval gate → open the Whitelist page
   onPinAction?: (a: PinnedAction | null) => void; // lift a decision action above the composer
-}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction }) => {
+  consolidateDoneVer?: number;                // page consolidation finished (version bump)
+}> = ({ data, showThought = true, interactive = true, onQuickReply, onNotify, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, onPinAction, consolidateDoneVer }) => {
   // In non-ideal (current) mode, drop the interactive blocks entirely.
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
@@ -697,7 +721,7 @@ export const AIResponse: React.FC<{
       {showThought && <ThoughtProcess steps={data.thought} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (b.kind === 'approvalGate') return <ApprovalGate key={i} block={b} active={i === done} onDone={advance} onPinAction={onPinAction} onNavigateWhitelist={onNavigateWhitelist} onConsolidate={onConsolidate} onNotify={onNotify} />;
+        if (b.kind === 'approvalGate') return <ApprovalGate key={i} block={b} active={i === done} onDone={advance} onPinAction={onPinAction} onNavigateWhitelist={onNavigateWhitelist} onConsolidate={onConsolidate} onNotify={onNotify} consolidateDoneVer={consolidateDoneVer} />;
         if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing

@@ -22,6 +22,7 @@ interface AIChatPanelProps {
   onPreviewPolicy?: (p: PolicyDraft) => void;   // chat → product policy detail view
   onConsolidate?: (mode: 'manual' | 'auto') => void; // chat → whitelist consolidation
   onNavigateWhitelist?: () => void;                  // chat → open the Whitelist page (chat stays)
+  consolidateDoneVer?: number;                       // page reported consolidation complete
 }
 
 const HEADLINES = [
@@ -95,7 +96,7 @@ const UserMessage: React.FC<{
   );
 };
 
-export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist }) => {
+export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initialPrompt, onInitialPromptConsumed, onEditPolicy, onPreviewPolicy, onConsolidate, onNavigateWhitelist, consolidateDoneVer }) => {
   const [expanded, setExpanded]       = useState(false);
   const [mode, setMode]               = useState<ChatMode>('idle');
   const [messages, setMessages]       = useState<Message[]>([]);
@@ -408,6 +409,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
                       onConsolidate={onConsolidate}
                       onNavigateWhitelist={onNavigateWhitelist}
                       onPinAction={setPinned}
+                      consolidateDoneVer={consolidateDoneVer}
                     />
                   )}
                 </div>

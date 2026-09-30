@@ -221,15 +221,19 @@ interface Props {
   isLight: boolean;
   onThemeToggle: () => void;
   consolidate?: { mode: 'manual' | 'auto'; ver: number } | null;   // request from the AI chat
+  onConsolidateComplete?: (mode: 'manual' | 'auto') => void;        // fired when consolidation finishes
 }
 
 type ConsolPhase = 'idle' | 'labels' | 'collapse' | 'scope';
 
 const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
 
-export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate }) => {
+export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate, onConsolidateComplete }) => {
   const [tab, setTab] = useState<DestTab>('addresses');
   const [autoMode, setAutoMode] = useState(false);   // AI-driven hands-off consolidation
+  const modeRef = useRef<'manual' | 'auto'>('manual');           // mode of the current consolidation run
+  const completeCbRef = useRef(onConsolidateComplete);
+  completeCbRef.current = onConsolidateComplete;
   const [search, setSearch] = useState('');
 
   // Mutable local copy of destinations so consolidation edits are reflected live
@@ -247,6 +251,14 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
   const [animatingLabels, setAnimatingLabels] = useState<Map<string, string>>(new Map());
   const [cursorVisible, setCursorVisible] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);   // row kebab menu
+
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const onDoc = () => setMenuOpenId(null);
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpenId]);
 
   const lastActiveRowRef = useRef<HTMLTableRowElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -441,10 +453,11 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                   setGroupIdx(0);
                   setCustomLabel('');
                   setSelectedChip('');
-                  snackbarRef.current?.show(
-                    'Addresses with multiple labels are all consolidated.',
-                    false
-                  );
+                  completeCbRef.current?.(modeRef.current);
+                  // Auto consolidation reports completion into the AI chat, not a page snackbar.
+                  if (modeRef.current !== 'auto') {
+                    snackbarRef.current?.show('Addresses with multiple labels are all consolidated.', false);
+                  }
                 }
                 return next;
               });
@@ -457,6 +470,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
   // Start consolidation when the AI chat requests it (manual = interactive, auto = hands-off).
   useEffect(() => {
     if (!consolidate) return;
+    modeRef.current = consolidate.mode;
     handleStartConsolidate();
     setAutoMode(consolidate.mode === 'auto');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -601,7 +615,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                         <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5">{d.label}</div>
                       )}
                       <div className="flex items-center gap-[8px] mt-0.5">
-                        <span className="text-[14px] text-[var(--color-text-secondary)] font-mono">{truncateAddr(d.address)}</span>
+                        <span className="text-[14px] text-[var(--color-text-secondary)]">{truncateAddr(d.address)}</span>
                         {hoveredId === d.id && (
                           <button
                             className="p-0 bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] flex items-center shrink-0"
@@ -627,33 +641,48 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                         {d.scopes.slice(0, 3).map(s => (
                           <span
                             key={s}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-[#EBEBEB] text-[var(--color-text)] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap border border-[var(--color-border-strong)]${animatingScopes.has(s) ? ' chip-appear' : ''}`}
                           >{s}</span>
                         ))}
                         {d.scopes.length > 3 && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium bg-[#EBEBEB] text-[var(--color-text)] whitespace-nowrap">+{d.scopes.length - 3}</span>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap border border-[var(--color-border-strong)]">+{d.scopes.length - 3}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-[14px] align-middle">
                       {d.status === 'pending' ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-semibold text-[var(--color-gold)]">Pending Approval</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(235,197,94,0.1)] text-[#ff9c11] whitespace-nowrap">Pending Approval</span>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-medium bg-[var(--color-level2)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">Active</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(27,154,50,0.15)] text-[#2ebc48] whitespace-nowrap">Active</span>
                       )}
                     </td>
                     <td className="px-4 py-[14px] align-middle">
-                      <button
-                        className="w-7 h-7 flex items-center justify-center rounded-md bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level3)] hover:text-[var(--color-text)] transition-colors"
-                        title="Delete"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/>
-                          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-                        </svg>
-                      </button>
+                      <div className="relative flex justify-end">
+                        <button
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level3)] hover:text-[var(--color-text)] transition-colors"
+                          title="More options"
+                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === d.id ? null : d.id); }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>
+                          </svg>
+                        </button>
+                        {menuOpenId === d.id && (
+                          <div
+                            className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[152px] py-1.5 rounded-[10px] bg-[var(--color-level1)] border border-[var(--color-border)]"
+                            style={{ boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
+                            {['Edit Label', 'Edit Scope', 'Remove'].map(opt => (
+                              <button
+                                key={opt}
+                                className="w-full text-left px-3 py-2 text-[13.5px] bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level2)] hover:text-[var(--color-text)] transition-colors"
+                                onClick={() => setMenuOpenId(null)}
+                              >{opt}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

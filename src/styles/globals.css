@@ -2135,10 +2135,11 @@ body.light-mode .ai-chat-bubble.user {
 }
 .ai-resp-qr-chip:hover { border-color: var(--brand-500); color: var(--brand-500); background: var(--brand-a100); }
 
-/* Pinned decision action card — sits above the composer (Figma Platform-AI 7978:70230) */
+/* Pinned decision action card — sits above the composer (Figma Platform-AI 7978:70230).
+   Outline-only: no fill on the card or its buttons. */
 .ai-chat-action-card {
   flex-shrink: 0; margin: 8px 12px 0;
-  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-level2);
+  border: 1px solid var(--color-border); border-radius: 12px; background: transparent;
   padding: 14px 16px 16px; display: flex; flex-direction: column;
   animation: ai-stream-in .26s ease both;
 }
@@ -2148,10 +2149,13 @@ body.light-mode .ai-chat-bubble.user {
 .ai-chat-action-btn {
   width: 100%; padding: 11px 14px; border-radius: 99px; cursor: pointer; font-family: inherit;
   font-size: 13.5px; font-weight: 600; color: var(--color-text);
-  background: var(--color-level3); border: 1px solid var(--color-border);
-  transition: background .14s, border-color .14s;
+  background: transparent; border: 1px solid var(--color-border-strong);
+  transition: border-color .14s, color .14s;
 }
-.ai-chat-action-btn:hover { background: var(--color-level4); border-color: var(--color-border-strong); }
+.ai-chat-action-btn:hover { border-color: var(--brand-500); color: var(--brand-500); }
+
+/* Inline second thought (approval gate) — separate it from the line above like a new paragraph */
+.ai-thought-gate { margin-top: 8px; }
 
 /* Policy cards — each supports Edit / Simulate / Preview / Apply */
 .ai-resp-policy-block { display: flex; flex-direction: column; gap: 12px; }

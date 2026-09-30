@@ -92,6 +92,7 @@ export default function App() {
   const [drawerEntry,       setDrawerEntry]       = React.useState<'preview' | 'edit'>('preview');
   const [drawerPolicy,      setDrawerPolicy]      = React.useState<PolicyDraft | null>(null);
   const [consolidateReq,    setConsolidateReq]    = React.useState<{ mode: 'manual' | 'auto'; ver: number } | null>(null);
+  const [consolidateDone,   setConsolidateDone]   = React.useState<{ mode: 'manual' | 'auto'; ver: number } | null>(null);
   const [chatOpen,          setChatOpen]          = React.useState(false);
   const [searchOpen,        setSearchOpen]        = React.useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = React.useState<string | null>(null);
@@ -246,6 +247,7 @@ export default function App() {
     setConsolidateReq({ mode, ver: Date.now() });
     setSecurityPage('destinations');
   };
+  const handleConsolidateComplete = (mode: 'manual' | 'auto') => { setConsolidateDone({ mode, ver: Date.now() }); };
 
   if (topPage === 'flow') return <FlowPage />;
   if (topPage === 'kyb') return <KYBFlow />;
@@ -269,7 +271,7 @@ export default function App() {
         onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
-        <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} />
+        <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
@@ -322,7 +324,7 @@ export default function App() {
         />
         <div className="workspace">
           {securityPage === 'destinations' ? (
-            <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} />
+            <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
           ) : (
             <Dashboard
               isLight={isLight}
@@ -405,6 +407,7 @@ export default function App() {
         onPreviewPolicy={openPolicyPreview}
         onConsolidate={handleConsolidate}
         onNavigateWhitelist={openWhitelist}
+        consolidateDoneVer={consolidateDone?.ver}
       />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
 
