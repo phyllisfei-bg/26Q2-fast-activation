@@ -37,7 +37,7 @@ export const RolesTable: React.FC<Props> = ({ roles, onRowClick, onManageMembers
               <input type="checkbox" className="mr-check" />
             </td>
             <td className={TD}>
-              <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5">{r.name}</div>
+              <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5">{r.name}</div>
               <div className="text-[14px] text-[var(--color-text-secondary)]">{r.kind}</div>
             </td>
             <td className={TD}><PillRow items={r.categories} max={2} /></td>

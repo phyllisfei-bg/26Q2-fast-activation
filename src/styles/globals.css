@@ -2375,7 +2375,7 @@ body.light-mode .mr-chip { border-color: #D3D6D9; color: #242531; }
 .mr-badge {
   display: inline-flex; align-items: center; white-space: nowrap;
   height: 21px; padding: 0 9px; border-radius: 99px; box-sizing: border-box;
-  font-size: 12px; font-weight: 500; line-height: 1; border: 1px solid; background: transparent;
+  font-size: 12px; font-weight: 400; line-height: 1; border: 1px solid; background: transparent;
 }
 /* success / warning use the filled style shared with the Whitelist Destinations table */
 .mr-badge.success { color: #2ebc48; background: rgba(27,154,50,.15);  border-color: transparent; }

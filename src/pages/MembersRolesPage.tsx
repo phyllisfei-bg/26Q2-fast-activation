@@ -53,8 +53,8 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
         {/* Page header */}
         <div className="flex items-start justify-between mb-6 gap-4 pt-7">
           <div>
-            <h1 className="text-[22px] font-semibold text-[var(--color-text)]">{tab === 'members' ? 'Members' : 'Roles'}</h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+            <h1 className="text-[30px] font-normal text-[var(--color-text)]">{tab === 'members' ? 'Members' : 'Roles'}</h1>
+            <p className="text-[16px] font-normal text-[var(--color-text-secondary)] mt-1">
               {tab === 'members'
                 ? 'Manage member access in your organization.'
                 : 'Manage roles and their permissions.'} For detailed role permissions, visit{' '}

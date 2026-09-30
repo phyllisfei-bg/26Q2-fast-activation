@@ -42,7 +42,7 @@ export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onMana
               <td className={TD}>
                 <div className="flex items-center gap-3">
                   <Avatar name={m.name} color={m.avatarColor} />
-                  <span className="text-[16px] font-medium text-[var(--color-text)]">{m.name}</span>
+                  <span className="text-[16px] font-normal text-[var(--color-text)]">{m.name}</span>
                 </div>
               </td>
               <td className={`${TD} text-[14px] text-[var(--color-text-secondary)]`}>{m.email}</td>

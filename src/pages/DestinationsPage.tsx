@@ -491,8 +491,8 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
         {/* Page header */}
         <div className={`flex items-start justify-between mb-6 pt-7${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
           <div>
-            <h1 className="text-[22px] font-semibold text-[var(--color-text)]">Whitelist Destinations</h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
+            <h1 className="text-[30px] font-normal text-[var(--color-text)]">Whitelist Destinations</h1>
+            <p className="text-[16px] font-normal text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
           </div>
           <button className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -581,14 +581,14 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                   >
                     <td className="px-4 py-[14px] align-middle">
                       {isActive ? (
-                        <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5 flex items-baseline gap-px">
+                        <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5 flex items-baseline gap-px">
                           <mark className="label-mark">{animatingLabels.get(d.id) ?? d.label}</mark>
                           {animatingLabels.has(d.id) && (
                             <span style={{ opacity: cursorVisible ? 1 : 0, transition: 'opacity 0.1s', color: 'var(--color-text)', fontWeight: 300 }}>|</span>
                           )}
                         </div>
                       ) : (
-                        <div className="text-[16px] font-medium text-[var(--color-text)] mb-0.5">{d.label}</div>
+                        <div className="text-[16px] font-normal text-[var(--color-text)] mb-0.5">{d.label}</div>
                       )}
                       <div className="flex items-center gap-[8px] mt-0.5">
                         <span className="text-[14px] text-[var(--color-text-secondary)]">{truncateAddr(d.address)}</span>
