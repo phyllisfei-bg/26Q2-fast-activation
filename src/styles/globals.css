@@ -2395,7 +2395,7 @@ body.light-mode .mr-badge.neutral { color: #161720; border-color: #D3D6D9; } /* 
   display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box;
   height: 30px; padding: 0 8px 0 12px; border-radius: 999px; cursor: pointer;
   background: transparent; border: 0.5px solid var(--color-border-strong);
-  color: var(--color-text); font-family: inherit; font-size: 14px; font-weight: 500;
+  color: var(--color-text); font-family: inherit; font-size: 14px; font-weight: 400;
   letter-spacing: 0.2px; white-space: nowrap; transition: background .13s, border-color .13s;
 }
 body.light-mode .filter-chip { border-color: #D3D6D9; }
