@@ -459,7 +459,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ open, onClose, initial
             <textarea
               ref={textareaRef}
               className="ai-chat-textarea"
-              placeholder="Placeholder"
+              placeholder={thinkStyle === 'ideal' ? 'How can I help you today?' : 'Ask anything'}
               value={input}
               rows={1}
               onChange={e => setInput(e.target.value)}
