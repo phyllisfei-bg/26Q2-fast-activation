@@ -4,8 +4,8 @@ import { Topbar } from '../components/Topbar';
 import { Snackbar } from '../components/Snackbar';
 import type { SnackbarHandle } from '../components/Snackbar';
 import { FilterChips } from '../components/FilterChips';
+import { Menu, TrashIcon } from '../components/membersRoles/shared';
 
-type DestTab = 'addresses' | 'wallets' | 'enterprise';
 
 interface Destination {
   id: string;
@@ -230,7 +230,6 @@ type ConsolPhase = 'idle' | 'labels' | 'collapse' | 'scope';
 const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)]';
 
 export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate, onConsolidateComplete }) => {
-  const [tab, setTab] = useState<DestTab>('addresses');
   const [autoMode, setAutoMode] = useState(false);   // AI-driven hands-off consolidation
   const modeRef = useRef<'manual' | 'auto'>('manual');           // mode of the current consolidation run
   const completeCbRef = useRef(onConsolidateComplete);
@@ -252,14 +251,6 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
   const [animatingLabels, setAnimatingLabels] = useState<Map<string, string>>(new Map());
   const [cursorVisible, setCursorVisible] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);   // row kebab menu
-
-  useEffect(() => {
-    if (!menuOpenId) return;
-    const onDoc = () => setMenuOpenId(null);
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [menuOpenId]);
 
   const lastActiveRowRef = useRef<HTMLTableRowElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -499,7 +490,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
             <h1 className="text-[22px] font-semibold text-[var(--color-text)]">Whitelist Destinations</h1>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
           </div>
-          <button className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
+          <button className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -533,46 +524,33 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
           </div>
         )}
 
-        {/* Tabs + search row */}
-        <div className={`flex items-center justify-between gap-4 border-b border-[var(--color-border)] mb-4${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
-          <div className="flex">
-            {(['addresses', 'wallets', 'enterprise'] as DestTab[]).map(t => (
-              <button
-                key={t}
-                className={`h-9 px-4 text-sm font-medium cursor-pointer bg-transparent border-0 border-b-2 -mb-px transition-colors ${tab === t ? 'border-[var(--brand-500)] text-[var(--color-text)]' : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'}`}
-                onClick={() => setTab(t)}
-              >
-                {t === 'addresses' ? 'Addresses' : t === 'wallets' ? 'Wallets' : 'Enterprise Whitelist'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="dest-search-wrap flex items-center gap-2 h-9 px-4 rounded-full bg-white min-w-[180px]" style={{ border: '1px solid #E5E7EB' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--color-text-muted)] shrink-0">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                className="bg-transparent border-none outline-none text-sm text-[var(--color-text)] flex-1 w-36 placeholder:text-[var(--color-text-muted)]"
-                placeholder="Search"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                disabled={consolidating}
-              />
-            </div>
-            <FilterChips filters={['Network', 'Scope', 'Status']} />
+        {/* Filter chips + search row */}
+        <div className={`flex items-center justify-between gap-4 mb-4${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+          <FilterChips filters={[{ label: 'Type', options: ['Addresses', 'Wallets', 'Enterprise Whitelist'] }, 'Network', 'Scope', 'Status']} />
+          <div className="dest-search-wrap flex items-center gap-2 h-9 px-4 rounded-full bg-white min-w-[180px] shrink-0" style={{ border: '1px solid #E5E7EB' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--color-text-muted)] shrink-0">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              className="bg-transparent border-none outline-none text-sm text-[var(--color-text)] flex-1 w-36 placeholder:text-[var(--color-text-muted)]"
+              placeholder="Search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              disabled={consolidating}
+            />
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-auto rounded-xl border border-[var(--color-border)]">
-          <table className="dest-cols w-full table-fixed border-collapse">
+          <table className="dest-cols w-full table-fixed border-separate border-spacing-0">
             <thead className={consolidating ? 'opacity-40' : ''}>
               <tr>
-                <th className={TH}>Destination</th>
+                <th className={`${TH} rounded-l-[11px]`}>Destination</th>
                 <th className={TH}>Network</th>
                 <th className={TH}>Scope (Whitelisted On)</th>
                 <th className={TH}>Status</th>
-                <th className="px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)]"></th>
+                <th className="px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)] rounded-r-[11px]"></th>
               </tr>
             </thead>
             <tbody>
@@ -634,47 +612,31 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
                         {d.scopes.slice(0, 3).map(s => (
                           <span
                             key={s}
-                            className={`inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] font-medium bg-[#d3d6d9] text-[#161720] whitespace-nowrap${animatingScopes.has(s) ? ' chip-appear' : ''}`}
+                            className={`mr-badge neutral${animatingScopes.has(s) ? ' chip-appear' : ''}`}
                           >{s}</span>
                         ))}
                         {d.scopes.length > 3 && (
-                          <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] font-medium bg-[#d3d6d9] text-[#161720] whitespace-nowrap">+{d.scopes.length - 3}</span>
+                          <span className="mr-badge neutral">+{d.scopes.length - 3}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-[14px] align-middle">
                       {d.status === 'pending' ? (
-                        <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(235,197,94,0.1)] text-[#ff9c11] whitespace-nowrap">Pending Approval</span>
+                        <span className="mr-badge warning">Pending Approval</span>
                       ) : (
-                        <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-[12px] tracking-[0.2px] bg-[rgba(27,154,50,0.15)] text-[#2ebc48] whitespace-nowrap">Active</span>
+                        <span className="mr-badge success">Active</span>
                       )}
                     </td>
                     <td className="px-4 py-[14px] align-middle">
-                      <div className="relative flex justify-end">
-                        <button
-                          className="mr-kebab-btn"
-                          title="More options"
-                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === d.id ? null : d.id); }}
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>
-                          </svg>
-                        </button>
-                        {menuOpenId === d.id && (
-                          <div
-                            className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[152px] py-1.5 rounded-[10px] bg-[var(--color-level1)] border border-[var(--color-border)]"
-                            style={{ boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
-                            {['Edit Label', 'Edit Scope', 'Remove'].map(opt => (
-                              <button
-                                key={opt}
-                                className="w-full text-left px-3 py-2 text-[13.5px] bg-transparent border-none cursor-pointer text-[var(--color-text-secondary)] hover:bg-[var(--color-level2)] hover:text-[var(--color-text)] transition-colors"
-                                onClick={() => setMenuOpenId(null)}
-                              >{opt}</button>
-                            ))}
-                          </div>
-                        )}
+                      <div className="flex justify-end">
+                        <Menu
+                          variant="kebab"
+                          items={[
+                            { label: 'Edit Label', onClick: () => {} },
+                            { label: 'Edit Scope', onClick: () => {} },
+                            { label: 'Remove', danger: true, icon: <TrashIcon />, onClick: () => {} },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>

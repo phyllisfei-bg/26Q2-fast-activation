@@ -40,8 +40,8 @@ export const StatusBadge: React.FC<{ status: EntityStatus }> = ({ status }) => (
 );
 
 /* ── Pills (roles / permission categories) with +N overflow ────────
-   Matches the DestinationsPage scope-chip style verbatim. */
-const CHIP = 'mr-chip';
+   Uses the default badge variant — same as the DestinationsPage scope column. */
+const CHIP = 'mr-badge neutral';
 export const PillRow: React.FC<{ items: string[]; max?: number }> = ({ items, max = 2 }) => {
   const shown = items.slice(0, max);
   const extra = items.length - shown.length;

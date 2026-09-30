@@ -64,7 +64,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
           <div className="flex items-center gap-2.5 shrink-0">
             {tab === 'members' ? (
               <button
-                className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
+                className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
                 onClick={onInviteMember}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -74,7 +74,7 @@ export const MembersRolesPage: React.FC<Props> = ({ isLight, onThemeToggle, api,
               </button>
             ) : (
               <button
-                className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
+                className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors"
                 onClick={() => snackRef.current?.show('Create Role flow coming soon.', false)}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
