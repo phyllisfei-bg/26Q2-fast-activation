@@ -48,7 +48,8 @@ const joinAnd = (a: string, b: string) => [a, b].filter(Boolean).join(' and ');
 const SentenceBuilder: React.FC<{
   draft: Draft; activePart?: BuilderPart; compact?: boolean;
   onPart?: (p: BuilderPart) => void; onAddCondition?: () => void; onAddRequirement?: () => void;
-}> = ({ draft, activePart, compact, onPart, onAddCondition, onAddRequirement }) => {
+  onPick?: (patch: Partial<Draft>) => void;
+}> = ({ draft, activePart, compact, onPart, onAddCondition, onAddRequirement, onPick }) => {
   const eventDef = BUILDER_EVENTS.find(e => e.id === draft.event)!;
   const walletText = BUILDER_WALLETS.find(w => w.id === draft.wallet)?.label;
   const hasCondition = draft.condition !== 'none' || draft.extraCondition !== 'none';
@@ -68,12 +69,35 @@ const SentenceBuilder: React.FC<{
     onPart
       ? <button type="button" onClick={() => onPart(part)} className={partClass(part, filled)} style={{ font: 'inherit' }}>{children}</button>
       : <span className="text-[var(--color-text)]">{children}</span>;
+  const selectClass = 'rounded-lg px-2 py-0.5 border border-[var(--brand-500)] bg-[var(--brand-a100)] text-[var(--brand-500)] outline-none cursor-pointer';
   const linkBtn = 'text-[14px] font-medium text-[var(--brand-500)] bg-transparent border-none cursor-pointer p-0 hover:underline';
 
   return (
     <p className={`${compact ? 'text-[14px] leading-relaxed' : 'text-[22px] leading-[2]'} font-normal text-[var(--color-text-secondary)]`}>
-      <Part part="event" filled>{eventText}</Part>{' from '}
-      <Part part="wallets" filled={!!walletText}>{walletText || 'choose wallets'}</Part>{' '}
+      {onPick && activePart === 'event' ? (
+        <select
+          autoFocus
+          className={selectClass}
+          style={{ font: 'inherit' }}
+          value={draft.event}
+          onChange={e => { onPick({ event: e.target.value as BuilderEvent }); onPart?.(null); }}
+          onBlur={() => onPart?.(null)}
+        >
+          {BUILDER_EVENTS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
+        </select>
+      ) : <Part part="event" filled>{eventText}</Part>}{' from '}
+      {onPick && activePart === 'wallets' ? (
+        <select
+          autoFocus
+          className={selectClass}
+          style={{ font: 'inherit' }}
+          value={draft.wallet}
+          onChange={e => { onPick({ wallet: e.target.value as BuilderWallet }); onPart?.(null); }}
+          onBlur={() => onPart?.(null)}
+        >
+          {BUILDER_WALLETS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
+        </select>
+      ) : <Part part="wallets" filled={!!walletText}>{walletText || 'choose wallets'}</Part>}{' '}
       {hasCondition ? (
         <>
           <Part part="condition" filled>{conditionText}</Part>{' '}
@@ -298,27 +322,11 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ isLight, onThemeToggle, onC
                 <SentenceBuilder
                   draft={draft}
                   activePart={activePart}
-                  onPart={openPart}
+                  onPick={patch}
+                  onPart={p => (p === null ? setActivePart(null) : openPart(p))}
                   onAddCondition={() => { setAddingCondition(true); setShowOtherConditions(true); setActivePart('condition'); }}
                   onAddRequirement={() => { setAddingRequirement(true); setShowOtherRequirements(true); setActivePart('requirement'); }}
                 />
-                {(activePart === 'event' || activePart === 'wallets') && (
-                  <div className="mt-4 max-w-sm">
-                    <label className="kyc-form-label">{activePart === 'event' ? 'What should this policy check?' : 'Which wallets does this cover?'}</label>
-                    {activePart === 'event' ? (
-                      <select className="kyc-form-select" value={event} onChange={e => { patch({ event: e.target.value as BuilderEvent }); setActivePart(null); }}>
-                        {BUILDER_EVENTS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
-                      </select>
-                    ) : (
-                      <select className="kyc-form-select" value={wallet} onChange={e => { patch({ wallet: e.target.value as BuilderWallet }); setActivePart(null); }}>
-                        {BUILDER_WALLETS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
-                      </select>
-                    )}
-                    <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">
-                      {activePart === 'event' ? eventDef.help : BUILDER_WALLETS.find(w => w.id === wallet)?.help}
-                    </p>
-                  </div>
-                )}
               </div>
 
               <div className="kyc-form-group" style={{ marginTop: 24 }}>
