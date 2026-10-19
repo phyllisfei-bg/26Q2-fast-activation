@@ -5,8 +5,6 @@ import type { SentencePolicy } from './policyData';
 
 const TONE: Partial<Record<SentencePolicy['policyState'], BadgeTone>> = {
   'Pending approval': 'warning',
-  'Planned': 'invited',
-  'Paused': 'danger',
 };
 
 /** Badge for non-lock states only — lock state is shown by PolicyLockIcon. */
