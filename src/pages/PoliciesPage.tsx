@@ -132,13 +132,13 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle }) => {
                   <td className={TD}>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="text-[16px] font-normal text-[var(--color-text)]">{p.name}</span>
+                      {p.setBy === 'BitGo' && (
+                        <span className="text-[14px] text-[var(--color-text-secondary)]">· Default</span>
+                      )}
                       <PolicyLockIcon policy={p} />
                       <PolicyStatusBadge policy={p} />
                     </div>
                     <PolicySentence policy={p} onRequirementClick={() => setEditing({ policy: p, field: primaryField(p) })} />
-                    {p.setBy === 'BitGo' && (
-                      <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">Default</p>
-                    )}
                     {p.organizationNote && (
                       <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">{p.organizationNote}</p>
                     )}
