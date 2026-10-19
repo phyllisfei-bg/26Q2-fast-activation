@@ -8,6 +8,7 @@ import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { GoAccountPage }      from './pages/GoAccountPage';
 import { DestinationsPage }   from './pages/DestinationsPage';
+import { PoliciesPage }       from './pages/PoliciesPage';
 import { MembersRolesPage }   from './pages/MembersRolesPage';
 import { InviteMemberFlow }   from './flows/InviteMemberFlow';
 import type { InvitePayload } from './flows/InviteMemberFlow';
@@ -28,7 +29,7 @@ import type { TaskId, UserRole, WalletInfo, PolicyDraft } from './types';
 import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
-type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'roles' | 'flow' | 'trade';
+type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'policies' | 'roles' | 'flow' | 'trade';
 type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 
 function getTopPage(): TopPage {
@@ -36,6 +37,7 @@ function getTopPage(): TopPage {
   if (h === '#kyb') return 'kyb';
   if (h.startsWith('#kyc')) return 'kyc';
   if (h === '#destinations') return 'destinations';
+  if (h === '#policies') return 'policies';
   if (h === '#roles') return 'roles';
   if (h === '#flow') return 'flow';
   if (h === '#trade') return 'trade';
@@ -269,10 +271,25 @@ export default function App() {
         activeSecurity="destinations"
         onSearchOpen={() => setSearchOpen(true)}
         onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
-        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub === 'policies') { navigateTo('policies'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
+      </div>
+      <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
+    </div>
+  );
+  if (topPage === 'policies') return (
+    <div className="app">
+      <Sidebar
+        activeItem="security"
+        activeSecurity="policies"
+        onSearchOpen={() => setSearchOpen(true)}
+        onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('policies'); } else if (sub === 'destinations') { navigateTo('destinations'); } else if (sub !== 'policies') { navigateTo('dashboard'); } }}
+      />
+      <div className="workspace">
+        <PoliciesPage isLight={isLight} onThemeToggle={toggle} />
       </div>
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
@@ -321,6 +338,7 @@ export default function App() {
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); if (item === 'trade') navigateTo('trade'); }}
           onNavigateSecurity={(sub) => {
             if (sub === 'destinations') { navigateTo('destinations'); }
+            else if (sub === 'policies') { navigateTo('policies'); }
             else if (sub === 'roles') { goToRoles('dashboard'); }
             else setSecurityPage(sub);
           }}
