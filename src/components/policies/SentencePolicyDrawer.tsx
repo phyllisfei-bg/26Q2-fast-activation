@@ -1,7 +1,7 @@
 import React from 'react';
 import type { SentencePolicy, EditablePolicyField } from './policyData';
 import { PolicySentence } from './PolicySentence';
-import { PolicyStatusBadge, fieldLabel } from './PolicyStatusBadge';
+import { PolicyStatusBadge, PolicyLockIcon, fieldLabel } from './PolicyStatusBadge';
 import { Menu, CloseIcon } from '../membersRoles/shared';
 
 interface Props {
@@ -35,6 +35,7 @@ export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, onUpdat
             <div className="mr-drawer-identity">
               <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <span className="text-[20px] font-normal text-[var(--color-text)]">{policy.name}</span>
+                <PolicyLockIcon policy={policy} />
                 <PolicyStatusBadge policy={policy} />
               </div>
               {policy.editableFields.length > 0 && (

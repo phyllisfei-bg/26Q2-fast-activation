@@ -6,7 +6,7 @@ import { FilterChips } from '../components/FilterChips';
 import { SearchField } from '../components/SearchField';
 import { Menu, TrashIcon } from '../components/membersRoles/shared';
 import { PolicySentence } from '../components/policies/PolicySentence';
-import { PolicyStatusBadge, fieldLabel } from '../components/policies/PolicyStatusBadge';
+import { PolicyStatusBadge, PolicyLockIcon, fieldLabel } from '../components/policies/PolicyStatusBadge';
 import { SentencePolicyDrawer } from '../components/policies/SentencePolicyDrawer';
 import { SentencePolicyUpdateModal } from '../components/policies/SentencePolicyUpdateModal';
 import { SENTENCE_POLICIES } from '../components/policies/policyData';
@@ -117,26 +117,33 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle }) => {
           <table className="w-full table-fixed border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className={`${TH} rounded-l-[11px]`} style={{ width: '46%' }}>Policy</th>
-                <th className={TH}>Set By</th>
-                <th className={TH}>Last Triggered</th>
-                <th className={TH}>Status</th>
+                <th className={`${THBLANK} rounded-l-[11px]`} style={{ width: 48 }}><input type="checkbox" className="mr-check" /></th>
+                <th className={TH}>Policy</th>
+                <th className={TH} style={{ width: 180 }}>Last Triggered</th>
                 <th className={`${THBLANK} rounded-r-[11px]`} style={{ width: 56 }}></th>
               </tr>
             </thead>
             <tbody>
               {visible.map(p => (
                 <tr key={p.id} className="cursor-pointer tbl-row-hover" onClick={() => setViewing(p)}>
+                  <td className={TD} onClick={e => e.stopPropagation()}>
+                    <input type="checkbox" className="mr-check" />
+                  </td>
                   <td className={TD}>
-                    <div className="text-[16px] font-normal text-[var(--color-text)] mb-1">{p.name}</div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-[16px] font-normal text-[var(--color-text)]">{p.name}</span>
+                      <PolicyLockIcon policy={p} />
+                      <PolicyStatusBadge policy={p} />
+                    </div>
                     <PolicySentence policy={p} onRequirementClick={() => setEditing({ policy: p, field: primaryField(p) })} />
+                    {p.setBy === 'BitGo' && (
+                      <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">Default</p>
+                    )}
                     {p.organizationNote && (
                       <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">{p.organizationNote}</p>
                     )}
                   </td>
-                  <td className={`${TD} text-[14px] text-[var(--color-text-secondary)]`}>{p.setBy}</td>
                   <td className={`${TD} text-[14px] text-[var(--color-text-secondary)]`}>{p.lastUsed ?? '—'}</td>
-                  <td className={TD}><PolicyStatusBadge policy={p} /></td>
                   <td className={`${TD} text-right`} onClick={e => e.stopPropagation()}>
                     <Menu
                       variant="kebab"
@@ -152,7 +159,7 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle }) => {
               ))}
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-[14px] text-[var(--color-text-secondary)]">
+                  <td colSpan={4} className="px-4 py-12 text-center text-[14px] text-[var(--color-text-secondary)]">
                     {q ? 'No policies match your search.' : 'No policies yet.'}
                   </td>
                 </tr>
