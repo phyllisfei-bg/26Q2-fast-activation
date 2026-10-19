@@ -30,8 +30,8 @@ const relativeDays = (dateStr: string) => {
   return days === 0 ? 'Today' : days === 1 ? '1 day ago' : `${days} days ago`;
 };
 
-const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div className="mr-summary-row">
+const Row: React.FC<{ label: string; noDivider?: boolean; children: React.ReactNode }> = ({ label, noDivider, children }) => (
+  <div className="mr-summary-row" style={noDivider ? { borderBottom: 'none' } : undefined}>
     <span className="mr-summary-label">{label}</span>
     <div className="mr-summary-col2"><span className="mr-summary-value">{children}</span></div>
   </div>
@@ -88,14 +88,14 @@ export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, onUpdat
                     <Badge tone="neutral">{unlocked ? 'Unlocked' : 'Locked'}</Badge>
                     <Sub>{unlocked ? 'Editing or archiving enabled' : 'Unlock to edit or archive'}</Sub>
                   </Row>
-                  <Row label="Trigger">{cap(policy.trigger)}</Row>
-                  <Row label="Condition">
+                  <Row label="Trigger" noDivider>{cap(policy.trigger)}</Row>
+                  <Row label="Condition" noDivider>
                     <span className="block">When all following conditions are met:</span>
                     <ul className="list-disc pl-5 mt-0.5">
                       <li>{cap(policy.condition)}{policy.conditionValue ? ` ${policy.conditionValue}` : ''}</li>
                     </ul>
                   </Row>
-                  <Row label="Scope">{cap(policy.scope)}</Row>
+                  <Row label="Scope" noDivider>{cap(policy.scope)}</Row>
                   <Row label="Action">
                     {policy.sentenceMode === 'accepted' ? cap(policy.policyAction) : `Require ${policy.policyAction}`}
                   </Row>
