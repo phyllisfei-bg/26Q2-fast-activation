@@ -5,7 +5,14 @@ import React, { useState, useRef, useEffect } from 'react';
    dropdown of choices on click (prototype: selection is visual only).
    Matches Figma Addresses 6011:205487. */
 
-export interface FilterDef { label: string; options?: string[]; }
+export interface FilterDef {
+  label: string;
+  options?: string[];
+  /** Option shown as selected on first render. */
+  defaultValue?: string;
+  /** Called when an option is picked. */
+  onSelect?: (option: string) => void;
+}
 type Filter = string | FilterDef;
 
 const Chevron = () => (
@@ -18,7 +25,11 @@ const Chevron = () => (
 
 export const FilterChips: React.FC<{ filters: Filter[] }> = ({ filters }) => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const [selected, setSelected] = useState<Record<number, string>>({});
+  const [selected, setSelected] = useState<Record<number, string>>(() => {
+    const init: Record<number, string> = {};
+    filters.forEach((f, i) => { if (typeof f !== 'string' && f.defaultValue) init[i] = f.defaultValue; });
+    return init;
+  });
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,7 +64,7 @@ export const FilterChips: React.FC<{ filters: Filter[] }> = ({ filters }) => {
                     key={opt}
                     type="button"
                     className={`filter-chip-menu-item${sel === opt ? ' selected' : ''}`}
-                    onClick={() => { setSelected(s => ({ ...s, [i]: opt })); setOpenIdx(null); }}
+                    onClick={() => { setSelected(s => ({ ...s, [i]: opt })); setOpenIdx(null); def.onSelect?.(opt); }}
                   >
                     {opt}
                   </button>

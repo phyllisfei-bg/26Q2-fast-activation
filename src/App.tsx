@@ -8,6 +8,10 @@ import { Dashboard }          from './pages/Dashboard';
 import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { GoAccountPage }      from './pages/GoAccountPage';
 import { DestinationsPage }   from './pages/DestinationsPage';
+import { PoliciesPage }       from './pages/PoliciesPage';
+import { SecurityCenterPage } from './pages/SecurityCenterPage';
+import { PolicyConceptSwitcher } from './components/PolicyConceptSwitcher';
+import type { PolicyConcept, CreateMode } from './components/PolicyConceptSwitcher';
 import { MembersRolesPage }   from './pages/MembersRolesPage';
 import { InviteMemberFlow }   from './flows/InviteMemberFlow';
 import type { InvitePayload } from './flows/InviteMemberFlow';
@@ -28,7 +32,7 @@ import type { TaskId, UserRole, WalletInfo, PolicyDraft } from './types';
 import { ACTION_CATALOG } from './types';
 
 type ActiveFlow = 'none' | 'wallet-creation';
-type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'roles' | 'flow' | 'trade';
+type TopPage = 'dashboard' | 'kyb' | 'kyc' | 'destinations' | 'policies' | 'roles' | 'flow' | 'trade';
 type SecuritySubPage = 'policies' | 'destinations' | 'activity-log' | 'roles';
 
 function getTopPage(): TopPage {
@@ -36,6 +40,7 @@ function getTopPage(): TopPage {
   if (h === '#kyb') return 'kyb';
   if (h.startsWith('#kyc')) return 'kyc';
   if (h === '#destinations') return 'destinations';
+  if (h === '#policies') return 'policies';
   if (h === '#roles') return 'roles';
   if (h === '#flow') return 'flow';
   if (h === '#trade') return 'trade';
@@ -100,6 +105,9 @@ export default function App() {
   // Members & Roles — shared state across the page and the invite flow
   const membersRoles = useMembersRoles();
   const [inviteOpen, setInviteOpen] = React.useState(false);
+  // Prototype switches for the Security → Policies surface
+  const [policyConcept, setPolicyConcept] = React.useState<PolicyConcept>('near');
+  const [createMode, setCreateMode] = React.useState<CreateMode>('modal');
   // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
   const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
   const [adminTab, setAdminTab] = React.useState<'members' | 'roles'>('members');
@@ -269,11 +277,29 @@ export default function App() {
         activeSecurity="destinations"
         onSearchOpen={() => setSearchOpen(true)}
         onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
-        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('destinations'); } else if (sub === 'policies') { navigateTo('policies'); } else if (sub !== 'destinations') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
         <DestinationsPage isLight={isLight} onThemeToggle={toggle} consolidate={consolidateReq} onConsolidateComplete={handleConsolidateComplete} />
       </div>
+      <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
+    </div>
+  );
+  if (topPage === 'policies') return (
+    <div className="app">
+      <Sidebar
+        activeItem="security"
+        activeSecurity="policies"
+        onSearchOpen={() => setSearchOpen(true)}
+        onNavigate={(item) => { if (item === 'home') navigateTo('dashboard'); if (item === 'trade') navigateTo('trade'); }}
+        onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('policies'); } else if (sub === 'destinations') { navigateTo('destinations'); } else if (sub !== 'policies') { navigateTo('dashboard'); } }}
+      />
+      <div className="workspace">
+        {policyConcept === 'near'
+          ? <PoliciesPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} />
+          : <SecurityCenterPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} membersApi={membersRoles} />}
+      </div>
+      <PolicyConceptSwitcher concept={policyConcept} onConceptChange={setPolicyConcept} createMode={createMode} onCreateModeChange={setCreateMode} />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
   );
@@ -321,6 +347,7 @@ export default function App() {
           onNavigate={(item) => { setSecurityPage(null); if (item === 'home') handleBackToDashboard(); if (item === 'trade') navigateTo('trade'); }}
           onNavigateSecurity={(sub) => {
             if (sub === 'destinations') { navigateTo('destinations'); }
+            else if (sub === 'policies') { navigateTo('policies'); }
             else if (sub === 'roles') { goToRoles('dashboard'); }
             else setSecurityPage(sub);
           }}
