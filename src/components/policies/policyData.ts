@@ -40,10 +40,14 @@ export const SENTENCE_POLICIES: SentencePolicy[] = [
 
 /* ── Builder vocabulary ── */
 export type BuilderEvent = 'withdrawal' | 'stake' | 'unstake' | 'rewards' | 'validator' | 'settlement-start' | 'settlement-approve' | 'recovery';
-export type BuilderWallet = '' | 'all' | 'custody' | 'self-hot' | 'self-cold' | 'eth-custody' | 'three-wallets' | 'go-account';
-export type BuilderCondition = 'none' | 'amount' | 'velocity' | 'destination' | 'asset' | 'webhook';
-export type BuilderRequirement = '' | 'enterprise-admins' | 'wallet-admins' | 'people' | 'role' | 'final' | 'reject';
-export type BuilderPart = 'event' | 'wallets' | 'condition' | 'requirement' | null;
+export type BuilderWallet = 'all' | 'single' | 'multiple' | 'type' | 'tag';
+export type CondType = 'amount' | 'velocity' | 'destination' | 'asset' | 'webhook';
+export type ActType = 'enterprise-admins' | 'wallet-admins' | 'users' | 'role' | 'final' | 'reject';
+
+/** One condition step ("Spending limit", "Destination"…). */
+export interface Cond { id: string; type: CondType; limit: 'gt' | 'gte'; amount: string; currency: string; fresh?: boolean }
+/** One action step ("Require approval from a set of users"…). */
+export interface Act { id: string; type: ActType; approvals: number; role: string; person: string; users: string[]; selfApprove: boolean; fresh?: boolean }
 
 export const BUILDER_EVENTS: { id: BuilderEvent; label: string; sentence: string; noCondition: string; help: string }[] = [
   { id: 'withdrawal', label: 'Withdrawals', sentence: 'Withdrawals', noCondition: 'All withdrawals', help: 'Any send out of the wallet' },
@@ -57,17 +61,14 @@ export const BUILDER_EVENTS: { id: BuilderEvent; label: string; sentence: string
 ];
 
 export const BUILDER_WALLETS: { id: BuilderWallet; label: string; help: string }[] = [
-  { id: 'all', label: 'all wallets', help: "Every current and future wallet. Doesn't include the Go Account." },
-  { id: 'custody', label: 'all custody wallets', help: 'Includes custody wallets you add later.' },
-  { id: 'self-hot', label: 'all self-custody hot wallets', help: 'Includes hot wallets you add later.' },
-  { id: 'self-cold', label: 'all self-custody cold wallets', help: 'Includes cold wallets you add later.' },
-  { id: 'eth-custody', label: 'ETH Custody', help: 'Custody · 2 wallet admins' },
-  { id: 'three-wallets', label: '3 wallets', help: 'ETH Custody, Treasury Hot and BTC Cold' },
-  { id: 'go-account', label: 'the Go Account', help: 'Available for settlement policies.' },
+  { id: 'all', label: 'All wallets in my enterprise', help: 'Applies to All Wallets' },
+  { id: 'single', label: 'Single Wallet', help: 'Allows creating a Condition based on the Wallet Id' },
+  { id: 'multiple', label: 'Multiple Wallets', help: 'Allows creating a Condition for multiple Wallets' },
+  { id: 'type', label: 'Wallet Type', help: 'Allows creating a Condition based on the Wallet Type' },
+  { id: 'tag', label: 'Wallet Tag', help: 'Select wallets that have specific tags applied' },
 ];
 
 export const BUILDER_TEMPLATES: [string, string][] = [
-  ['every', 'Approve every withdrawal'], ['large', 'Approval for large withdrawals'], ['daily', 'Daily limit'],
-  ['block', 'Block non-whitelisted addresses'], ['destination', 'Approval for non-whitelisted addresses'],
-  ['named', 'Named approvers'], ['final', 'Final sign-off'], ['webhook', 'Check with your system'], ['staking', 'Approve staking'],
+  ['approve-all', 'Approval on all withdrawals'],
+  ['reject-large', 'Reject on withdrawals over $100k'],
 ];

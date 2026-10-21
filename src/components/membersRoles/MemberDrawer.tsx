@@ -12,11 +12,13 @@ interface Props {
   member: Member | null;
   api: MembersRolesApi;
   onClose: () => void;
-  onManageRoles: (m: Member) => void;
-  onRemove: (m: Member) => void;
+  onManageRoles?: (m: Member) => void;
+  onRemove?: (m: Member) => void;
+  /** View-only: hides the Actions menu. */
+  readOnly?: boolean;
 }
 
-export const MemberDrawer: React.FC<Props> = ({ member, api, onClose, onManageRoles, onRemove }) => {
+export const MemberDrawer: React.FC<Props> = ({ member, api, onClose, onManageRoles, onRemove, readOnly }) => {
   const [tab, setTab] = useState<Tab>('Overview');
 
   // Reset to Overview whenever a new member is opened.
@@ -52,13 +54,15 @@ export const MemberDrawer: React.FC<Props> = ({ member, api, onClose, onManageRo
                   </div>
                 </div>
               </div>
+              {!readOnly && (
               <Menu
-                variant="actions"
-                items={[
-                  { label: 'Manage Roles Assigned', icon: <ManageRolesIcon />, onClick: () => onManageRoles(member) },
-                  { label: 'Remove from Organization', danger: true, icon: <TrashIcon />, onClick: () => onRemove(member) },
-                ]}
-              />
+                  variant="actions"
+                  items={[
+                    { label: 'Manage Roles Assigned', icon: <ManageRolesIcon />, onClick: () => onManageRoles?.(member) },
+                    { label: 'Remove from Organization', danger: true, icon: <TrashIcon />, onClick: () => onRemove?.(member) },
+                  ]}
+                />
+              )}
             </div>
 
             <div className="mr-drawer-tabs">

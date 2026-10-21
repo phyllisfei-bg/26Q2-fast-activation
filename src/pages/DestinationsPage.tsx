@@ -192,6 +192,14 @@ const DESTINATIONS: Destination[] = [
   },
 ];
 
+/** Headline numbers for summaries elsewhere (e.g. the Security Center overview). */
+export const DESTINATION_SUMMARY = {
+  total: DESTINATIONS.length,
+  pending: DESTINATIONS.filter(d => d.status === 'pending').length,
+  networks: new Set(DESTINATIONS.map(d => d.coin)).size,
+  multiLabel: (() => { const m = new Map<string, number>(); DESTINATIONS.forEach(d => { if (d.groupId) m.set(d.groupId, (m.get(d.groupId) ?? 0) + 1); }); return [...m.values()].filter(n => n > 1).length; })(),
+};
+
 // Pre-compute groups that have multiple labels
 const MULTI_LABEL_GROUPS = (() => {
   const map = new Map<string, Destination[]>();
@@ -223,6 +231,8 @@ const CoinIcon: React.FC<{ coin: string; color: string; bg: string }> = ({ coin,
 interface Props {
   isLight: boolean;
   onThemeToggle: () => void;
+  /** Render inside another page (Security Center): no topbar / page title; parent owns scrolling. */
+  embedded?: boolean;
   consolidate?: { mode: 'manual' | 'auto'; ver: number } | null;   // request from the AI chat
   onConsolidateComplete?: (mode: 'manual' | 'auto') => void;        // fired when consolidation finishes
 }
@@ -233,7 +243,7 @@ const TH = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.
 // Sticky header — pins just below the sticky filter row (h-14 = 56px) while rows scroll.
 const STICKY_TH = 'sticky top-14 z-10';
 
-export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, consolidate, onConsolidateComplete }) => {
+export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, embedded, consolidate, onConsolidateComplete }) => {
   const [autoMode, setAutoMode] = useState(false);   // AI-driven hands-off consolidation
   const modeRef = useRef<'manual' | 'auto'>('manual');           // mode of the current consolidation run
   const completeCbRef = useRef(onConsolidateComplete);
@@ -483,17 +493,31 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
   // Clear auto mode once consolidation finishes.
   useEffect(() => { if (!consolidating) setAutoMode(false); }, [consolidating]);
 
-  return (
-    <div className="flex flex-col h-full overflow-hidden bg-[var(--color-level1)]">
-      <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />
+  const addNewBtn = (
+          <button className="flex items-center gap-2 h-9 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add New
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+  );
 
-      <div className="flex-1 overflow-y-auto px-7 pb-7" ref={contentRef}>
+  return (
+    <div className={embedded ? '' : 'flex flex-col h-full overflow-hidden bg-[var(--color-level1)]'}>
+      {!embedded && <Topbar isLight={isLight} onThemeToggle={onThemeToggle} />}
+
+      <div className={embedded ? '' : 'flex-1 overflow-y-auto px-7 pb-7'} ref={contentRef}>
         {/* Page header */}
-        <div className={`flex items-start justify-between mb-6 pt-7${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+        <div className={`flex items-start ${embedded ? 'hidden' : 'justify-between mb-6 pt-7'}${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+          {!embedded && (
           <div>
             <h1 className="text-[30px] font-normal text-[var(--color-text)]">Whitelist Destinations</h1>
             <p className="text-[16px] font-normal text-[var(--color-text-secondary)] mt-1">Manage whitelisted addresses, wallets, and enterprise-wide allowlists.</p>
           </div>
+          )}
           <button className="flex items-center gap-2 h-10 px-4 rounded-full bg-[var(--brand-500)] text-sm font-semibold text-white border-none cursor-pointer hover:bg-[var(--brand-700)] transition-colors shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -529,7 +553,7 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
         )}
 
         {/* Filter chips + search row — sticky while rows scroll */}
-        <div className={`sticky top-0 z-20 bg-[var(--color-level1)] flex items-center justify-between gap-4 h-14${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
+        <div className={`sticky top-0 z-20 bg-[var(--color-level1)] flex items-center ${embedded ? 'gap-3' : 'justify-between gap-4'} h-14${consolidating ? ' opacity-40 pointer-events-none' : ''}`}>
           <FilterChips filters={[{ label: 'Type', options: ['Addresses', 'Wallets', 'Enterprise Whitelist'] }, 'Network', 'Scope', 'Status']} />
           <div className="dest-search-wrap flex items-center gap-2 h-9 px-4 rounded-full bg-white min-w-[180px] shrink-0" style={{ border: '1px solid #E5E7EB' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--color-text-muted)] shrink-0">
@@ -543,10 +567,11 @@ export const DestinationsPage: React.FC<Props> = ({ isLight, onThemeToggle, cons
               disabled={consolidating}
             />
           </div>
+          {embedded && <><div className="flex-1" />{addNewBtn}</>}
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-[var(--color-border)]">
+        <div className={embedded ? '' : 'rounded-xl border border-[var(--color-border)]'}>
           <table className="dest-cols w-full table-fixed border-separate border-spacing-0">
             <thead className={consolidating ? 'opacity-40' : ''}>
               <tr>

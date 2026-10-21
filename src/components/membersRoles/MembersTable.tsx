@@ -14,21 +14,23 @@ interface Props {
   members: Member[];
   api: MembersRolesApi;
   onRowClick: (m: Member) => void;
-  onManageRoles: (m: Member) => void;
-  onRemove: (m: Member) => void;
+  onManageRoles?: (m: Member) => void;
+  onRemove?: (m: Member) => void;
+  /** View-only: no action menu at the end of each row. */
+  readOnly?: boolean;
 }
 
-export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onManageRoles, onRemove }) => (
-  <div className="rounded-xl border border-[var(--color-border)]">
+export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onManageRoles, onRemove, readOnly }) => (
+  <div className={readOnly ? '' : 'rounded-xl border border-[var(--color-border)]'}>
     <table className="mr-members-cols w-full table-fixed border-separate border-spacing-0">
       <thead>
         <tr>
           <th className={`${THBLANK} rounded-l-[11px]`}><input type="checkbox" className="mr-check" /></th>
           <th className={TH}>Name</th>
           <th className={TH}>Email</th>
-          <th className={TH}>Roles Assigned</th>
-          <th className={TH}>Status</th>
-          <th className={`${THBLANK} rounded-r-[11px]`}></th>
+          {!readOnly && <th className={TH}>Roles Assigned</th>}
+          <th className={`${TH}${readOnly ? ' rounded-r-[11px]' : ''}`}>Status</th>
+          {!readOnly && <th className={`${THBLANK} rounded-r-[11px]`}></th>}
         </tr>
       </thead>
       <tbody>
@@ -46,17 +48,19 @@ export const MembersTable: React.FC<Props> = ({ members, api, onRowClick, onMana
                 </div>
               </td>
               <td className={`${TD} text-[14px] text-[var(--color-text-secondary)]`}>{m.email}</td>
-              <td className={TD}><PillRow items={roleNames} max={2} /></td>
+              {!readOnly && <td className={TD}><PillRow items={roleNames} max={2} /></td>}
               <td className={TD}><StatusBadge status={m.status} /></td>
+              {!readOnly && (
               <td className={`${TD} text-right`} onClick={e => e.stopPropagation()}>
-                <Menu
-                  variant="kebab"
-                  items={[
-                    { label: 'Manage Roles Assigned', icon: <ManageRolesIcon />, onClick: () => onManageRoles(m) },
-                    { label: 'Remove from Organization', danger: true, icon: <TrashIcon />, onClick: () => onRemove(m) },
-                  ]}
-                />
-              </td>
+                  <Menu
+                    variant="kebab"
+                    items={[
+                      { label: 'Manage Roles Assigned', icon: <ManageRolesIcon />, onClick: () => onManageRoles?.(m) },
+                      { label: 'Remove from Organization', danger: true, icon: <TrashIcon />, onClick: () => onRemove?.(m) },
+                    ]}
+                  />
+                </td>
+              )}
             </tr>
           );
         })}

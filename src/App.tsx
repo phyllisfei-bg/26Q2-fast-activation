@@ -9,6 +9,9 @@ import { WalletDetailPage }   from './pages/WalletDetailPage';
 import { GoAccountPage }      from './pages/GoAccountPage';
 import { DestinationsPage }   from './pages/DestinationsPage';
 import { PoliciesPage }       from './pages/PoliciesPage';
+import { SecurityCenterPage } from './pages/SecurityCenterPage';
+import { PolicyConceptSwitcher } from './components/PolicyConceptSwitcher';
+import type { PolicyConcept, CreateMode } from './components/PolicyConceptSwitcher';
 import { MembersRolesPage }   from './pages/MembersRolesPage';
 import { InviteMemberFlow }   from './flows/InviteMemberFlow';
 import type { InvitePayload } from './flows/InviteMemberFlow';
@@ -102,6 +105,9 @@ export default function App() {
   // Members & Roles — shared state across the page and the invite flow
   const membersRoles = useMembersRoles();
   const [inviteOpen, setInviteOpen] = React.useState(false);
+  // Prototype switches for the Security → Policies surface
+  const [policyConcept, setPolicyConcept] = React.useState<PolicyConcept>('near');
+  const [createMode, setCreateMode] = React.useState<CreateMode>('modal');
   // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
   const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
   const [adminTab, setAdminTab] = React.useState<'members' | 'roles'>('members');
@@ -289,8 +295,11 @@ export default function App() {
         onNavigateSecurity={(sub) => { if (sub === 'roles') { goToRoles('policies'); } else if (sub === 'destinations') { navigateTo('destinations'); } else if (sub !== 'policies') { navigateTo('dashboard'); } }}
       />
       <div className="workspace">
-        <PoliciesPage isLight={isLight} onThemeToggle={toggle} />
+        {policyConcept === 'near'
+          ? <PoliciesPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} />
+          : <SecurityCenterPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} membersApi={membersRoles} />}
       </div>
+      <PolicyConceptSwitcher concept={policyConcept} onConceptChange={setPolicyConcept} createMode={createMode} onCreateModeChange={setCreateMode} />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
   );

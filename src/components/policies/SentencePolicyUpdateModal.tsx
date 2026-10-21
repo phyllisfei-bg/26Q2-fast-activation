@@ -54,7 +54,6 @@ export const SentencePolicyUpdateModal: React.FC<Props> = ({ policy, field, onCl
             <div className="mr-rm-meta-value">{policy.name}</div>
           </div>
         </div>
-        <div className="mr-rm-divider" />
 
         <div className="px-7 pt-5">
           <div className="rounded-xl bg-[var(--color-level2)] p-4 mb-6">
@@ -109,7 +108,7 @@ export const SentencePolicyUpdateModal: React.FC<Props> = ({ policy, field, onCl
 
         <div className="mr-rm-footer" style={{ marginTop: 24 }}>
           <button className="mr-rm-btn-cancel" onClick={onClose}>Cancel</button>
-          <button className="mr-rm-btn-save" onClick={save}>Save Changes</button>
+          <button className="mr-rm-btn-save" onClick={save}>Confirm</button>
         </div>
       </div>
     </div>
