@@ -181,11 +181,10 @@ export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, cr
   const flip = (k: keyof typeof toggles) => setToggles(t => ({ ...t, [k]: !t[k] }));
 
   // Modal form fields
-  const [confirmText, setConfirmText] = useState('');
   const [reason, setReason] = useState('');
   const [verified, setVerified] = useState(false);
   const [ipForm, setIpForm] = useState({ label: '', cidr: '' });
-  const openModal = (m: ModalState) => { setConfirmText(''); setReason(''); setVerified(false); setModal(m); };
+  const openModal = (m: ModalState) => { setReason(''); setVerified(false); setModal(m); };
   const log = (title: string, meta: string) => setActivity(a => [{ time: nowStr(), title, meta }, ...a]);
   const close = () => setModal(null);
 
