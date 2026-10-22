@@ -4,13 +4,14 @@ import { Snackbar } from '../components/Snackbar';
 import type { SnackbarHandle } from '../components/Snackbar';
 import { FilterChips } from '../components/FilterChips';
 import { SearchField } from '../components/SearchField';
-import { Menu, TrashIcon } from '../components/membersRoles/shared';
+import { Menu, Badge } from '../components/membersRoles/shared';
 import { PolicySentence } from '../components/policies/PolicySentence';
-import { PolicyStatusBadge, PolicyLockIcon, fieldLabel } from '../components/policies/PolicyStatusBadge';
+import { PolicyStatusBadge, PolicyLockIcon } from '../components/policies/PolicyStatusBadge';
 import { SentencePolicyDrawer } from '../components/policies/SentencePolicyDrawer';
-import { SentencePolicyUpdateModal } from '../components/policies/SentencePolicyUpdateModal';
-import { SENTENCE_POLICIES } from '../components/policies/policyData';
-import type { SentencePolicy, EditablePolicyField } from '../components/policies/policyData';
+import { policyMenuItems } from '../components/policies/policyMenu';
+import { VISIBLE_POLICIES } from '../components/policies/policyData';
+import type { SentencePolicy } from '../components/policies/policyData';
+import { PolicyEditFlow } from '../flows/PolicyEditFlow';
 import { PolicyBuilderFlow } from '../flows/PolicyBuilderFlow';
 
 type Tab = 'all' | 'transactions' | 'administrative';
@@ -19,12 +20,11 @@ type Tab = 'all' | 'transactions' | 'administrative';
 const STICKY = 'sticky top-14 z-10';
 const TH = `px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-secondary)] bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
 const THBLANK = `px-4 py-3 bg-[#F5F6F7] border-b border-[var(--color-border)] ${STICKY}`;
-const TD = 'px-4 py-[14px] align-top';
+const TD = 'px-4 py-[14px] align-middle';
 
 interface Props {
   isLight: boolean;
   onThemeToggle: () => void;
-  createMode: 'page' | 'modal';
   /** Render inside another page (Security Center): no topbar / page title, parent owns scrolling. */
   embedded?: boolean;
   /** Optional controlled list, so a parent can summarise the policies. */
@@ -34,20 +34,14 @@ interface Props {
   onEvent?: (title: string, meta: string) => void;
 }
 
-const HistoryIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 14" />
-  </svg>
-);
-
-export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, createMode, embedded, policies: policiesProp, onPoliciesChange, onEvent }) => {
+export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, embedded, policies: policiesProp, onPoliciesChange, onEvent }) => {
   const [tab, setTab] = useState<Tab>(embedded ? 'all' : 'transactions');
-  const [localPolicies, setLocalPolicies] = useState<SentencePolicy[]>(SENTENCE_POLICIES);
+  const [localPolicies, setLocalPolicies] = useState<SentencePolicy[]>(VISIBLE_POLICIES);
   const policies = policiesProp ?? localPolicies;
   const setPolicies = onPoliciesChange ?? setLocalPolicies;
   const [search, setSearch] = useState('');
   const [viewing, setViewing] = useState<SentencePolicy | null>(null);
-  const [editing, setEditing] = useState<{ policy: SentencePolicy; field: EditablePolicyField } | null>(null);
+  const [editFull, setEditFull] = useState<SentencePolicy | null>(null);
   const [creating, setCreating] = useState(false);
   const snackRef = useRef<SnackbarHandle>(null);
 
@@ -56,13 +50,11 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, createMo
   const visible = active.filter(p =>
     (tab === 'all' || p.kind === tab) && (!q || p.name.toLowerCase().includes(q) || p.summary.toLowerCase().includes(q) || p.policyAction.toLowerCase().includes(q)));
   const count = (kind: 'transactions' | 'administrative') => active.filter(p => p.kind === kind).length;
-  const primaryField = (p: SentencePolicy): EditablePolicyField =>
-    p.editableFields.includes('action') ? 'action' : (p.editableFields[0] ?? 'action');
 
   const savePolicy = (policy: SentencePolicy) => {
     setPolicies(cur => cur.map(p => p.id === policy.id ? policy : p));
     setViewing(v => (v && v.id === policy.id ? policy : v));
-    setEditing(null);
+    setEditFull(null);
     snackRef.current?.show(`${policy.name} updated.`, false);
     onEvent?.(`Policy updated: ${policy.name}`, 'You');
   };
@@ -81,6 +73,13 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, createMo
     snackRef.current?.show('Policy submitted for approval.', false);
     onEvent?.(`Policy created: ${policy.name}`, 'You · pending approval');
   };
+
+  const menuFor = (p: SentencePolicy) => policyMenuItems(p, {
+    onEdit: () => { setViewing(null); setEditFull(p); },
+    onCopy: () => snackRef.current?.show('Copy to other enterprise — coming soon.', false),
+    onArchive: () => archivePolicy(p),
+    onViewTask: () => snackRef.current?.show('Opening the approval task (prototype).', false),
+  });
 
   const newPolicyBtn = (
             <button
@@ -155,24 +154,17 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, createMo
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="text-[16px] font-normal text-[var(--color-text)]">{p.name}</span>
                       <PolicyLockIcon policy={p} />
+                      {p.optional && <Badge tone="neutral">Optional</Badge>}
                       <PolicyStatusBadge policy={p} />
                     </div>
-                    <PolicySentence policy={p} onRequirementClick={() => setEditing({ policy: p, field: primaryField(p) })} />
+                    <PolicySentence policy={p} />
                     {p.organizationNote && (
                       <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5">{p.organizationNote}</p>
                     )}
                   </td>
                   <td className={`${TD} text-[14px] text-[var(--color-text-secondary)]`}>{p.lastUsed ?? '—'}</td>
                   <td className={`${TD} text-right`} onClick={e => e.stopPropagation()}>
-                    <Menu
-                      variant="kebab"
-                      items={[
-                        ...p.editableFields.map(f => ({ label: `Update ${fieldLabel(f)}`, onClick: () => setEditing({ policy: p, field: f }) })),
-                        { label: 'View History', icon: <HistoryIcon />, onClick: () => setViewing(p) },
-                        { label: 'Copy to Other Enterprise', onClick: () => snackRef.current?.show('Copy to other enterprise — coming soon.', false) },
-                        { label: 'Archive', danger: true, icon: <TrashIcon />, onClick: () => archivePolicy(p) },
-                      ]}
-                    />
+                    <Menu variant="kebab" items={menuFor(p)} />
                   </td>
                 </tr>
               ))}
@@ -188,24 +180,12 @@ export const PoliciesPage: React.FC<Props> = ({ isLight, onThemeToggle, createMo
         </div>
       </div>
 
-      <SentencePolicyDrawer
-        policy={viewing}
-        onClose={() => setViewing(null)}
-        onUpdate={(policy, field) => { setViewing(null); setEditing({ policy, field }); }}
-      />
-      {editing && (
-        <SentencePolicyUpdateModal
-          policy={editing.policy}
-          field={editing.field}
-          onClose={() => setEditing(null)}
-          onSave={savePolicy}
-        />
-      )}
+      <SentencePolicyDrawer policy={viewing} onClose={() => setViewing(null)} menuItems={viewing ? menuFor(viewing) : []} />
+      {editFull && <PolicyEditFlow policy={editFull} onClose={() => setEditFull(null)} onSave={savePolicy} />}
       {creating && (
         <PolicyBuilderFlow
           isLight={isLight}
           onThemeToggle={onThemeToggle}
-          mode={createMode}
           onClose={() => setCreating(false)}
           onSubmit={addPolicy}
         />

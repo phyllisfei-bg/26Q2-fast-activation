@@ -10,9 +10,8 @@ import { DestinationsPage, DESTINATION_SUMMARY } from './DestinationsPage';
 import { MembersTable } from '../components/membersRoles/MembersTable';
 import { MemberDrawer } from '../components/membersRoles/MemberDrawer';
 import { FilterChips } from '../components/FilterChips';
-import { SENTENCE_POLICIES } from '../components/policies/policyData';
+import { VISIBLE_POLICIES } from '../components/policies/policyData';
 import type { SentencePolicy } from '../components/policies/policyData';
-import type { CreateMode } from '../components/PolicyConceptSwitcher';
 import type { MembersRolesApi } from '../hooks/useMembersRoles';
 import type { Member } from '../types';
 
@@ -154,12 +153,12 @@ const Dialog: React.FC<{ title: string; onClose: () => void; onConfirm: () => vo
 
 type ModalState = { kind: 'tfa' } | { kind: 'force'; user: [string, string, number] } | { kind: 'ip' } | null;
 
-interface Props { isLight: boolean; onThemeToggle: () => void; createMode: CreateMode; membersApi: MembersRolesApi }
+interface Props { isLight: boolean; onThemeToggle: () => void; membersApi: MembersRolesApi }
 
-export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, createMode, membersApi }) => {
+export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, membersApi }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [modal, setModal] = useState<ModalState>(null);
-  const [policies, setPolicies] = useState<SentencePolicy[]>(SENTENCE_POLICIES);
+  const [policies, setPolicies] = useState<SentencePolicy[]>(VISIBLE_POLICIES);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [activity, setActivity] = useState<Event[]>(INITIAL_ACTIVITY);
   const [ips, setIps] = useState(IPS);
@@ -232,7 +231,7 @@ export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, cr
         <div className="grid grid-cols-3 gap-4 mb-4"><Stat n={activeN} label="Active" /><Stat n={pendingN} label="Pending" /><Stat n={archivedN} label="Archived" /></div>
         <Divider />
         <div className={`text-[12px] font-semibold uppercase tracking-[0.06em] ${MUTED}`}>Frequently triggered · 30 days</div>
-        {[['Video ID', 'Transfers over $250,000 from custody wallets', '14'], ['Unverified address', 'Transfers to unverified addresses', '9']].map(r => (
+        {[['Video ID', 'Withdrawals over $250,000 from custody wallets', '14'], ['Unverified address', 'Withdrawals to unverified addresses', '9']].map(r => (
           <Row key={r[0]} title={r[0]} desc={r[1]} right={<span className={`text-[13px] ${MUTED} whitespace-nowrap`}>{r[2]} triggers</span>} />
         ))}
         <button className={`${PILL} mt-2`} onClick={() => setTab('policies')}>View policies</button>
@@ -280,7 +279,7 @@ export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, cr
   const q = search.trim().toLowerCase();
   const policiesTab = (
     <PoliciesPage
-      embedded isLight={isLight} onThemeToggle={onThemeToggle} createMode={createMode}
+      embedded isLight={isLight} onThemeToggle={onThemeToggle}
       policies={policies} onPoliciesChange={setPolicies} onEvent={log}
     />
   );

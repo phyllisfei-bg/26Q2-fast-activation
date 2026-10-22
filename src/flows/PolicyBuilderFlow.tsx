@@ -1,13 +1,11 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import ReactDOM from 'react-dom';
 import '../styles/kyc.css';
-import { CloseIcon, Chip } from '../components/membersRoles/shared';
-import { BUILDER_EVENTS, BUILDER_WALLETS, BUILDER_TEMPLATES } from '../components/policies/policyData';
+import { CloseIcon, Chip, Badge, EditIcon } from '../components/membersRoles/shared';
+import { BUILDER_EVENTS, BUILDER_WALLETS } from '../components/policies/policyData';
 import type { SentencePolicy, BuilderEvent, BuilderWallet, CondType, ActType, Cond, Act } from '../components/policies/policyData';
 
 interface Props {
-  /** 'page' = full page + nested modal; 'modal' = modal + nested screens. */
-  mode: 'page' | 'modal';
   isLight: boolean;
   onThemeToggle: () => void;
   onClose: () => void;
@@ -28,8 +26,8 @@ const CURRENCIES = ['USD', 'TUSD', 'USDC'];
 const ROLES = ['Investment Committee', 'Organization Admin', 'Wallet Admin'];
 
 let uid = 0;
-const newCond = (type: CondType = 'amount', fresh = false): Cond => ({ id: `c${++uid}`, type, limit: 'gt', amount: type === 'amount' ? '100,000' : '', currency: 'USD', fresh });
-const newAct = (type: ActType = 'enterprise-admins', fresh = false): Act => ({ id: `a${++uid}`, type, approvals: 1, role: ROLES[0], person: USERS[3], users: [], selfApprove: false, fresh });
+const newCond = (type: CondType = 'amount', fresh = false): Cond => ({ id: `c${++uid}`, type, limit: 'gt', amount: type === 'amount' ? '100,000' : '', currency: 'USD', join: 'and', fresh });
+const newAct = (type: ActType = 'enterprise-admins', fresh = false): Act => ({ id: `a${++uid}`, type, approvals: 1, role: ROLES[0], person: USERS[3], users: [], selfApprove: false, method: 'video', join: 'and', fresh });
 
 const COND_TYPES: { id: CondType; label: string; help: string }[] = [
   { id: 'amount', label: 'Spending limit', help: 'Policy triggers if a withdrawal meets the specified threshold' },
@@ -44,10 +42,10 @@ const ACT_TYPES: { id: ActType; label: string; help: string }[] = [
   { id: 'users', label: 'Require approval from a set of users', help: 'Choose the people who can approve' },
   { id: 'role', label: 'Require approval from a role', help: 'Anyone holding the role can approve' },
   { id: 'final', label: 'Require final approval from one person', help: 'One named person signs off last' },
+  { id: 'verification', label: 'Require identity verification', help: 'Choose video verification with BitGo Support or liveness verification' },
   { id: 'reject', label: 'Reject automatically', help: 'Matching transactions are rejected with no exceptions' },
 ];
 
-const sigOf = (d: Draft) => JSON.stringify({ e: d.event, s: d.scope, c: d.conds.map(({ id, fresh, ...r }) => r), a: d.acts.map(({ id, fresh, ...r }) => r) });
 const orList0 = (names: string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
 const scopeLabel = (sc: Scope) => {
   switch (sc.mode) {
@@ -79,16 +77,33 @@ const actCopy = (a: Act) => {
     users: `${n} approval${s} from ${a.users.length ? orList(a.users.map(u => u.split(' ')[0])) : 'selected users'}`,
     role: `${n} approval${s} from the ${a.role} role`,
     final: `final approval from ${a.person}`,
+    verification: `${a.method === 'video' ? 'video' : 'liveness'} verification with BitGo Support`,
     reject: 'rejected automatically',
   } as Record<ActType, string>)[a.type];
 };
-const condText = (conds: Cond[]) => conds.map(condCopy).join(' and ');
-const actText = (acts: Act[]) => acts.map(actCopy).join(', then ');
+const condText = (conds: Cond[]) => conds.map((c, i) => `${i ? ` ${c.join} ` : ''}${condCopy(c)}`).join('');
+const actText = (acts: Act[]) => acts.map((a, i) => `${i ? ` ${a.join} ` : ''}${actCopy(a)}`).join('');
 const isReject = (acts: Act[]) => acts.some(a => a.type === 'reject');
 const condValid = (c: Cond) => (c.type !== 'amount' && c.type !== 'velocity') || !!c.amount;
 const actValid = (a: Act) =>
-  a.type === 'reject' || a.type === 'final' ||
+  a.type === 'reject' || a.type === 'final' || a.type === 'verification' ||
   (a.approvals >= 1 && (a.type !== 'users' || (a.users.length > 0 && a.users.length >= a.approvals)));
+
+/** and / or switch shown between conditions (or actions). One choice applies to the whole list. */
+const JoinToggle: React.FC<{ value: 'and' | 'or'; onChange: (j: 'and' | 'or') => void }> = ({ value, onChange }) => (
+  <div className="flex items-center gap-4 my-4">
+    <div className="flex-1" style={{ borderTop: '1px solid var(--color-border)' }} />
+    <div className="rs-segment-control" style={{ margin: 0, borderRadius: 999 }}>
+      {(['and', 'or'] as const).map(j => (
+        <button key={j} className={`rs-segment-btn${value === j ? ' active' : ''}`} style={{ flex: 'none', padding: '6px 18px', fontSize: 14, borderRadius: 999 }} onClick={() => onChange(j)}>{j}</button>
+      ))}
+    </div>
+    <div className="flex-1" style={{ borderTop: '1px solid var(--color-border)' }} />
+  </div>
+);
+
+/** Connecting words ("from", "when") are the only secondary-colored text in the sentence. */
+const Soft: React.FC<{ children: React.ReactNode }> = ({ children }) => <span className="text-[var(--color-text-secondary)]">{children}</span>;
 
 /* ── The sentence: highlighted parts are editable ── */
 const SentenceBuilder: React.FC<{
@@ -111,29 +126,24 @@ const SentenceBuilder: React.FC<{
       ? <button type="button" onClick={onClick} className={`${tone(filled, !!active)} cursor-pointer`} style={{ font: 'inherit' }}>{children}</button>
       : <span className={highlight && active ? tone(true, true) : 'text-[var(--color-text)]'}>{children}</span>;
   const selectClass = 'rounded-lg px-2 py-0.5 border border-[var(--brand-500)] bg-[var(--brand-a100)] text-[var(--brand-500)] outline-none cursor-pointer';
-  const link = 'text-[14px] font-medium text-[var(--brand-500)] bg-transparent border-none cursor-pointer p-0 hover:underline';
   const interactive = !!onOpen;
 
   return (
-    <p className={`${compact ? 'text-[14px] leading-[2]' : 'text-[22px] leading-[2]'} font-normal text-[var(--color-text-secondary)]`}>
+    <p className={`${compact ? 'text-[14px] leading-[2]' : 'text-[22px] leading-[2]'} font-normal text-[var(--color-text)]`}>
       {interactive && sel === 'event' ? (
         <select autoFocus className={selectClass} style={{ font: 'inherit' }} value={draft.event}
           onChange={e => { onPick?.({ event: e.target.value as BuilderEvent }); setSel(null); }} onBlur={() => setSel(null)}>
           {BUILDER_EVENTS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
         </select>
-      ) : <Token filled onClick={interactive ? () => setSel('event') : undefined}>{hasCond ? eventDef.sentence : eventDef.noCondition}</Token>}{' from '}
+      ) : <Token filled onClick={interactive ? () => setSel('event') : undefined}>{hasCond ? eventDef.sentence : eventDef.noCondition}</Token>}<Soft>{' from '}</Soft>
       <Token filled={!!walletText} active={highlight === 'scope'} onClick={interactive ? () => onOpen!('scope') : undefined}>{walletText || 'choose wallets'}</Token>{' '}
-      {hasCond ? (
-        <>
-          <Token filled active={highlight === 'condition'} onClick={interactive ? () => onOpen!('condition') : undefined}>{condText(draft.conds)}</Token>{' '}
-          {interactive && <><button type="button" className={link} onClick={() => onOpen!('condition', true)}>+ Add condition</button>{' '}</>}
-        </>
-      ) : (
-        interactive && <><button type="button" className={link} onClick={() => onOpen!('condition', true)}>+ Add a condition</button>{' '}</>
-      )}
+      {(hasCond || interactive) && <Soft>when </Soft>}
+      {hasCond
+        ? <><Token filled active={highlight === 'condition'} onClick={interactive ? () => onOpen!('condition') : undefined}>{condText(draft.conds)}</Token>{' '}</>
+        : (interactive && <><Token filled={false} onClick={() => onOpen!('condition')}>no condition</Token>{' '}</>)}
       {rejects ? 'are ' : 'require '}
       <Token filled={draft.acts.length > 0} active={highlight === 'action'} onClick={interactive ? () => onOpen!('action') : undefined}>{draft.acts.length ? actText(draft.acts) : 'choose what to require'}</Token>
-      {interactive && draft.acts.length > 0 && !rejects && <>{' '}<button type="button" className={link} onClick={() => onOpen!('action', true)}>+ Add action</button></>}.
+      .
     </p>
   );
 };
@@ -274,7 +284,7 @@ const CondCard: React.FC<{ cond: Cond; index: number; onChange: (c: Cond) => voi
 /* ── Action card ── */
 const ActCard: React.FC<{ act: Act; index: number; canDelete: boolean; onChange: (a: Act) => void; onDelete: () => void }> = ({ act, index, canDelete, onChange, onDelete }) => {
   const def = ACT_TYPES.find(t => t.id === act.type)!;
-  const counted = act.type !== 'reject' && act.type !== 'final';
+  const counted = act.type !== 'reject' && act.type !== 'final' && act.type !== 'verification';
   const available = USERS.filter(u => !act.users.includes(u));
   return (
     <div className="pb-5 mb-5 border-b border-[var(--color-border)]">
@@ -310,6 +320,15 @@ const ActCard: React.FC<{ act: Act; index: number; canDelete: boolean; onChange:
           </label>
         </>
       )}
+      {act.type === 'verification' && (
+        <>
+          <label className="kyc-form-label" style={{ marginTop: 16 }}>Verification method</label>
+          <select className="kyc-form-select" value={act.method} onChange={e => onChange({ ...act, method: e.target.value as 'video' | 'liveness' })}>
+            <option value="video">Video verification with BitGo Support</option>
+            <option value="liveness">Liveness verification</option>
+          </select>
+        </>
+      )}
       {act.type === 'role' && (
         <>
           <label className="kyc-form-label" style={{ marginTop: 16 }}>Role</label>
@@ -326,18 +345,18 @@ const ActCard: React.FC<{ act: Act; index: number; canDelete: boolean; onChange:
   );
 };
 
-export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) => {
+export const PolicyBuilderFlow: React.FC<Props> = ({ onClose, onSubmit }) => {
   const [draft, setDraft] = useState<Draft>({ event: 'withdrawal', scope: ALL_SCOPE, conds: [newCond()], acts: [newAct()] });
   const patch = (p: Partial<Draft>) => setDraft(d => ({ ...d, ...p }));
-  const [template, setTemplate] = useState('scratch');
   const [name, setName] = useState('');
   const [nameTouched, setNameTouched] = useState(false);
-  const [tpl, setTpl] = useState<{ name: string; sig: string } | null>(null);
   const [reviewing, setReviewing] = useState(false);
 
   // Nested-screen state: edits happen on copies and are committed with Confirm.
   const [screen, setScreen] = useState<Screen>('main');
   const [editConds, setEditConds] = useState<Cond[]>([]);
+  const [expandedCond, setExpandedCond] = useState<string | null>(null);
+  const [expandedAct, setExpandedAct] = useState<string | null>(null);
   const [editActs, setEditActs] = useState<Act[]>([]);
 
   const { event, scope, conds, acts } = draft;
@@ -347,33 +366,24 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
   const hasCond = conds.length > 0;
   const first = conds[0];
   const suggestedName = `${isReject(acts) ? 'Reject ' + eventDef.sentence.toLowerCase() : eventDef.sentence}${first?.type === 'amount' ? ` over ${money(first)}` : first?.type === 'destination' ? ' to non-whitelisted addresses' : ''} from ${walletText}`;
-  // A template's name only holds while the policy still matches the template; once edited, fall back to the generated name.
-  const templateActive = !!tpl && sigOf(draft) === tpl.sig;
-  const policyName = nameTouched ? name : templateActive ? tpl!.name : suggestedName;
+  const policyName = nameTouched ? name : suggestedName;
   const valid = scopeValid(scope) && acts.length > 0 && acts.every(actValid) && conds.every(condValid) && !!policyName.trim();
   const blockingAdminCount = (scope.mode === 'single' || scope.mode === 'multiple') && scope.wallets.includes('ETH Custody') && acts.some(a => a.type === 'wallet-admins' && a.approvals >= 2);
   const canSubmit = valid && !blockingAdminCount;
 
-  const applyTemplate = (id: string) => {
-    setTemplate(id);
-    const next: Draft = id === 'approve-all'
-      ? { event: 'withdrawal', scope: ALL_SCOPE, conds: [], acts: [{ ...newAct('users'), users: ['Jack Brown', 'Jill Green', 'Joe White'] }] }
-      : { event: 'withdrawal', scope: ALL_SCOPE, conds: [newCond('amount')], acts: [newAct('reject')] };
-    setDraft(next);
-    setTpl({ name: id === 'approve-all' ? 'Approval on all withdrawals' : 'Reject on withdrawals over $100k', sig: sigOf(next) });
-    setNameTouched(false);
-  };
-  const startFromScratch = () => {
-    setTemplate('scratch');
-    patch({ event: 'withdrawal', scope: ALL_SCOPE, conds: [newCond()], acts: [newAct()] });
-    setTpl(null);
-    setNameTouched(false);
-  };
-
   const open = (s: EditPart, addNew?: boolean) => {
     if (s === 'scope') setEditScope(scope);
-    else if (s === 'condition') setEditConds([...conds, ...(addNew || conds.length === 0 ? [newCond('amount', true)] : [])]);
-    else setEditActs([...acts, ...(addNew || acts.length === 0 ? [newAct('enterprise-admins', true)] : [])]);
+    else if (s === 'condition') {
+      const fresh = addNew || conds.length === 0 ? [newCond('amount', true)] : [];
+      setEditConds([...conds, ...fresh]);
+      // Only the condition being edited is expanded; the rest collapse to a one-line summary.
+      setExpandedCond(fresh[0]?.id ?? (conds.length === 1 ? conds[0].id : null));
+    }
+    else {
+      const fresh = addNew || acts.length === 0 ? [newAct('enterprise-admins', true)] : [];
+      setEditActs([...acts, ...fresh]);
+      setExpandedAct(fresh[0]?.id ?? (acts.length === 1 ? acts[0].id : null));
+    }
     setScreen(s);
   };
   const strip = <T extends { fresh?: boolean }>(l: T[]) => l.map(i => ({ ...i, fresh: undefined }));
@@ -391,7 +401,7 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
     const rejects = isReject(acts);
     onSubmit({
       id: `custom-${Date.now()}`, kind: 'transactions', name: policyName,
-      summary: `${hasCond ? eventDef.sentence : eventDef.noCondition} from ${walletText}${hasCond ? ` ${condText(conds)}` : ''}${rejects ? ' are' : ''}`,
+      summary: `${hasCond ? eventDef.sentence : eventDef.noCondition} from ${walletText}${hasCond ? ` when ${condText(conds)}` : ''}${rejects ? ' are' : ''}`,
       sentenceMode: rejects ? 'accepted' : undefined,
       setBy: 'Your enterprise', policyState: 'Pending approval', actor: 'wallet user',
       trigger: eventDef.sentence.toLowerCase(), scope: walletText, condition: hasCond ? condText(conds) : 'always',
@@ -413,19 +423,12 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
 
   const main = (
     <>
-      {mode === 'page' && <div className="mb-8">{notes}</div>}
-      <div className="kyc-section-label">Start from a common policy</div>
-      <div className="flex flex-wrap gap-2 mb-6">
-        {BUILDER_TEMPLATES.map(([id, label]) => (
-          <button key={id} className={`filter-chip${template === id ? ' active' : ''}`} onClick={() => applyTemplate(id)}>{label}</button>
-        ))}
-        <button className={`filter-chip${template === 'scratch' ? ' active' : ''}`} onClick={startFromScratch}>Start from scratch</button>
-      </div>
-
-      <div className="kyc-section-label">Build your policy</div>
-      <div className="rounded-xl border border-[var(--color-border)] p-6">
+      <div className="mb-8">{notes}</div>
+      <label className="kyc-form-label">Policy details</label>
+      <div className="rounded-xl border border-solid border-[color:var(--color-border)] p-6">
         <SentenceBuilder draft={draft} onPick={patch} onOpen={open} />
       </div>
+      <p className="text-[13px] text-[var(--color-text-muted)] mt-2">Click any highlighted part to change it.</p>
 
       <div className="kyc-form-group" style={{ marginTop: 24 }}>
         <label className="kyc-form-label">Name</label>
@@ -433,25 +436,31 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
         <Help>Suggested from the policy. You can rename it.</Help>
       </div>
 
-      {mode === 'modal' && (
-        <>
-          <div className="kyc-section-label" style={{ marginTop: 28 }}>Before you publish</div>
-          {notes}
-        </>
-      )}
-
     </>
   );
 
   const conditionScreen = (
     <>
-      <p className="text-[14px] text-[var(--color-text-secondary)] mb-5">Select an event that can trigger this policy. Every condition must be met. <span className="text-[var(--color-text-muted)]">Optional.</span></p>
-      {editConds.map((c, i) => (
-        <CondCard key={c.id} cond={c} index={i}
-          onChange={n => setEditConds(l => l.map(x => x.id === c.id ? n : x))}
-          onDelete={() => setEditConds(l => l.filter(x => x.id !== c.id))} />
-      ))}
-      <button className={GHOST} onClick={() => setEditConds(l => [...l, newCond('amount', true)])}>+ Add condition</button>
+      <p className="text-[14px] text-[var(--color-text-secondary)] mb-5">Select an event that can trigger this policy. Combine conditions with <b className="font-medium">and</b> / <b className="font-medium">or</b>.</p>
+      {editConds.map((c, i) => {
+        const open = expandedCond === c.id;
+        const remove = () => { setEditConds(l => l.filter(x => x.id !== c.id)); if (open) setExpandedCond(null); };
+        return (
+          <React.Fragment key={c.id}>
+            {i > 0 && <JoinToggle value={editConds[1].join} onChange={j => setEditConds(l => l.map(x => ({ ...x, join: j })))} />}
+            {open ? (
+              <CondCard cond={c} index={i} onChange={n => setEditConds(l => l.map(x => x.id === c.id ? n : x))} onDelete={remove} />
+            ) : (
+              <div className="flex items-center gap-3 py-2">
+                <div className="flex-1 min-w-0 text-[16px] text-[var(--color-text)]">{COND_TYPES.find(t => t.id === c.type)!.label} {condCopy(c)}</div>
+                <button className="mr-rm-icon-btn always" title="Edit" style={{ border: '1px solid var(--color-border-strong)', borderRadius: '50%', width: 32, height: 32 }} onClick={() => setExpandedCond(c.id)}><EditIcon /></button>
+                <TrashBtn onClick={remove} />
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
+      <button className={GHOST} style={{ marginTop: 12 }} onClick={() => { const n = { ...newCond('amount', true), join: editConds[1]?.join ?? editConds[0]?.join ?? 'and' }; setEditConds(l => [...l, n]); setExpandedCond(n.id); }}>+ Add condition</button>
     </>
   );
 
@@ -484,37 +493,48 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
 
   const actionScreen = (
     <>
-      <p className="text-[14px] text-[var(--color-text-secondary)] mb-5">Identify the action that aligns with the policy resolution. Steps run in order.</p>
-      {editActs.map((a, i) => (
-        <ActCard key={a.id} act={a} index={i} canDelete={editActs.length > 1}
-          onChange={n => setEditActs(l => n.type === 'reject' ? [n] : l.map(x => x.id === a.id ? n : x))}
-          onDelete={() => setEditActs(l => l.filter(x => x.id !== a.id))} />
-      ))}
+      <p className="text-[14px] text-[var(--color-text-secondary)] mb-5">Identify the action that aligns with the policy resolution. Combine actions with <b className="font-medium">and</b> / <b className="font-medium">or</b>.</p>
+      {editActs.map((a, i) => {
+        const open = expandedAct === a.id;
+        const canDelete = editActs.length > 1;
+        const remove = () => { setEditActs(l => l.filter(x => x.id !== a.id)); if (open) setExpandedAct(null); };
+        const summary = actCopy(a);
+        return (
+          <React.Fragment key={a.id}>
+            {i > 0 && <JoinToggle value={editActs[1].join} onChange={j => setEditActs(l => l.map(x => ({ ...x, join: j })))} />}
+            {open ? (
+              <ActCard act={a} index={i} canDelete={canDelete}
+                onChange={n => setEditActs(l => n.type === 'reject' ? [n] : l.map(x => x.id === a.id ? n : x))}
+                onDelete={remove} />
+            ) : (
+              <div className="flex items-center gap-3 py-2">
+                <div className="flex-1 min-w-0 text-[16px] text-[var(--color-text)]">{summary.charAt(0).toUpperCase() + summary.slice(1)}</div>
+                <button className="mr-rm-icon-btn always" title="Edit" style={{ border: '1px solid var(--color-border-strong)', borderRadius: '50%', width: 32, height: 32 }} onClick={() => setExpandedAct(a.id)}><EditIcon /></button>
+                <TrashBtn onClick={remove} disabled={!canDelete} />
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
       {!isReject(editActs) && (
-        <button className={GHOST} onClick={() => setEditActs(l => [...l, newAct('wallet-admins', true)])}>+ Add action</button>
+        <button className={GHOST} style={{ marginTop: 12 }} onClick={() => { const n = { ...newAct('wallet-admins', true), join: editActs[1]?.join ?? editActs[0]?.join ?? 'and' }; setEditActs(l => [...l, n]); setExpandedAct(n.id); }}>+ Add action</button>
       )}
     </>
   );
 
   const nested = screen !== 'main';
-  const modalSize = { width: 900, height: 'calc(100vh - 96px)' };
-
-  /* Nested edit panel — identical content in both layouts (header, pinned sentence, body, footer). */
+  /* Nested edit panel (header, pinned sentence, body, footer). */
   const nestedHeader = (
     <>
       <div className="mr-rm-header">
         <div className="dep-drawer-breadcrumb">
-          {mode === 'modal' && (
-            <button className="dep-breadcrumb-back" onClick={back} title="Back">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-          )}
-          <span className="dep-breadcrumb-current" style={{ fontWeight: 400, fontSize: 24 }}>{screen === 'condition' ? 'Edit Condition' : screen === 'action' ? 'Edit Action' : 'Edit Scope'}</span>
+          <span className="dep-breadcrumb-current" style={{ fontWeight: 400, fontSize: 24 }}>{screen === 'condition' ? 'Edit Condition (Optional)' : screen === 'action' ? 'Edit Action' : 'Edit Scope'}</span>
         </div>
         <button className="mr-rm-close" onClick={back}><CloseIcon /></button>
       </div>
       <div className="px-7 pt-5">
-        <div className="rounded-xl bg-[var(--color-level2)] px-4 py-2">
+        <div className="rounded-xl bg-[var(--color-level2)] px-4 py-3">
+          <div className="mb-1.5"><Badge tone="neutral">Preview</Badge></div>
           <SentenceBuilder draft={liveDraft} compact highlight={screen === 'main' ? undefined : screen} />
         </div>
       </div>
@@ -528,14 +548,14 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
   // Cancel = abandon: closes the nested modal (page layout) or the whole flow (modal layout). Back (header) returns to the builder.
   const nestedFooter = (
     <div className="mr-rm-footer" style={{ marginTop: 0 }}>
-      <button className="mr-rm-btn-cancel" onClick={mode === 'page' ? back : onClose}>Cancel</button>
+      <button className="mr-rm-btn-cancel" onClick={back}>Cancel</button>
       <button className="mr-rm-btn-save" disabled={!screenValid} onClick={confirmScreen}>Confirm</button>
     </div>
   );
 
-  const layout = mode === 'page' ? (
+  const layout = (
     <>
-      {/* Option 1 — full page for the main builder; nested edits open as a modal on top */}
+      {/* Full page for the main builder; nested edits open as a modal on top */}
       <div className="fixed inset-0" style={{ zIndex: 800 }}>
         <div className="kyc-root mr-invite-root" style={{ background: 'var(--color-level1)' }}>
           <div className="kyc-page kyc-screen-flow active">
@@ -565,30 +585,6 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
         </div>
       )}
     </>
-  ) : (
-    /* Option 2 — one modal; nested edits replace its content with a Back button */
-    <div className="wf-overlay open" style={{ zIndex: 800 }} onClick={nested ? undefined : onClose}>
-      <div className="mr-rm-modal" style={modalSize} onClick={e => e.stopPropagation()}>
-        {nested ? (
-          <>{nestedHeader}{nestedBody}{nestedFooter}</>
-        ) : (
-          <>
-            <div className="mr-rm-header">
-              <div>
-                <span className="mr-rm-title">New Policy</span>
-                <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">Build your policy as a sentence. Click any highlighted part to change it.</p>
-              </div>
-              <button className="mr-rm-close" onClick={onClose}><CloseIcon /></button>
-            </div>
-                  <div className="flex-1 overflow-y-auto px-7 py-6 text-left">{main}</div>
-            <div className="mr-rm-footer" style={{ marginTop: 0 }}>
-              <button className="mr-rm-btn-cancel" onClick={onClose}>Cancel</button>
-              <button className="mr-rm-btn-save" disabled={!canSubmit} onClick={() => setReviewing(true)}>Confirm</button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
   );
 
   return (
