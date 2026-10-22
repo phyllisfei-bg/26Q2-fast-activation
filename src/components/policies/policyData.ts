@@ -23,6 +23,10 @@ export interface SentencePolicy {
   conditionValue?: string;
   policyAction: string;
   editableFields: EditablePolicyField[];
+  /** Full sentence override, for policies that don't read as "X requires Y". */
+  description?: string;
+  /** Shows an "Optional" badge next to the name. */
+  optional?: boolean;
   status: 'Active' | 'Archived';
   lastModified: string;
 }
@@ -35,7 +39,7 @@ export const SENTENCE_POLICIES: SentencePolicy[] = [
   { id: 'admin-update-policy', kind: 'administrative', name: 'Policy changes', summary: 'Creating or changing any policy in this enterprise', setBy: 'Your enterprise', policyState: 'Locked', lastUsed: 'Aug 20, 2026', actor: 'enterprise admin', trigger: 'create or change a policy', scope: 'any policy in this enterprise', condition: 'a change is submitted', policyAction: '1 wallet admin and 1 enterprise admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Aug 20, 2026, 2:11 PM' },
   { id: 'admin-user-roles', kind: 'administrative', name: 'User and role changes', summary: 'Inviting someone or changing a role', setBy: 'Your organization', policyState: 'Locked', lastUsed: 'Sep 1, 2026', organizationNote: 'Shared by every enterprise in your organization. Changes are approved by organization admins.', actor: 'organization admin', trigger: 'invite someone or change a role', scope: 'your organization', condition: 'a change is submitted', policyAction: 'another organization admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 1, 2026, 11:45 AM' },
   { id: 'admin-whitelist', kind: 'administrative', name: 'Whitelist changes', summary: 'Adding or removing a whitelisted address', setBy: 'Your enterprise', policyState: 'Unlocked · 47h left', lastUsed: 'Sep 10, 2026', actor: 'wallet admin', trigger: 'add or remove an address', scope: 'wallet whitelist', condition: 'a change is submitted', policyAction: 'another wallet admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 10, 2026, 3:22 PM' },
-  { id: 'admin-approve-tx', kind: 'administrative', name: 'Approval IP allowlist', summary: 'Approvals are only accepted', sentenceMode: 'accepted', sentenceSuffix: ' (12)', setBy: 'Your enterprise', policyState: 'Planned', actor: 'wallet admin', trigger: 'submit an approval', scope: 'transaction approvals', condition: 'IP address matches the enterprise allowlist', policyAction: 'from IP addresses on your allowlist', editableFields: ['condition'], status: 'Active', lastModified: 'Aug 15, 2026, 9:00 AM' },
+  { id: 'admin-approve-tx', kind: 'administrative', name: 'Approval IP allowlist', summary: 'Approvals are only accepted', sentenceMode: 'accepted', description: 'Approvals that are not from selected IP addresses (none added now) are automatically blocked', optional: true, setBy: 'Your enterprise', policyState: 'Planned', actor: 'wallet admin', trigger: 'submit an approval', scope: 'transaction approvals', condition: 'IP address matches the enterprise allowlist', policyAction: 'from IP addresses on your allowlist', editableFields: ['condition'], status: 'Active', lastModified: 'Aug 15, 2026, 9:00 AM' },
 ];
 
 /* ── Builder vocabulary ── */
@@ -72,3 +76,14 @@ export const BUILDER_TEMPLATES: [string, string][] = [
   ['approve-all', 'Approval on all withdrawals'],
   ['reject-large', 'Reject on withdrawals over $100k'],
 ];
+
+/* ── Hidden for now ───────────────────────────────────────────────────
+   NOTE (come back to this): the "User and role changes" policy is hidden from every
+   policy list for now. The data stays in SENTENCE_POLICIES; remove its id from
+   HIDDEN_POLICY_IDS to bring it back. */
+export const HIDDEN_POLICY_IDS = ['admin-user-roles'];
+export const VISIBLE_POLICIES = SENTENCE_POLICIES.filter(p => !HIDDEN_POLICY_IDS.includes(p.id));
+
+/** Seeded (BitGo / system) policies are "default": only some fields can be edited.
+ *  Policies created in the builder are "custom": every field is editable. */
+export const isCustomPolicy = (p: SentencePolicy) => p.id.startsWith('custom-');

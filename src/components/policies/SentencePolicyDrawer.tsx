@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import type { SentencePolicy, EditablePolicyField } from './policyData';
+import type { SentencePolicy } from './policyData';
 import { PolicySentence } from './PolicySentence';
-import { PolicyStatusBadge, PolicyLockIcon, fieldLabel } from './PolicyStatusBadge';
+import { PolicyStatusBadge, PolicyLockIcon } from './PolicyStatusBadge';
 import { Menu, Badge, CloseIcon } from '../membersRoles/shared';
+import type { MenuItem } from '../membersRoles/shared';
 
 type Tab = 'Overview' | 'Activity Log';
 
 interface Props {
   policy: SentencePolicy | null;
   onClose: () => void;
-  onUpdate: (policy: SentencePolicy, field: EditablePolicyField) => void;
+  menuItems: MenuItem[];
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -41,7 +42,7 @@ const Sub: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span className="block text-[13px] text-[var(--color-text-secondary)] mt-0.5">{children}</span>
 );
 
-export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, onUpdate }) => {
+export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, menuItems }) => {
   const [tab, setTab] = useState<Tab>('Overview');
   useEffect(() => { if (policy) setTab('Overview'); }, [policy?.id]);
 
@@ -63,16 +64,12 @@ export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, onUpdat
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[20px] font-normal text-[var(--color-text)]">{policy.name}</span>
                   <PolicyLockIcon policy={policy} />
+                  {policy.optional && <Badge tone="neutral">Optional</Badge>}
                   <PolicyStatusBadge policy={policy} />
                 </div>
                 <div className="mt-1"><PolicySentence policy={policy} /></div>
               </div>
-              {policy.editableFields.length > 0 && (
-                <Menu
-                  variant="actions"
-                  items={policy.editableFields.map(f => ({ label: `Update ${fieldLabel(f)}`, onClick: () => onUpdate(policy, f) }))}
-                />
-              )}
+              <Menu variant="actions" items={menuItems} />
             </div>
 
             <div className="mr-drawer-tabs">

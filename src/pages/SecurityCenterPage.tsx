@@ -10,9 +10,8 @@ import { DestinationsPage, DESTINATION_SUMMARY } from './DestinationsPage';
 import { MembersTable } from '../components/membersRoles/MembersTable';
 import { MemberDrawer } from '../components/membersRoles/MemberDrawer';
 import { FilterChips } from '../components/FilterChips';
-import { SENTENCE_POLICIES } from '../components/policies/policyData';
+import { VISIBLE_POLICIES } from '../components/policies/policyData';
 import type { SentencePolicy } from '../components/policies/policyData';
-import type { CreateMode } from '../components/PolicyConceptSwitcher';
 import type { MembersRolesApi } from '../hooks/useMembersRoles';
 import type { Member } from '../types';
 
@@ -154,12 +153,12 @@ const Dialog: React.FC<{ title: string; onClose: () => void; onConfirm: () => vo
 
 type ModalState = { kind: 'tfa' } | { kind: 'force'; user: [string, string, number] } | { kind: 'ip' } | null;
 
-interface Props { isLight: boolean; onThemeToggle: () => void; createMode: CreateMode; membersApi: MembersRolesApi }
+interface Props { isLight: boolean; onThemeToggle: () => void; membersApi: MembersRolesApi }
 
-export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, createMode, membersApi }) => {
+export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, membersApi }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [modal, setModal] = useState<ModalState>(null);
-  const [policies, setPolicies] = useState<SentencePolicy[]>(SENTENCE_POLICIES);
+  const [policies, setPolicies] = useState<SentencePolicy[]>(VISIBLE_POLICIES);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [activity, setActivity] = useState<Event[]>(INITIAL_ACTIVITY);
   const [ips, setIps] = useState(IPS);
@@ -280,7 +279,7 @@ export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, cr
   const q = search.trim().toLowerCase();
   const policiesTab = (
     <PoliciesPage
-      embedded isLight={isLight} onThemeToggle={onThemeToggle} createMode={createMode}
+      embedded isLight={isLight} onThemeToggle={onThemeToggle}
       policies={policies} onPoliciesChange={setPolicies} onEvent={log}
     />
   );

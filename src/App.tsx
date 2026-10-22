@@ -11,7 +11,7 @@ import { DestinationsPage }   from './pages/DestinationsPage';
 import { PoliciesPage }       from './pages/PoliciesPage';
 import { SecurityCenterPage } from './pages/SecurityCenterPage';
 import { PolicyConceptSwitcher } from './components/PolicyConceptSwitcher';
-import type { PolicyConcept, CreateMode } from './components/PolicyConceptSwitcher';
+import type { PolicyConcept } from './components/PolicyConceptSwitcher';
 import { MembersRolesPage }   from './pages/MembersRolesPage';
 import { InviteMemberFlow }   from './flows/InviteMemberFlow';
 import type { InvitePayload } from './flows/InviteMemberFlow';
@@ -107,7 +107,6 @@ export default function App() {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   // Prototype switches for the Security → Policies surface
   const [policyConcept, setPolicyConcept] = React.useState<PolicyConcept>('near');
-  const [createMode, setCreateMode] = React.useState<CreateMode>('modal');
   // Page the user was on when they entered Roles & Permissions — "Return to Enterprise" goes back here
   const [rolesReturn, setRolesReturn] = React.useState<TopPage>('dashboard');
   const [adminTab, setAdminTab] = React.useState<'members' | 'roles'>('members');
@@ -296,10 +295,10 @@ export default function App() {
       />
       <div className="workspace">
         {policyConcept === 'near'
-          ? <PoliciesPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} />
-          : <SecurityCenterPage isLight={isLight} onThemeToggle={toggle} createMode={createMode} membersApi={membersRoles} />}
+          ? <PoliciesPage isLight={isLight} onThemeToggle={toggle} />
+          : <SecurityCenterPage isLight={isLight} onThemeToggle={toggle} membersApi={membersRoles} />}
       </div>
-      <PolicyConceptSwitcher concept={policyConcept} onConceptChange={setPolicyConcept} createMode={createMode} onCreateModeChange={setCreateMode} />
+      <PolicyConceptSwitcher concept={policyConcept} onConceptChange={setPolicyConcept} />
       <SearchPopover open={searchOpen} onClose={() => setSearchOpen(false)} onOpenChat={openChatWithPrompt} />
     </div>
   );

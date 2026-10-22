@@ -75,6 +75,10 @@ export interface MenuItem {
   label: string;
   danger?: boolean;
   icon?: React.ReactNode;
+  /** Renders greyed out and does nothing when clicked. */
+  disabled?: boolean;
+  /** Draws a separator line above this item. */
+  dividerBefore?: boolean;
   onClick: () => void;
 }
 
@@ -125,14 +129,18 @@ export const Menu: React.FC<{ items: MenuItem[]; variant?: 'kebab' | 'actions' }
       {open && ReactDOM.createPortal(
         <div className="mr-menu" style={{ position: 'fixed', top: pos.top, left: pos.left }} onClick={e => e.stopPropagation()}>
           {items.map(item => (
-            <button
-              key={item.label}
-              className={`mr-menu-item${item.danger ? ' danger' : ''}`}
-              onClick={() => { setOpen(false); item.onClick(); }}
-            >
-              {item.icon && <span className="mr-menu-item-icon">{item.icon}</span>}
-              {item.label}
-            </button>
+            <React.Fragment key={item.label}>
+              {item.dividerBefore && <div style={{ height: 1, margin: '6px 4px', background: 'var(--color-border)' }} />}
+              <button
+                className={`mr-menu-item${item.danger ? ' danger' : ''}`}
+                disabled={item.disabled}
+                style={item.disabled ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+                onClick={() => { if (item.disabled) return; setOpen(false); item.onClick(); }}
+              >
+                {item.icon && <span className="mr-menu-item-icon">{item.icon}</span>}
+                {item.label}
+              </button>
+            </React.Fragment>
           ))}
         </div>,
         document.body,
@@ -154,6 +162,18 @@ export const TrashIcon = () => (
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
     <path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+  </svg>
+);
+
+export const EditIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+  </svg>
+);
+
+export const TaskIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16l1.5 1.5L14 14" />
   </svg>
 );
 

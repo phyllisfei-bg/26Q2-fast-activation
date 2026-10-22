@@ -6,8 +6,6 @@ import { BUILDER_EVENTS, BUILDER_WALLETS, BUILDER_TEMPLATES } from '../component
 import type { SentencePolicy, BuilderEvent, BuilderWallet, CondType, ActType, Cond, Act } from '../components/policies/policyData';
 
 interface Props {
-  /** 'page' = full page + nested modal; 'modal' = modal + nested screens. */
-  mode: 'page' | 'modal';
   isLight: boolean;
   onThemeToggle: () => void;
   onClose: () => void;
@@ -326,7 +324,7 @@ const ActCard: React.FC<{ act: Act; index: number; canDelete: boolean; onChange:
   );
 };
 
-export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) => {
+export const PolicyBuilderFlow: React.FC<Props> = ({ onClose, onSubmit }) => {
   const [draft, setDraft] = useState<Draft>({ event: 'withdrawal', scope: ALL_SCOPE, conds: [newCond()], acts: [newAct()] });
   const patch = (p: Partial<Draft>) => setDraft(d => ({ ...d, ...p }));
   const [template, setTemplate] = useState('scratch');
@@ -413,7 +411,7 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
 
   const main = (
     <>
-      {mode === 'page' && <div className="mb-8">{notes}</div>}
+      <div className="mb-8">{notes}</div>
       <div className="kyc-section-label">Start from a common policy</div>
       <div className="flex flex-wrap gap-2 mb-6">
         {BUILDER_TEMPLATES.map(([id, label]) => (
@@ -432,13 +430,6 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
         <input className="kyc-form-input" maxLength={80} value={policyName} onChange={e => { setName(e.target.value); setNameTouched(true); }} />
         <Help>Suggested from the policy. You can rename it.</Help>
       </div>
-
-      {mode === 'modal' && (
-        <>
-          <div className="kyc-section-label" style={{ marginTop: 28 }}>Before you publish</div>
-          {notes}
-        </>
-      )}
 
     </>
   );
@@ -497,18 +488,11 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
   );
 
   const nested = screen !== 'main';
-  const modalSize = { width: 900, height: 'calc(100vh - 96px)' };
-
-  /* Nested edit panel — identical content in both layouts (header, pinned sentence, body, footer). */
+  /* Nested edit panel (header, pinned sentence, body, footer). */
   const nestedHeader = (
     <>
       <div className="mr-rm-header">
         <div className="dep-drawer-breadcrumb">
-          {mode === 'modal' && (
-            <button className="dep-breadcrumb-back" onClick={back} title="Back">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-          )}
           <span className="dep-breadcrumb-current" style={{ fontWeight: 400, fontSize: 24 }}>{screen === 'condition' ? 'Edit Condition' : screen === 'action' ? 'Edit Action' : 'Edit Scope'}</span>
         </div>
         <button className="mr-rm-close" onClick={back}><CloseIcon /></button>
@@ -528,14 +512,14 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
   // Cancel = abandon: closes the nested modal (page layout) or the whole flow (modal layout). Back (header) returns to the builder.
   const nestedFooter = (
     <div className="mr-rm-footer" style={{ marginTop: 0 }}>
-      <button className="mr-rm-btn-cancel" onClick={mode === 'page' ? back : onClose}>Cancel</button>
+      <button className="mr-rm-btn-cancel" onClick={back}>Cancel</button>
       <button className="mr-rm-btn-save" disabled={!screenValid} onClick={confirmScreen}>Confirm</button>
     </div>
   );
 
-  const layout = mode === 'page' ? (
+  const layout = (
     <>
-      {/* Option 1 — full page for the main builder; nested edits open as a modal on top */}
+      {/* Full page for the main builder; nested edits open as a modal on top */}
       <div className="fixed inset-0" style={{ zIndex: 800 }}>
         <div className="kyc-root mr-invite-root" style={{ background: 'var(--color-level1)' }}>
           <div className="kyc-page kyc-screen-flow active">
@@ -565,30 +549,6 @@ export const PolicyBuilderFlow: React.FC<Props> = ({ mode, onClose, onSubmit }) 
         </div>
       )}
     </>
-  ) : (
-    /* Option 2 — one modal; nested edits replace its content with a Back button */
-    <div className="wf-overlay open" style={{ zIndex: 800 }} onClick={nested ? undefined : onClose}>
-      <div className="mr-rm-modal" style={modalSize} onClick={e => e.stopPropagation()}>
-        {nested ? (
-          <>{nestedHeader}{nestedBody}{nestedFooter}</>
-        ) : (
-          <>
-            <div className="mr-rm-header">
-              <div>
-                <span className="mr-rm-title">New Policy</span>
-                <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">Build your policy as a sentence. Click any highlighted part to change it.</p>
-              </div>
-              <button className="mr-rm-close" onClick={onClose}><CloseIcon /></button>
-            </div>
-                  <div className="flex-1 overflow-y-auto px-7 py-6 text-left">{main}</div>
-            <div className="mr-rm-footer" style={{ marginTop: 0 }}>
-              <button className="mr-rm-btn-cancel" onClick={onClose}>Cancel</button>
-              <button className="mr-rm-btn-save" disabled={!canSubmit} onClick={() => setReviewing(true)}>Confirm</button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
   );
 
   return (

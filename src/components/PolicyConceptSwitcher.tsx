@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export type PolicyConcept = 'near' | 'vision';
-export type CreateMode = 'page' | 'modal';
 
 interface Props {
   concept: PolicyConcept;
   onConceptChange: (c: PolicyConcept) => void;
-  createMode: CreateMode;
-  onCreateModeChange: (m: CreateMode) => void;
 }
 
 const GripIcon = () => (
@@ -25,7 +22,7 @@ const CONCEPTS: { id: PolicyConcept; name: string; desc: string }[] = [
 
 /** Floating, draggable prototype control — same family as the Role Switcher.
  *  Switches the Security → Policies surface between the near-term page and the Security Center vision. */
-export const PolicyConceptSwitcher: React.FC<Props> = ({ concept, onConceptChange, createMode, onCreateModeChange }) => {
+export const PolicyConceptSwitcher: React.FC<Props> = ({ concept, onConceptChange }) => {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -87,13 +84,6 @@ export const PolicyConceptSwitcher: React.FC<Props> = ({ concept, onConceptChang
                 </span>
               </button>
             ))}
-            <div className="role-switcher-divider" />
-            <div className="role-switcher-menu-header">New policy flow</div>
-            <div className="rs-segment-control">
-              {([['page', 'Page + modal'], ['modal', 'Modal + nested']] as const).map(([id, label]) => (
-                <button key={id} className={`rs-segment-btn${createMode === id ? ' active' : ''}`} onClick={() => { if (!dragging.current) onCreateModeChange(id); }}>{label}</button>
-              ))}
-            </div>
           </div>
         </div>
       )}

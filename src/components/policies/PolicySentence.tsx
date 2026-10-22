@@ -34,6 +34,9 @@ export const PolicySentence: React.FC<Props> = ({ policy, changes, conditionValu
       >{requirement}</button>
     )
     : requirement;
+  if (policy.description) {
+    return <p className="text-[14px] leading-relaxed text-[var(--color-text-secondary)]">{policy.description}</p>;
+  }
   return (
     <p className="text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
       {before}{policy.conditionValue && threshold}{after}
