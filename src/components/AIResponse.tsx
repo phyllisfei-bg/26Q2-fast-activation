@@ -66,14 +66,22 @@ const SkLine: React.FC<{ w: string; h?: number; mt?: number }> = ({ w, h = 12, m
 //   'ideal'   → star + "Thinking…" + steps stream in below (skeleton → text)
 //   'current' → star + a single shimmering line that swaps to each step's name
 // Once done, both variants collapse to the same expandable "Thought process".
-export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean; variant?: 'ideal' | 'current' }> = ({ steps, thinking = false, variant = 'ideal' }) => {
-  const [open, setOpen] = useState(false);               // always collapsed by default; user expands via chevron
+export const ThoughtProcess: React.FC<{
+  steps: ThoughtStep[];
+  thinking?: boolean;
+  variant?: 'ideal' | 'current';
+  external?: boolean;    // steps are revealed by the parent (approval gates): show them all, no internal streaming
+  skeleton?: boolean;    // external mode: show a loading step after the revealed ones
+}> = ({ steps, thinking = false, variant = 'ideal', external = false, skeleton: extSkeleton = false }) => {
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);   // null → follow `thinking`
+  const open = userOpen ?? thinking;                 // expanded while thinking; collapses once the text response starts
   const [shown, setShown] = useState(thinking ? 0 : steps.length);
   const [skeleton, setSkeleton] = useState(thinking);
   const [activeStep, setActiveStep] = useState(0);       // 'current' variant: which step name is shown
 
   // 'ideal': stream each step as skeleton → text
   useEffect(() => {
+    if (external) return;
     if (!thinking) { setShown(steps.length); setSkeleton(false); return; }
     if (variant !== 'ideal') return;
     setShown(0); setSkeleton(true);
@@ -92,11 +100,11 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
     };
     run();
     return () => { cancelled = true; };
-  }, [thinking, variant, steps]);
+  }, [thinking, variant, steps, external]);
 
   // 'current': advance the single live label through each step name
   useEffect(() => {
-    if (!thinking || variant !== 'current') return;
+    if (external || !thinking || variant !== 'current') return;
     setActiveStep(0);
     let cancelled = false;
     let i = 0;
@@ -114,7 +122,7 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
 
   // 'current' variant while thinking: reuse the ideal toggle row (identical alignment);
   // the label is one shimmering line that swaps to each step name.
-  if (thinking && variant === 'current') {
+  if (!external && thinking && variant === 'current') {
     return (
       <div className="ai-thought">
         <div className="ai-thought-toggle ai-thought-live">
@@ -129,7 +137,7 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
 
   return (
     <div className="ai-thought">
-      <button className="ai-thought-toggle" onClick={() => setOpen(o => !o)}>
+      <button className="ai-thought-toggle" onClick={() => setUserOpen(!open)}>
         {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
         <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>
           {thinking ? 'Thinking...' : 'Thought process'}
@@ -146,13 +154,13 @@ export const ThoughtProcess: React.FC<{ steps: ThoughtStep[]; thinking?: boolean
       </button>
       {open && (
         <div className="ai-thought-steps">
-          {steps.slice(0, shown).map((s, i) => (
+          {steps.slice(0, external ? steps.length : shown).map((s, i) => (
             <div key={i} className="ai-thought-step ai-stream-in">
               <div className="ai-thought-step-header">{s.header}</div>
               <div className="ai-thought-step-desc">{s.desc}</div>
             </div>
           ))}
-          {thinking && skeleton && shown < steps.length && (
+          {(external ? extSkeleton : thinking && skeleton && shown < steps.length) && (
             <div className="ai-thought-step">
               <SkLine w="42%" />
               <SkLine w="72%" mt={7} />
@@ -549,16 +557,11 @@ export interface PinnedAction {
   buttons: { label: string; onClick: () => void }[];
 }
 
-const chevron = (open: boolean) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
-    style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}>
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-
 // An approval gate: pauses the response with a pinned Approve/Deny (or choose-mode)
 // card above the composer. While waiting it shows an inline "Thinking…"; on a positive
 // choice it streams `approvedThought` inline, raises `notify`, then continues the response.
+interface GateThought { steps: ThoughtStep[]; thinking: boolean; skeleton: boolean }
+
 const ApprovalGate: React.FC<{
   block: Extract<Block, { kind: 'approvalGate' }>;
   active: boolean;                 // this is the gate the stream is currently paused on
@@ -568,11 +571,12 @@ const ApprovalGate: React.FC<{
   onConsolidate?: (mode: 'manual' | 'auto') => void;
   onNotify?: (n: NoticePayload) => void;
   consolidateDoneVer?: number;     // increments when the page consolidation finishes
-}> = ({ block, active, onDone, onPinAction, onNavigateWhitelist, onConsolidate, onNotify, consolidateDoneVer }) => {
+  onThought: (st: GateThought) => void;   // reports thought steps/state to the response's thought process
+}> = ({ block, active, onDone, onPinAction, onNavigateWhitelist, onConsolidate, onNotify, consolidateDoneVer, onThought }) => {
+  const reportRef = useRef(onThought); reportRef.current = onThought;
   const [phase, setPhase] = useState<'waiting' | 'approved' | 'denied'>('waiting');
   const [shownSteps, setShownSteps] = useState(0);
   const [awaiting, setAwaiting] = useState(false);   // waiting for the page consolidation to finish
-  const [open, setOpen] = useState(true);
   const doneRef = useRef(onDone); doneRef.current = onDone;
   const notifyRef = useRef(onNotify); notifyRef.current = onNotify;
   const pinRef = useRef(onPinAction); pinRef.current = onPinAction;
@@ -589,9 +593,20 @@ const ApprovalGate: React.FC<{
     doneRef.current();
   };
 
+  // Auto gates skip the card: the user's prompt was the approval, so run immediately.
+  useEffect(() => {
+    if (!active || !block.auto || phase !== 'waiting') return;
+    const btn = block.buttons[0];
+    chosenRef.current = btn.effect;
+    if (btn.effect === 'consolidateManual') consRef.current?.('manual');
+    else if (btn.effect === 'consolidateAuto') consRef.current?.('auto');
+    setPhase('approved');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   // Only the active gate manages the pinned decision card.
   useEffect(() => {
-    if (!active) return;
+    if (!active || block.auto) return;
     if (phase !== 'waiting') { pinRef.current?.(null); return; }
     pinRef.current?.({
       key: `gate-${block.title}`,
@@ -644,35 +659,18 @@ const ApprovalGate: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [awaiting, consolidateDoneVer]);
 
-  if (phase === 'denied') {
-    return <p className="ai-resp-paragraph ai-stream-in"><em>No problem — let me know if you change your mind.</em></p>;
-  }
   const streaming = phase === 'approved' && shownSteps < block.approvedThought.length;
-  const thinking = phase === 'waiting' || streaming || awaiting;
-  return (
-    <div className="ai-thought ai-thought-gate">
-      <button className="ai-thought-toggle" onClick={() => { if (phase !== 'waiting') setOpen(o => !o); }}>
-        {thinking && <AiStar size={16} className="ai-chat-thinking-star" />}
-        <span className={`ai-thought-label${thinking ? ' thinking' : ''}`}>{thinking ? 'Thinking...' : 'Thought process'}</span>
-        {phase === 'waiting' ? (
-          <svg className="ai-thought-chevron-pending" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 6 15 12 9 18" />
-          </svg>
-        ) : chevron(open)}
-      </button>
-      {open && phase === 'approved' && (
-        <div className="ai-thought-steps">
-          {block.approvedThought.slice(0, shownSteps).map((s, i) => (
-            <div key={i} className="ai-thought-step ai-stream-in">
-              <div className="ai-thought-step-header">{s.header}</div>
-              <div className="ai-thought-step-desc">{s.desc}</div>
-            </div>
-          ))}
-          {streaming && <div className="ai-thought-step"><SkLine w="42%" /><SkLine w="72%" mt={7} /></div>}
-        </div>
-      )}
-    </div>
-  );
+  const thinking = !(block.auto && phase === 'waiting') && (phase === 'waiting' || streaming || awaiting);
+  const revealed = phase === 'approved' ? block.approvedThought.slice(0, shownSteps) : [];
+  // Feed the response's single thought process instead of rendering a second one.
+  useEffect(() => {
+    reportRef.current?.({ steps: revealed, thinking: phase !== 'denied' && thinking, skeleton: streaming });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, shownSteps, awaiting]);
+  if (phase === 'denied') {
+    return <p className="ai-resp-paragraph ai-stream-in"><em>No problem — I won't open the page. Let me know if you'd like me to continue the analysis here.</em></p>;
+  }
+  return null;
 };
 
 // Wrapper: brief skeleton reveal (once), then the stateful control. Rendered as ONE
@@ -725,17 +723,36 @@ export const AIResponse: React.FC<{
   const blocks = interactive ? data.blocks : data.blocks.filter(b => !isInteractive(b.kind));
   const [done, setDone] = useState(0);            // count of fully-revealed blocks
   const advance = () => setDone(d => d + 1);
+  const concluded = done >= blocks.length;
+  const [gates, setGates] = useState<Record<number, GateThought>>({});
+  const hasGates = blocks.some(b => b.kind === 'approvalGate');
+  const gateList = Object.values(gates);
+  const thoughtSteps = [...data.thought, ...gateList.flatMap(g => g.steps)];
+  const pinRef = useRef(onPinAction); pinRef.current = onPinAction;
+  const replyRef = useRef(onQuickReply); replyRef.current = onQuickReply;
+  // Once the response has concluded, raise its next-action card; a click auto-sends the prompt.
+  useEffect(() => {
+    const next = data.nextAction;
+    if (!concluded || !interactive || !next) return;
+    pinRef.current?.({
+      key: `next-${next.title}`,
+      title: next.title,
+      subtext: next.subtext,
+      buttons: next.buttons.map(b => ({ label: b.label, onClick: () => replyRef.current?.(b.prompt) })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [concluded]);
   return (
     <div className="ai-response">
-      {showThought && <ThoughtProcess steps={data.thought} />}
+      {showThought && <ThoughtProcess steps={thoughtSteps} external={hasGates} thinking={hasGates && gateList.some(g => g.thinking)} skeleton={gateList.some(g => g.skeleton)} />}
       {blocks.map((b, i) => {
         if (i > done) return null;                // not reached yet
-        if (b.kind === 'approvalGate') return <ApprovalGate key={i} block={b} active={i === done} onDone={advance} onPinAction={onPinAction} onNavigateWhitelist={onNavigateWhitelist} onConsolidate={onConsolidate} onNotify={onNotify} consolidateDoneVer={consolidateDoneVer} />;
+        if (b.kind === 'approvalGate') return <ApprovalGate key={i} block={b} active={i === done} onDone={advance} onPinAction={onPinAction} onNavigateWhitelist={onNavigateWhitelist} onConsolidate={onConsolidate} onNotify={onNotify} consolidateDoneVer={consolidateDoneVer} onThought={st => setGates(g => ({ ...g, [i]: st }))} />;
         if (isInteractive(b.kind)) return <InteractiveBlock key={i} block={b} onReveal={advance} onQuickReply={onQuickReply} onNotify={onNotify} onEditPolicy={onEditPolicy} onPreviewPolicy={onPreviewPolicy} />;
         if (i < done) return <StaticBlock key={i} block={b} />;     // already revealed
         return <AnimatedBlock key={i} block={b} onDone={advance} />;// currently revealing
       })}
-      {done >= blocks.length && <ResponseActions />}
+      {concluded && <ResponseActions />}
     </div>
   );
 };
