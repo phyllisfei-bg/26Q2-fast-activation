@@ -15,9 +15,9 @@ const GripIcon = () => (
   </svg>
 );
 
-const CONCEPTS: { id: PolicyConcept; name: string; desc: string }[] = [
-  { id: 'near', name: '1 · Near future', desc: 'Sentence-based Policies page' },
-  { id: 'vision', name: '2 · Vision', desc: 'Security Center' },
+const CONCEPTS: { id: PolicyConcept; name: string; short: string; desc: string }[] = [
+  { id: 'near', name: '1 · Near future', short: 'Near future', desc: 'Sentence-based Policies page' },
+  { id: 'vision', name: '2 · Vision', short: 'Vision', desc: 'Security Center' },
 ];
 
 /** Floating, draggable prototype control — same family as the Role Switcher.
@@ -74,7 +74,7 @@ export const PolicyConceptSwitcher: React.FC<Props> = ({ concept, onConceptChang
       {open && (
         <div className="role-switcher-menu" style={{ top: 'auto', bottom: 'calc(100% + 6px)', left: 'auto', right: 0 }}>
           <div className="role-switcher-col" style={{ minWidth: 260 }}>
-            <div className="role-switcher-menu-header">Policies concept</div>
+            <div className="role-switcher-menu-header">Policy concept</div>
             {CONCEPTS.map(c => (
               <button key={c.id} className={`role-switcher-item${concept === c.id ? ' active' : ''}`} onClick={() => { if (!dragging.current) onConceptChange(c.id); }}>
                 <span className={`role-switcher-radio${concept === c.id ? ' checked' : ''}`} />
@@ -90,7 +90,7 @@ export const PolicyConceptSwitcher: React.FC<Props> = ({ concept, onConceptChang
       <div className="role-switcher-pill">
         <div className="role-switcher-grip"><GripIcon /></div>
         <button className="role-switcher-trigger" onClick={() => { if (!dragging.current) setOpen(o => !o); }} title="Switch Policies concept">
-          <span className="role-switcher-label"><span className="role-switcher-prefix">Policies</span>{cur.name}</span>
+          <span className="role-switcher-label"><span className="role-switcher-prefix">Policy concept</span>•<span>{cur.short}</span></span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: open ? 'none' : 'rotate(180deg)', transition: 'transform .15s' }}>
             <polyline points="6 9 12 15 18 9" />
           </svg>

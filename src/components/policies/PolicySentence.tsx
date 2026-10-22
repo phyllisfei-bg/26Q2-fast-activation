@@ -1,4 +1,5 @@
 import React from 'react';
+import { scopeFirst } from './policyData';
 import type { SentencePolicy, EditablePolicyField } from './policyData';
 
 interface Props {
@@ -6,6 +7,8 @@ interface Props {
   changes?: Partial<Record<EditablePolicyField, string>>;
   conditionValueChange?: string;
   onRequirementClick?: () => void;
+  /** Put the wallet scope before the condition (used in edit views). */
+  scopeFirst?: boolean;
 }
 
 const OLD = 'line-through text-[var(--color-text-muted)]';
@@ -13,17 +16,17 @@ const NEW = 'text-[var(--brand-500)]';
 
 /** A policy rendered as one plain-language sentence. The requirement is the
  *  emphasised part; pass `changes` to show a before → after diff. */
-export const PolicySentence: React.FC<Props> = ({ policy, changes, conditionValueChange, onRequirementClick }) => {
+export const PolicySentence: React.FC<Props> = ({ policy, changes, conditionValueChange, onRequirementClick, scopeFirst: scopeFirstOrder }) => {
   const actionChange = changes?.action;
   const requirement = actionChange && actionChange !== policy.policyAction
     ? <><span className={OLD}>{policy.policyAction}</span> <span className={NEW}>{actionChange}</span></>
-    : <span className="text-[var(--color-text)]">{policy.policyAction}</span>;
+    : <span>{policy.policyAction}</span>;
   const threshold = policy.conditionValue && (
     conditionValueChange && conditionValueChange !== policy.conditionValue
       ? <><span className={OLD}>{policy.conditionValue}</span> <span className={NEW}>{conditionValueChange}</span></>
-      : <span className="text-[var(--color-text)]">{policy.conditionValue}</span>
+      : <span>{policy.conditionValue}</span>
   );
-  const [before, after] = policy.summary.split('{conditionValue}');
+  const [before, after] = (scopeFirstOrder ? scopeFirst(policy.summary) : policy.summary).split('{conditionValue}');
   const requirementControl = onRequirementClick
     ? (
       <button
@@ -41,7 +44,7 @@ export const PolicySentence: React.FC<Props> = ({ policy, changes, conditionValu
     <p className="text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
       {before}{policy.conditionValue && threshold}{after}
       {policy.sentenceMode === 'accepted' ? <> {requirementControl}</> : <> requires {requirementControl}</>}
-      {policy.sentenceSuffix}.
+      {policy.sentenceSuffix}
     </p>
   );
 };

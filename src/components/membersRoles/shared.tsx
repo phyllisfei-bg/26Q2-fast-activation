@@ -77,6 +77,8 @@ export interface MenuItem {
   icon?: React.ReactNode;
   /** Renders greyed out and does nothing when clicked. */
   disabled?: boolean;
+  /** Hover tooltip, e.g. why an item is disabled. */
+  tooltip?: string;
   /** Draws a separator line above this item. */
   dividerBefore?: boolean;
   onClick: () => void;
@@ -131,15 +133,17 @@ export const Menu: React.FC<{ items: MenuItem[]; variant?: 'kebab' | 'actions' }
           {items.map(item => (
             <React.Fragment key={item.label}>
               {item.dividerBefore && <div style={{ height: 1, margin: '6px 4px', background: 'var(--color-border)' }} />}
-              <button
-                className={`mr-menu-item${item.danger ? ' danger' : ''}`}
-                disabled={item.disabled}
-                style={item.disabled ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-                onClick={() => { if (item.disabled) return; setOpen(false); item.onClick(); }}
-              >
-                {item.icon && <span className="mr-menu-item-icon">{item.icon}</span>}
-                {item.label}
-              </button>
+              <div title={item.tooltip}>
+                <button
+                  className={`mr-menu-item${item.danger ? ' danger' : ''}`}
+                  disabled={item.disabled}
+                  style={item.disabled ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+                  onClick={() => { if (item.disabled) return; setOpen(false); item.onClick(); }}
+                >
+                  {item.icon && <span className="mr-menu-item-icon">{item.icon}</span>}
+                  {item.label}
+                </button>
+              </div>
             </React.Fragment>
           ))}
         </div>,

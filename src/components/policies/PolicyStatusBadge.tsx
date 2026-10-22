@@ -17,7 +17,7 @@ const svgProps = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', st
 
 /** Inline unlock glyph next to the policy name — shown only while a policy is unlocked. */
 export const PolicyLockIcon: React.FC<{ policy: SentencePolicy }> = ({ policy }) => {
-  if (!policy.policyState.startsWith('Unlocked')) return null;
+  if (!policy.unlocked && !policy.policyState.startsWith('Unlocked')) return null;
   return (
     <span
       className="inline-flex shrink-0 text-[var(--color-text-muted)]"

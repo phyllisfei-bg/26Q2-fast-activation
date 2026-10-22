@@ -23,8 +23,14 @@ export interface SentencePolicy {
   conditionValue?: string;
   policyAction: string;
   editableFields: EditablePolicyField[];
+  /** Show the unlocked icon even when another state (e.g. pending approval) is the main status. */
+  unlocked?: boolean;
   /** Full sentence override, for policies that don't read as "X requires Y". */
   description?: string;
+  /** Plain-text words before the editable condition, e.g. "user IP is not from" + [the allowlist]. */
+  conditionLead?: string;
+  /** IP allowlist entries, for policies whose condition is "user IP is not from the allowlist". */
+  allowlist?: { label: string; cidr: string }[];
   /** Shows an "Optional" badge next to the name. */
   optional?: boolean;
   status: 'Active' | 'Archived';
@@ -32,26 +38,27 @@ export interface SentencePolicy {
 }
 
 export const SENTENCE_POLICIES: SentencePolicy[] = [
-  { id: 'tx-video-id', kind: 'transactions', name: 'Video ID', summary: 'Transfers over {conditionValue} from custody wallets', setBy: 'BitGo', policyState: 'Locked', lastUsed: 'Sep 18, 2026', actor: 'wallet user', trigger: 'send funds', scope: 'custody wallets', condition: 'transfer amount exceeds', conditionValue: '$250,000', policyAction: 'video verification with BitGo Support', editableFields: ['condition', 'action'], status: 'Active', lastModified: 'Sep 18, 2026, 3:42 PM' },
-  { id: 'tx-unverified', kind: 'transactions', name: 'Unverified address', summary: 'Transfers to unverified addresses', setBy: 'Your enterprise', policyState: 'Pending approval', lastUsed: 'Sep 14, 2026', actor: 'wallet user', trigger: 'send funds', scope: 'unverified addresses', condition: 'destination is unverified', policyAction: '1 enterprise admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 14, 2026, 9:16 AM' },
-  { id: 'tx-fiat', kind: 'transactions', name: 'Fiat liveness check', summary: 'Fiat withdrawals over {conditionValue} from custody accounts', setBy: 'BitGo', policyState: 'Locked', lastUsed: 'Sep 9, 2026', actor: 'wallet user', trigger: 'withdraw fiat', scope: 'custody accounts', condition: 'withdrawal amount exceeds', conditionValue: '$100,000', policyAction: 'liveness verification', editableFields: ['condition'], status: 'Active', lastModified: 'Sep 9, 2026, 1:05 PM' },
-  { id: 'admin-unlock', kind: 'administrative', name: 'Policy unlocks', summary: 'Unlocking any policy in this enterprise', setBy: 'Your enterprise', policyState: 'Locked', lastUsed: 'Aug 24, 2026', actor: 'enterprise admin', trigger: 'unlock policies for editing', scope: 'any policy in this enterprise', condition: 'an unlock is requested', policyAction: 'a video call with BitGo Support', editableFields: ['action'], status: 'Active', lastModified: 'Aug 24, 2026, 10:33 AM' },
-  { id: 'admin-update-policy', kind: 'administrative', name: 'Policy changes', summary: 'Creating or changing any policy in this enterprise', setBy: 'Your enterprise', policyState: 'Locked', lastUsed: 'Aug 20, 2026', actor: 'enterprise admin', trigger: 'create or change a policy', scope: 'any policy in this enterprise', condition: 'a change is submitted', policyAction: '1 wallet admin and 1 enterprise admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Aug 20, 2026, 2:11 PM' },
+  { id: 'tx-video-id', kind: 'transactions', name: 'Video ID', summary: 'Withdrawals over {conditionValue} from custody wallets', setBy: 'BitGo', policyState: 'Locked', lastUsed: 'Sep 18, 2026', actor: 'wallet user', trigger: 'send funds', scope: 'custody wallets', condition: 'transfer amount exceeds', conditionValue: '$250,000', policyAction: 'video verification with BitGo Support', editableFields: ['condition', 'action'], status: 'Active', lastModified: 'Sep 18, 2026, 3:42 PM' },
+  { id: 'tx-unverified', kind: 'transactions', name: 'Unverified address', summary: 'Withdrawals to unverified addresses', setBy: 'Your enterprise', policyState: 'Pending approval', unlocked: true, lastUsed: 'Sep 14, 2026', actor: 'wallet user', trigger: 'send funds', scope: 'unverified addresses', condition: 'destination is unverified', policyAction: '1 enterprise admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 14, 2026, 9:16 AM' },
+  { id: 'tx-fiat', kind: 'transactions', name: 'Fiat liveness check', summary: 'Fiat withdrawals over {conditionValue} from custody wallets', setBy: 'BitGo', policyState: 'Locked', lastUsed: 'Sep 9, 2026', actor: 'wallet user', trigger: 'withdraw fiat', scope: 'custody wallets', condition: 'withdrawal amount exceeds', conditionValue: '$100,000', policyAction: 'liveness verification', editableFields: ['condition'], status: 'Active', lastModified: 'Sep 9, 2026, 1:05 PM' },
+  { id: 'tx-custodial-whitelist', kind: 'transactions', name: 'Custodial wallet whitelist', summary: 'Withdrawals from custody wallets and the Main Account', setBy: 'BitGo', policyState: 'Locked', lastUsed: 'Sep 5, 2026', actor: 'wallet user', trigger: 'send funds', scope: 'custody wallets and the Main Account', condition: 'destination is not whitelisted', policyAction: 'destinations to be whitelisted', editableFields: [], status: 'Active', lastModified: 'Sep 5, 2026, 10:12 AM' },
+  { id: 'admin-unlock', kind: 'administrative', name: 'Policy unlocks', summary: 'Unlocking any policy in this enterprise', setBy: 'Your enterprise', policyState: 'Locked', lastUsed: 'Aug 24, 2026', actor: 'enterprise admin', trigger: 'unlock policies for editing', scope: 'any policy in this enterprise', condition: 'an unlock is requested', policyAction: 'video verification with BitGo Support', editableFields: ['action'], status: 'Active', lastModified: 'Aug 24, 2026, 10:33 AM' },
+  { id: 'admin-update-policy', kind: 'administrative', name: 'Policy changes', summary: 'Creating or changing any policy in this enterprise', setBy: 'Your enterprise', policyState: 'Pending approval', unlocked: true, lastUsed: 'Aug 20, 2026', actor: 'enterprise admin', trigger: 'create or change a policy', scope: 'any policy in this enterprise', condition: 'a change is submitted', policyAction: '1 wallet admin and 1 enterprise admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Aug 20, 2026, 2:11 PM' },
   { id: 'admin-user-roles', kind: 'administrative', name: 'User and role changes', summary: 'Inviting someone or changing a role', setBy: 'Your organization', policyState: 'Locked', lastUsed: 'Sep 1, 2026', organizationNote: 'Shared by every enterprise in your organization. Changes are approved by organization admins.', actor: 'organization admin', trigger: 'invite someone or change a role', scope: 'your organization', condition: 'a change is submitted', policyAction: 'another organization admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 1, 2026, 11:45 AM' },
-  { id: 'admin-whitelist', kind: 'administrative', name: 'Whitelist changes', summary: 'Adding or removing a whitelisted address', setBy: 'Your enterprise', policyState: 'Unlocked · 47h left', lastUsed: 'Sep 10, 2026', actor: 'wallet admin', trigger: 'add or remove an address', scope: 'wallet whitelist', condition: 'a change is submitted', policyAction: 'another wallet admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 10, 2026, 3:22 PM' },
-  { id: 'admin-approve-tx', kind: 'administrative', name: 'Approval IP allowlist', summary: 'Approvals are only accepted', sentenceMode: 'accepted', description: 'Approvals that are not from selected IP addresses (none added now) are automatically blocked', optional: true, setBy: 'Your enterprise', policyState: 'Planned', actor: 'wallet admin', trigger: 'submit an approval', scope: 'transaction approvals', condition: 'IP address matches the enterprise allowlist', policyAction: 'from IP addresses on your allowlist', editableFields: ['condition'], status: 'Active', lastModified: 'Aug 15, 2026, 9:00 AM' },
+  { id: 'admin-whitelist', kind: 'administrative', name: 'Whitelist changes', summary: 'Adding or removing a whitelisted address', setBy: 'Your enterprise', policyState: 'Locked', lastUsed: 'Sep 10, 2026', actor: 'wallet admin', trigger: 'add or remove an address', scope: 'wallet whitelist', condition: 'a change is submitted', policyAction: 'another wallet admin to approve', editableFields: ['action'], status: 'Active', lastModified: 'Sep 10, 2026, 3:22 PM' },
+  { id: 'admin-approve-tx', kind: 'administrative', name: 'Approval IP allowlist', summary: 'Approvals are only accepted', sentenceMode: 'accepted', description: 'Approvals from users that are not from the IP allowlist (0 added now) are automatically blocked', optional: true, allowlist: [], setBy: 'Your enterprise', policyState: 'Planned', actor: 'wallet admin', trigger: 'Approvals', scope: 'all wallets', conditionLead: 'user IP is not from', condition: 'the IP allowlist', policyAction: 'automatically blocked', editableFields: ['condition'], status: 'Active', lastModified: 'Aug 15, 2026, 9:00 AM' },
 ];
 
 /* ── Builder vocabulary ── */
 export type BuilderEvent = 'withdrawal' | 'stake' | 'unstake' | 'rewards' | 'validator' | 'settlement-start' | 'settlement-approve' | 'recovery';
 export type BuilderWallet = 'all' | 'single' | 'multiple' | 'type' | 'tag';
 export type CondType = 'amount' | 'velocity' | 'destination' | 'asset' | 'webhook';
-export type ActType = 'enterprise-admins' | 'wallet-admins' | 'users' | 'role' | 'final' | 'reject';
+export type ActType = 'enterprise-admins' | 'wallet-admins' | 'users' | 'role' | 'final' | 'verification' | 'reject';
 
 /** One condition step ("Spending limit", "Destination"…). */
-export interface Cond { id: string; type: CondType; limit: 'gt' | 'gte'; amount: string; currency: string; fresh?: boolean }
+export interface Cond { id: string; type: CondType; limit: 'gt' | 'gte'; amount: string; currency: string; join: 'and' | 'or'; fresh?: boolean }
 /** One action step ("Require approval from a set of users"…). */
-export interface Act { id: string; type: ActType; approvals: number; role: string; person: string; users: string[]; selfApprove: boolean; fresh?: boolean }
+export interface Act { id: string; type: ActType; approvals: number; role: string; person: string; users: string[]; selfApprove: boolean; method: 'video' | 'liveness'; join: 'and' | 'or'; fresh?: boolean }
 
 export const BUILDER_EVENTS: { id: BuilderEvent; label: string; sentence: string; noCondition: string; help: string }[] = [
   { id: 'withdrawal', label: 'Withdrawals', sentence: 'Withdrawals', noCondition: 'All withdrawals', help: 'Any send out of the wallet' },
@@ -72,10 +79,6 @@ export const BUILDER_WALLETS: { id: BuilderWallet; label: string; help: string }
   { id: 'tag', label: 'Wallet Tag', help: 'Select wallets that have specific tags applied' },
 ];
 
-export const BUILDER_TEMPLATES: [string, string][] = [
-  ['approve-all', 'Approval on all withdrawals'],
-  ['reject-large', 'Reject on withdrawals over $100k'],
-];
 
 /* ── Hidden for now ───────────────────────────────────────────────────
    NOTE (come back to this): the "User and role changes" policy is hidden from every
@@ -87,3 +90,8 @@ export const VISIBLE_POLICIES = SENTENCE_POLICIES.filter(p => !HIDDEN_POLICY_IDS
 /** Seeded (BitGo / system) policies are "default": only some fields can be edited.
  *  Policies created in the builder are "custom": every field is editable. */
 export const isCustomPolicy = (p: SentencePolicy) => p.id.startsWith('custom-');
+
+/** Edit views read scope before condition: "Withdrawals over {v} from custody wallets"
+ *  becomes "Withdrawals from custody wallets when over {v}". Policy rows keep their original copy. */
+export const scopeFirst = (summary: string) =>
+  summary.replace(/^(.*?)\s+(over \{conditionValue\})\s+(from .+)$/, '$1 $3 when $2');

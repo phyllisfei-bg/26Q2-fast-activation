@@ -86,13 +86,13 @@ export const SentencePolicyDrawer: React.FC<Props> = ({ policy, onClose, menuIte
                     <Sub>{unlocked ? 'Editing or archiving enabled' : 'Unlock to edit or archive'}</Sub>
                   </Row>
                   <Row label="Trigger" noDivider>{cap(policy.trigger)}</Row>
+                  <Row label="Scope" noDivider>{cap(policy.scope)}</Row>
                   <Row label="Condition" noDivider>
                     <span className="block">When all following conditions are met:</span>
                     <ul className="list-disc pl-5 mt-0.5">
-                      <li>{cap(policy.condition)}{policy.conditionValue ? ` ${policy.conditionValue}` : ''}</li>
+                      <li>{cap(`${policy.conditionLead ? policy.conditionLead + ' ' : ''}${policy.condition}`)}{policy.conditionValue ? ` ${policy.conditionValue}` : ''}</li>
                     </ul>
                   </Row>
-                  <Row label="Scope" noDivider>{cap(policy.scope)}</Row>
                   <Row label="Action">
                     {policy.sentenceMode === 'accepted' ? cap(policy.policyAction) : `Require ${policy.policyAction}`}
                   </Row>

@@ -231,7 +231,7 @@ export const SecurityCenterPage: React.FC<Props> = ({ isLight, onThemeToggle, me
         <div className="grid grid-cols-3 gap-4 mb-4"><Stat n={activeN} label="Active" /><Stat n={pendingN} label="Pending" /><Stat n={archivedN} label="Archived" /></div>
         <Divider />
         <div className={`text-[12px] font-semibold uppercase tracking-[0.06em] ${MUTED}`}>Frequently triggered · 30 days</div>
-        {[['Video ID', 'Transfers over $250,000 from custody wallets', '14'], ['Unverified address', 'Transfers to unverified addresses', '9']].map(r => (
+        {[['Video ID', 'Withdrawals over $250,000 from custody wallets', '14'], ['Unverified address', 'Withdrawals to unverified addresses', '9']].map(r => (
           <Row key={r[0]} title={r[0]} desc={r[1]} right={<span className={`text-[13px] ${MUTED} whitespace-nowrap`}>{r[2]} triggers</span>} />
         ))}
         <button className={`${PILL} mt-2`} onClick={() => setTab('policies')}>View policies</button>
